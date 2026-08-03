@@ -1,0 +1,1662 @@
+/* =========================================================
+   DiviniQ Home Page — styles matching the approved design
+   ========================================================= */
+
+:root {
+  --maroon: #6d1230;
+  --maroon-dark: #5a0e27;
+  --maroon-light: #8a1a3d;
+  --gold: #c9973f;
+  --gold-light: #e0b567;
+  --cream: #fdf7ef;
+  --cream-dark: #f7ecdd;
+  --text-dark: #2b2020;
+  --text-muted: #7a6f6f;
+  --border-soft: #eee0cf;
+  --white: #ffffff;
+  --radius: 10px;
+  --shadow-card: 0 4px 18px rgba(109, 18, 48, 0.08);
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body: 'Poppins', Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.dq-page {
+  font-family: var(--font-body);
+  color: var(--text-dark);
+  background: var(--white);
+  overflow-x: hidden;
+}
+
+.dq-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.dq-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--gold);
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.dq-eyebrow .line {
+  width: 30px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.dq-section-title {
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 32px;
+  color: var(--text-dark);
+  margin: 0 0 36px;
+}
+
+.dq-btn {
+  display: inline-block;
+  background: var(--maroon);
+  color: var(--white);
+  border: 1px solid var(--maroon);
+  padding: 12px 26px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.dq-btn:hover {
+  background: var(--maroon-dark);
+}
+
+.dq-btn-outline {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid var(--white);
+}
+
+.dq-btn-outline:hover {
+  background: var(--white);
+  color: var(--maroon);
+}
+
+.dq-btn-sm {
+  padding: 8px 18px;
+  font-size: 13px;
+}
+
+/* ---------------- HEADER (FIXED: CTA no longer clipped at 100% zoom) ---------------- */
+.dq-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px clamp(20px, 4vw, 110px);
+  gap: 16px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.dq-logo {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--maroon);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dq-logo span.dot {
+  color: var(--gold);
+}
+
+.dq-nav {
+  display: flex;
+  gap: clamp(12px, 1.6vw, 30px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.dq-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.dq-nav a {
+  text-decoration: none;
+  color: var(--text-dark);
+  font-size: 14.5px;
+  font-weight: 500;
+  padding-bottom: 6px;
+}
+
+.dq-nav a.active {
+  color: var(--maroon);
+  border-bottom: 2px solid var(--maroon);
+}
+
+.dq-header-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--maroon);
+  color: var(--white);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.dq-mobile-toggle {
+  display: none;
+}
+
+@media (max-width: 1536px) {
+  .dq-header {
+    padding: 14px 32px;
+  }
+
+  .dq-nav {
+    gap: 18px;
+  }
+
+  .dq-nav a {
+    font-size: 13.5px;
+  }
+}
+
+@media (max-width: 992px) {
+  .dq-nav {
+    display: none;
+  }
+
+  .dq-mobile-toggle {
+    display: block;
+  }
+}
+
+/* ---------------- HERO ---------------- */
+.dq-hero {
+  position: relative;
+  min-height: 480px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  color: var(--white);
+}
+
+.dq-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(30, 10, 15, 0.72) 10%, rgba(30, 10, 15, 0.25) 55%, rgba(30, 10, 15, 0.05) 100%);
+}
+
+.dq-hero-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
+  padding: 60px 110px;
+  color: var(--white);
+}
+
+.dq-hero-inner h1 {
+  font-family: var(--font-heading);
+  font-size: 44px;
+  line-height: 1.2;
+  margin: 0 0 18px;
+  font-weight: 700;
+}
+
+.dq-hero-inner h1 .accent {
+  color: var(--white);
+  display: block;
+}
+
+.dq-hero-inner p {
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 26px;
+  opacity: 0.92;
+  max-width: 460px;
+  color: #FFC107;
+  /* Bright golden yellow */
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  font-weight: 700;
+}
+
+.dq-hero-actions {
+  display: flex;
+  gap: 14px;
+}
+
+/* ---------------- TRUST STRIP ---------------- */
+.dq-trust-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--cream-dark);
+  padding: 22px 110px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.dq-trust-item .icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--maroon);
+  font-size: 17px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.dq-trust-item .icon img {
+  width: 100px;
+  height: 91px;
+  object-fit: contain;
+}
+
+.dq-trust-item strong {
+  display: block;
+  font-size: 15px;
+  color: var(--text-dark);
+}
+
+.dq-trust-item span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---------------- SERVICES / CATEGORY ---------------- */
+.dq-section {
+  padding: 64px 0;
+}
+
+.dq-section-cream {
+  background: var(--cream);
+}
+
+.dq-services-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 992px) {
+  .dq-services-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .dq-services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dq-service-card {
+  background: var(--white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 26px 14px;
+  text-align: center;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.dq-service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card);
+  border-color: var(--gold);
+}
+
+.dq-service-card .ic {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--cream-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--maroon);
+  font-size: 22px;
+}
+
+.dq-service-card h4 {
+  font-size: 14.5px;
+  margin: 0 0 4px;
+}
+
+.dq-service-card p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.dq-center-btn {
+  text-align: center;
+  margin-top: 34px;
+}
+
+/* ---------------- WHY TRUST ---------------- */
+.dq-why-trust {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .dq-why-trust {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dq-video-thumb {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 360px;
+  background-size: cover;
+  background-position: center;
+}
+
+.dq-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 20px;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+
+.dq-why-content h2 {
+  font-family: var(--font-heading);
+  font-size: 30px;
+  margin: 0 0 24px;
+}
+
+.dq-why-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px 30px;
+  margin-bottom: 26px;
+}
+
+.dq-why-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.dq-why-item .chk {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--maroon);
+  color: var(--white);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dq-why-item strong {
+  display: block;
+  font-size: 14.5px;
+  margin-bottom: 3px;
+}
+
+.dq-why-item p {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ---------------- CARDS ROW (Pujas / Chadhava) ---------------- */
+.dq-cards-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 992px) {
+  .dq-cards-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .dq-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dq-puja-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+}
+
+.dq-puja-card img {
+  width: 100% !important;
+  height: 130px !important;
+  max-width: 100% !important;
+  min-height: 130px;
+  max-height: 130px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.dq-puja-body {
+  padding: 14px;
+}
+
+.dq-puja-body h4 {
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.dq-puja-meta {
+  font-size: 11.5px;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.dq-puja-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.dq-puja-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dq-puja-price {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+.dq-chadhava-wrap {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 30px;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .dq-chadhava-wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dq-chadhava-intro h3 {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  margin: 0 0 14px;
+}
+
+.dq-chadhava-intro p {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-bottom: 22px;
+  line-height: 1.6;
+}
+.dq-chadhava-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    align-items: start;
+}
+
+.dq-chadhava-item {
+    width: 100%;
+}
+
+.dq-chadhava-img-wrap {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.dq-chadhava-img-wrap img {
+    width: 100% !important;
+    height: 220px!important;
+    object-fit: cover;
+    display: block;
+}
+
+@media (max-width: 900px) {
+  .dq-chadhava-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .dq-chadhava-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dq-chadhava-item {
+  text-align: left;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dq-chadhava-item img {
+  width: 100% ;
+  height: 100% ;
+  aspect-ratio: 1/1;
+  object-fit: cover !important;
+  object-position: center;
+  border-radius: var(--radius);
+  margin-bottom: 8px !important;
+  display: block;
+}
+
+.dq-chadhava-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dq-chadhava-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dq-chadhava-name {
+  font-size: 13.5px;
+  color: var(--text-dark);
+  font-weight: 500;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.dq-chadhava-top strong {
+  font-size: 13.5px;
+  color: var(--maroon);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dq-chadhava-temple {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* ---------------- ASTROLOGERS ---------------- */
+.dq-section-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 30px;
+}
+
+.dq-section-head-row h2 {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  margin: 0;
+}
+
+.dq-section-head-row a {
+  color: var(--maroon);
+  font-size: 13.5px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.dq-astro-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .dq-astro-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dq-astro-card {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.dq-astro-photo-wrap {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--gold);
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.dq-astro-photo-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dq-astro-icon-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.dq-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-soft);
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--maroon);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dq-astro-info {
+  width: 100%;
+}
+
+.dq-astro-card h4 {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+.dq-astro-card .exp {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.dq-astro-card .spec {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.dq-astro-cta {
+  width: 100%;
+}
+
+/* ---------------- BLOG + STATS ---------------- */
+.dq-blog-wrap {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.dq-blog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 992px) {
+  .dq-blog-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .dq-blog-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .dq-blog-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dq-blog-card {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+}
+
+.dq-blog-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.dq-blog-body {
+  padding: 14px;
+}
+
+.dq-blog-tag {
+  font-size: 11px;
+  color: var(--gold);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.dq-blog-body h4 {
+  font-size: 13.5px;
+  line-height: 1.4;
+  margin: 0 0 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.8em;
+}
+
+.dq-blog-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.dq-stats-panel {
+  background: var(--maroon);
+  border-radius: var(--radius);
+  color: var(--white);
+  padding: 36px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 40px;
+  column-gap: 22px;
+  align-content: start;
+  height: 100%;
+}
+
+.dq-stats-panel .stat {
+  text-align: center;
+  padding-top: 4px;
+}
+
+.dq-stats-panel .stat .ic {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: var(--gold-light);
+}
+
+.dq-stats-panel .stat .ic img {
+  height: 80px;
+  border-radius: 50% !important;
+  width: 80px;
+}
+
+.dq-stats-panel .stat strong {
+  display: block;
+  font-size: 19px;
+}
+
+.dq-stats-panel .stat span {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* ---------------- FAQ ---------------- */
+.dq-faq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+
+@media (max-width: 700px) {
+  .dq-faq-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dq-faq-item {
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 14px;
+  background: var(--white);
+}
+
+.dq-faq-item:hover {
+  border-color: var(--gold);
+}
+
+.dq-faq-item .answer {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.dq-faq-item-wrap.open .dq-faq-item {
+  border-color: var(--gold);
+}
+
+/* ---------------- QUICK LINKS BAND ---------------- */
+.dq-quicklinks {
+  background: var(--cream-dark);
+  padding: 44px 0;
+}
+
+.dq-quicklinks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+@media (max-width: 800px) {
+  .dq-quicklinks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dq-quicklinks-col h5 {
+  color: var(--maroon);
+  font-size: 14.5px;
+  margin: 0 0 14px;
+}
+
+.dq-quicklinks-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  columns: 2;
+  column-gap: 20px;
+}
+
+.dq-quicklinks-col li {
+  font-size: 12.5px;
+  margin-bottom: 10px;
+  color: var(--text-muted);
+}
+
+/* ---------------- FOOTER ---------------- */
+.dq-footer {
+  background: var(--maroon-dark);
+  color: rgba(255, 255, 255, 0.85);
+  padding: 50px 0 0;
+}
+
+.dq-footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 30px;
+  padding-bottom: 34px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 900px) {
+  .dq-footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dq-footer-logo {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+
+.dq-footer-grid p {
+  font-size: 12.5px;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+.dq-footer-grid h5 {
+  color: var(--gold-light);
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+
+.dq-footer-grid ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dq-footer-grid li {
+  font-size: 12.5px;
+  margin-bottom: 10px;
+}
+
+.dq-footer-social {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dq-footer-social a {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 13px;
+}
+
+.dq-app-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.dq-app-badges img {
+  height: 36px;
+}
+
+.dq-footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 0;
+  font-size: 12px;
+  opacity: 0.7;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* horizontal scroll row: 4 cards visible, rest scroll */
+.dq-cards-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
+  /* room for scrollbar */
+}
+
+/* each card takes ~1/4 of the row, minus the gaps */
+.dq-cards-scroll .dq-puja-card {
+  flex: 0 0 calc((100% - 3 * 20px) / 4);
+  scroll-snap-align: start;
+}
+
+/* 3-line clamp on the purpose text */
+.dq-puja-purpose {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* optional: tidy scrollbar */
+.dq-cards-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.dq-cards-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+/* responsive: fewer per view on smaller screens */
+@media (max-width: 1024px) {
+  .dq-cards-scroll .dq-puja-card {
+    flex: 0 0 calc((100% - 2 * 20px) / 3);
+  }
+}
+
+@media (max-width: 768px) {
+  .dq-cards-scroll .dq-puja-card {
+    flex: 0 0 calc((100% - 20px) / 2);
+  }
+}
+
+@media (max-width: 480px) {
+  .dq-cards-scroll .dq-puja-card {
+    flex: 0 0 85%;
+  }
+}
+
+/* puja name: max 2 lines, then ellipsis */
+.dq-puja-body h4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* mandir/address: single line, ellipsis */
+.dq-puja-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   RESPONSIVE ENHANCEMENTS (added — no existing rules changed)
+   ========================================================= */
+
+/* ---- Container / general spacing on smaller screens ---- */
+@media (max-width: 768px) {
+  .dq-container {
+    padding: 0 16px;
+  }
+
+  .dq-section {
+    padding: 44px 0;
+  }
+
+  .dq-section-title {
+    font-size: 26px;
+    margin-bottom: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dq-container {
+    padding: 0 14px;
+  }
+
+  .dq-section {
+    padding: 36px 0;
+  }
+
+  .dq-section-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+}
+
+/* ---- Header (mobile spacing — unchanged) ---- */
+@media (max-width: 992px) {
+  .dq-header {
+    padding: 14px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dq-header {
+    padding: 12px 16px;
+  }
+
+  .dq-logo {
+    font-size: 21px;
+  }
+
+  .dq-header-cta span {
+    display: none;
+  }
+}
+
+/* ---- Hero ---- */
+@media (max-width: 768px) {
+  .dq-hero {
+    min-height: 520px;
+    background-position: center;
+  }
+
+  /* .dq-hero::before {
+    background: linear-gradient(
+      180deg,
+      rgba(18,8,12,.88) 0%,
+      rgba(18,8,12,.72) 45%,
+      rgba(18,8,12,.55) 100%
+    );
+  } */
+
+  .dq-hero-inner {
+    padding: 32px 24px;
+  }
+
+  .dq-hero-inner h1 {
+    font-size: 34px;
+    color: #FFC107;
+    /* Bright golden yellow */
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    font-weight: 700;
+  }
+
+  .dq-hero-inner p {
+    font-size: 15px;
+    color: white;
+    /* Bright golden yellow */
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    font-weight: 500;
+  }
+  @media (max-width: 768px) {
+    .hide-mobile {
+        display: none;
+    }
+}
+}
+
+/* ---- Trust strip ---- */
+@media (max-width: 992px) {
+  .dq-trust-strip {
+    padding: 20px 24px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .dq-trust-strip {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding: 20px 16px;
+    gap: 26px;
+  }
+
+  .dq-trust-strip::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .dq-trust-strip::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+  }
+
+  .dq-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+}
+
+/* ---- Why Trust list ---- */
+@media (max-width: 480px) {
+  .dq-why-list {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dq-why-content h2 {
+    font-size: 24px;
+  }
+}
+
+/* ---- Astrologers section head ---- */
+@media (max-width: 480px) {
+  .dq-section-head-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* ---- Chadhava intro ---- */
+@media (max-width: 480px) {
+  .dq-chadhava-intro h3 {
+    font-size: 22px;
+  }
+}
+
+/* ---- Chadhava grid: horizontal scroll on mobile ---- */
+@media (max-width: 600px) {
+  .dq-chadhava-grid {
+    display: flex;
+    grid-template-columns: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    padding-bottom: 10px;
+  }
+
+  .dq-chadhava-grid::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .dq-chadhava-grid::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+  }
+
+  .dq-chadhava-item {
+    flex: 0 0 42%;
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 400px) {
+  .dq-chadhava-item {
+    flex: 0 0 48%;
+  }
+}
+
+/* ---- Blog / stats panel ---- */
+@media (max-width: 600px) {
+  .dq-stats-panel {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 24px;
+    padding: 26px 16px;
+  }
+}
+
+/* ---- Blog grid: horizontal scroll on mobile ---- */
+@media (max-width: 600px) {
+  .dq-blog-grid {
+    display: flex;
+    grid-template-columns: none;
+    grid-template-rows: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    padding-bottom: 10px;
+  }
+
+  .dq-blog-grid::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .dq-blog-grid::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+  }
+
+  .dq-blog-card {
+    flex: 0 0 72%;
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 400px) {
+  .dq-blog-card {
+    flex: 0 0 80%;
+  }
+}
+
+/* ---- Footer ---- */
+@media (max-width: 600px) {
+  .dq-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dq-footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dq-footer-bottom {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ---- Quick links ---- */
+@media (max-width: 480px) {
+  .dq-quicklinks-col ul {
+    columns: 1;
+  }
+}
+
+/* ---- Cards scroll row spacing on very small screens ---- */
+@media (max-width: 480px) {
+  .dq-cards-scroll {
+    gap: 14px;
+  }
+}
+
+/* =========================================================
+   OVERRIDE: Most Booked Pujas — 2-column grid on mobile
+   (no horizontal scroll, matches reference design)
+   ========================================================= */
+@media (max-width: 768px) {
+  .dq-cards-scroll {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    overflow-x: visible;
+    scroll-snap-type: none;
+    gap: 14px;
+    padding-bottom: 0;
+  }
+
+  .dq-cards-scroll .dq-puja-card {
+    flex: none;
+    width: 100%;
+    scroll-snap-align: none;
+  }
+}
+
+/* =========================================================
+   OVERRIDE: Chadhava — 2-column grid on mobile
+   (no horizontal scroll, matches reference design)
+   ========================================================= */
+@media (max-width: 600px) {
+  .dq-chadhava-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    overflow-x: visible;
+    scroll-snap-type: none;
+    gap: 14px;
+    padding-bottom: 0;
+  }
+
+  .dq-chadhava-item {
+    flex: none;
+    width: 100%;
+    scroll-snap-align: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .dq-chadhava-item {
+    flex: none;
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   OVERRIDE: Trust strip — 2-column grid on mobile
+   (no horizontal scroll, matches reference design)
+   ========================================================= */
+@media (max-width: 600px) {
+  .dq-trust-strip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    overflow-x: visible;
+    scroll-snap-type: none;
+    flex-wrap: unset;
+    justify-content: unset;
+    gap: 18px 14px;
+    padding: 20px 16px;
+  }
+
+  .dq-trust-item {
+    flex: none;
+    width: 100%;
+    scroll-snap-align: none;
+    white-space: normal;
+  }
+}
+
+/* =========================================================
+   HOVER EFFECTS: Puja cards, Chadhava cards, Trust badges
+   ========================================================= */
+.dq-puja-card {
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.dq-puja-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 26px rgba(109, 18, 48, 0.14);
+  border-color: var(--gold);
+}
+
+.dq-chadhava-item {
+  transition: transform .2s ease;
+}
+
+.dq-chadhava-item:hover {
+  transform: translateY(-4px);
+}
+
+.dq-chadhava-item img {
+  transition: box-shadow .2s ease, opacity .2s ease;
+}
+
+.dq-chadhava-item:hover img {
+  box-shadow: 0 10px 24px rgba(109, 18, 48, 0.18);
+  opacity: 0.94;
+}
+
+.dq-chadhava-item:hover .dq-chadhava-name {
+  color: var(--maroon);
+}
+
+.dq-trust-item {
+  transition: transform .2s ease;
+}
+
+.dq-trust-item:hover {
+  transform: translateY(-3px);
+}
+
+.dq-trust-item .icon {
+  transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.dq-trust-item:hover .icon {
+  box-shadow: 0 8px 18px rgba(201, 151, 63, 0.35);
+  border-color: var(--maroon);
+  transform: scale(1.06);
+}
+
+/* =========================================================
+   HOVER EFFECTS — ENHANCED (more noticeable motion/depth)
+   ========================================================= */
+
+/* ---- Puja cards: bigger lift, image zoom, button glow ---- */
+.dq-puja-card {
+  transform: translateY(0) scale(1);
+}
+
+.dq-puja-card:hover {
+  transform: translateY(-8px) scale(1.015);
+  box-shadow: 0 18px 36px rgba(109, 18, 48, 0.22);
+  border-color: var(--gold);
+}
+
+.dq-puja-card img {
+  transition: transform .4s ease, filter .3s ease;
+}
+
+.dq-puja-card:hover img {
+  transform: scale(1.08);
+  filter: brightness(1.03);
+}
+
+.dq-puja-body h4 {
+  transition: color .2s ease;
+}
+
+.dq-puja-card:hover .dq-puja-body h4 {
+  color: var(--maroon);
+}
+
+.dq-puja-card .dq-btn,
+.dq-puja-card .dq-puja-footer .dq-btn-sm {
+  transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.dq-puja-card:hover .dq-btn,
+.dq-puja-card:hover .dq-puja-footer .dq-btn-sm {
+  box-shadow: 0 6px 16px rgba(109, 18, 48, 0.35);
+}
+
+/* ---- Chadhava cards: stronger lift + image zoom + name underline ---- */
+.dq-chadhava-item:hover {
+  transform: translateY(-8px);
+}
+
+.dq-chadhava-item img {
+  transition: transform .4s ease, box-shadow .2s ease, opacity .2s ease;
+}
+
+.dq-chadhava-item:hover img {
+  transform: scale(1.06);
+  box-shadow: 0 16px 30px rgba(109, 18, 48, 0.24);
+}
+
+.dq-chadhava-name {
+  transition: color .2s ease;
+  position: relative;
+}
+
+.dq-chadhava-item:hover .dq-chadhava-name {
+  color: var(--maroon);
+}
+
+.dq-chadhava-top strong {
+  transition: color .2s ease, transform .2s ease;
+  display: inline-block;
+}
+
+.dq-chadhava-item:hover .dq-chadhava-top strong {
+  color: var(--gold);
+  transform: scale(1.08);
+}
+
+/* ---- Trust badges: bigger pop + rotate ---- */
+.dq-trust-item:hover {
+  transform: translateY(-6px);
+}
+
+.dq-trust-item:hover .icon {
+  box-shadow: 0 12px 26px rgba(201, 151, 63, 0.45);
+  border-color: var(--maroon);
+  transform: scale(1.12) rotate(-6deg);
+}
+
+.dq-trust-item strong {
+  transition: color .2s ease;
+}
+
+.dq-trust-item:hover strong {
+  color: var(--maroon);
+}
+
+/* ---- Service cards (existing): add icon pop + heading color ---- */
+.dq-service-card .ic {
+  transition: background .2s ease, color .2s ease, transform .2s ease;
+}
+
+.dq-service-card:hover .ic {
+  background: var(--maroon);
+  color: var(--white);
+  transform: scale(1.1) rotate(4deg);
+}
+
+.dq-service-card h4 {
+  transition: color .2s ease;
+}
+
+.dq-service-card:hover h4 {
+  color: var(--maroon);
+}
+
+/* ---- Astrologer cards: add lift + photo ring glow ---- */
+.dq-astro-card {
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.dq-astro-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-card);
+  border-color: var(--gold);
+}
+
+.dq-astro-photo-wrap {
+  transition: box-shadow .25s ease, transform .25s ease;
+}
+
+.dq-astro-card:hover .dq-astro-photo-wrap {
+  box-shadow: 0 0 0 4px rgba(201, 151, 63, 0.25);
+  transform: scale(1.05);
+}
+
+/* ---- Blog cards: image zoom + tag pop ---- */
+.dq-blog-card {
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.dq-blog-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-card);
+}
+
+.dq-blog-card img {
+  transition: transform .4s ease;
+}
+
+.dq-blog-card:hover img {
+  transform: scale(1.07);
+}
+
+.dq-blog-body h4 {
+  transition: color .2s ease;
+}
+
+.dq-blog-card:hover .dq-blog-body h4 {
+  color: var(--maroon);
+}

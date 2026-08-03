@@ -1,0 +1,99 @@
+/* 
+ * Tourm - Travel & Tour Booking Agency React App
+ * Main stylesheet that imports original CSS files
+ */
+
+/* Google Fonts - Same as original HTML */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Manrope:wght@200..800&family=Montez&display=swap");
+
+/* Bootstrap */
+@import "/assets/css/bootstrap.min.css";
+
+/* Fontawesome Icon */
+@import "/assets/css/fontawesome.min.css";
+
+/* Magnific Popup */
+@import "/assets/css/magnific-popup.min.css";
+
+/* Theme Custom CSS - Main styles */
+@import "/assets/css/style.css";
+
+/* ===== About Section: Show all 3 images on mobile ===== */
+@media (max-width: 767px) {
+  .img-box1 {
+    display: grid !important;
+    grid-template-columns: 1.3fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  .img-box1 .img1 {
+    position: relative !important;
+    grid-row: 1 / 3;
+    max-width: 100% !important;
+  }
+  .img-box1 .img1 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .img-box1 .img2 {
+    display: block !important;
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    max-width: 100% !important;
+  }
+  .img-box1 .img2 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .img-box1 .img3 {
+    display: block !important;
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    max-width: 100% !important;
+  }
+  .img-box1 .img3 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* ===== Footer: Mobile responsive fixes ===== */
+@media (max-width: 767px) {
+  .footer-diviniq-final {
+    margin: 40px 12px 20px !important;
+    padding: 40px 20px 30px !important;
+    border-radius: 20px !important;
+  }
+  .footer-diviniq-final .app-btn-elite {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 16px;
+    justify-content: center;
+  }
+  .footer-diviniq-final .mb-80 {
+    margin-bottom: 40px !important;
+  }
+  .footer-diviniq-final .pb-60 {
+    padding-bottom: 30px !important;
+  }
+  .footer-diviniq-final .mt-100 {
+    margin-top: 40px !important;
+  }
+  .footer-diviniq-final .pt-40 {
+    padding-top: 20px !important;
+  }
+  .footer-title-modern {
+    margin-bottom: 16px;
+  }
+  .footer-link-modern {
+    margin-bottom: 10px;
+  }
+}

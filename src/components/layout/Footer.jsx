@@ -1,0 +1,144 @@
+import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+
+const Footer = () => {
+    // Generate star coordinates for a unique starfield every load
+    const starField = useMemo(() => Array.from({ length: 50 }).map((_, i) => ({
+        id: i,
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        size: `${Math.random() * 2.5}px`,
+        duration: `${3 + Math.random() * 4}s`
+    })), []);
+
+    const columns = [
+        {
+            title: "// Services",
+            items: [
+                { label: "Puja", url: "/puja" },
+                { label: "Chadhava", url: "/chadhava" },
+                { label: "Panchang", url: "/panchang" },
+                { label: "Astrology Tools", url: "/astrology_calculator_hub" },
+
+            ]
+        },
+        {
+            title: "// Support",
+            items: [
+                { label: "Help Center", url: "/help" },
+                { label: "Consult with Astrologer", url: "/astrologer" },
+                { label: "Register as Astrologer", url: "/astrologer_registration" },
+                { label: "Refund Policy", url: "/cancellation_refund_policy" }
+            ]
+        },
+        {
+            title: "// Company",
+            items: [
+                { label: "About Us", url: "/about_us" },
+                { label: "Careers", url: "/careers" },
+                { label: "Security", url: "/security" },
+                { label: "Contact Us", url: "/contact_us" },
+                { label: "Our Blog", url: "/blog" }
+
+
+            ]
+        }
+    ];
+    return (
+        <footer className="footer-diviniq-final" style={{ background: "linear-gradient(135deg, #6E2A22, #2A0C10)" }}>
+            {/* Twinkling Background Layer */}
+            {starField.map(star => (
+                <div key={star.id} className="footer-star" style={{
+                    top: star.top, left: star.left, width: star.size, height: star.size,
+                    '--d': star.duration
+                }} />
+            ))}
+
+            <div className="container-fluid p-0 position-relative z-index-1">
+
+                {/* --- 1. Top Section: Branding & App --- */}
+                <div className="row align-items-center mb-5 pb-5  border-white-10">
+                    <div className="col-lg-6 mb-4 mb-lg-0">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                        >
+                            <div
+                                className="d-inline-block p-3 rounded-12 mb-4"
+                            >
+                                <img
+                                    src="/assets/img/logo1234.jpeg"
+                                    width="200"
+                                    style={{ borderRadius: "15px" }}
+                                    alt="Vaidik Guru"
+                                />
+                            </div>
+
+                            <h2 className="text-white fw-bold h3 mb-2">
+                                Uncover a new approach to divinity
+                            </h2>
+
+                            <p className="text-white-50 small pe-lg-5 mb-0">
+                                Join our global community and align your life with celestial wisdom.
+                            </p>
+                        </motion.div>
+                    </div>
+                    <div className="col-lg-6">
+                        <div className="d-md-flex flex-wrap justify-content-lg-end gap-3">
+                            <a href="https://play.google.com/store/apps/details?id=com.vaidikguru.app" className="app-btn-elite">
+                                <i className="fab fa-apple fs-4"></i>
+                                <div className="text-start">
+                                    <small className="d-block opacity-50" style={{ fontSize: '9px' }}>DOWNLOAD ON THE</small>
+                                    <span className="fw-bold">App Store</span>
+                                </div>
+                            </a>
+                            <a href="https://play.google.com/store/apps/details?id=com.vaidikguru.app" className="app-btn-elite my-2 my-md-0">
+                                <i className="fab fa-google-play fs-4 text-warning"></i>
+                                <div className="text-start">
+                                    <small className="d-block opacity-50" style={{ fontSize: '9px' }}>GET IT ON</small>
+                                    <span className="fw-bold">Google Play</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- 2. 4-Column Link Grid --- */}
+                <div className="row justify-content-between g-4">
+                    {columns.map((col, idx) => (
+                        <div key={idx} className="col-6 col-md-4 col-xl-auto">
+                            <h4 className="footer-title-modern">{col.title}</h4>
+                            <div className="nav flex-column">
+                                {col.items.map((link, i) => (
+                                    <Link key={i} to={link.url} className="footer-link-modern">{link.label}</Link>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Newsletter as 4th Column */}
+                    <div className="col-lg-3">
+                        <h4 className="footer-title-modern">// Newsletter</h4>
+                        <p className="small text-white-50 mb-4">Never miss an update. Get cosmic insights monthly.</p>
+                        <div className="d-flex bg-white-10 rounded-pill p-1" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <input type="email" placeholder="example@gmail.com" className="form-control border-0 bg-transparent text-white px-3" />
+                            <button className="th-btn style3 py-2 px-4 rounded-pill">Join</button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- 3. Bottom Bar --- */}
+                <div className="mt-100 pt-40  border-white-10 d-flex flex-wrap justify-content-between align-items-center">
+                    <p className="small text-white-50 opacity-30 mb-0">© 2025 VaidikGuru. Designed for Celestial Excellence.</p>
+                    <div className="d-flex gap-4 mt-3 mt-md-0">
+                        <Link to="/privacy_policy" className="small text-white-50 text-decoration-none hover-white">Privacy Policy</Link>
+                        <Link to="/terms_of_use" className="small text-white-50 text-decoration-none hover-white">Terms of Service</Link>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+};
+
+export default Footer;

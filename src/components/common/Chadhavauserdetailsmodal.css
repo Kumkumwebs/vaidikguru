@@ -1,0 +1,413 @@
+/* ============================================
+   Chadhava User Details Modal — Theme Styles
+   Palette: Maroon #7B1F3A · Gold #f5a623 · Cream #fdf8f2
+   Dedicated stylesheet — classes prefixed "cudm-" so this
+   never collides with the shared udm-* / ud-* modal styles.
+
+   Desktop/base rules below are UNCHANGED from the original.
+   All size/scroll fixes live only inside the mobile media
+   queries at the bottom, so desktop view is not affected.
+   ============================================ */
+
+.cudm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 4, 6, 0.65);
+  backdrop-filter: blur(3px);
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.cudm-card {
+  width: 100%;
+  max-width: 460px;
+  background: #fffaf3;
+  border-radius: 40px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- Header ---------- */
+.cudm-header {
+  position: relative;
+  height: 110px;
+  background: linear-gradient(135deg, #fdf0df 0%, #fbe4cf 100%);
+  border-radius: 40px 40px 0 0;
+  overflow: hidden;
+}
+
+.cudm-header-img {
+  position: absolute;
+  left: 14px;
+  top: 10px;
+  width: 130px;
+  height: auto;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.cudm-header-pattern {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 75% 30%, rgba(245, 166, 35, 0.1) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.cudm-handle {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(123, 31, 58, 0.18);
+}
+
+.cudm-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  color: #7B1F3A;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+}
+.cudm-close:hover {
+  background: #fdf0f4;
+}
+
+/* ---------- Floating avatar ---------- */
+.cudm-avatar {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: -32px auto 0;
+  border-radius: 50%;
+  background: #fffaf3;
+  border: 2px solid #f5a623;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #7B1F3A;
+  box-shadow: 0 10px 24px rgba(245, 166, 35, 0.3);
+  z-index: 2;
+}
+
+/* ---------- Body ---------- */
+.cudm-body {
+  padding: 8px 30px 26px;
+  text-align: center;
+}
+
+.cudm-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #7B1F3A;
+  margin: 2px 0 6px;
+}
+
+.cudm-subtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.cudm-line {
+  width: 26px;
+  height: 1px;
+  background: #f5a623;
+  opacity: 0.6;
+}
+.cudm-subtitle-row i {
+  color: #f5a623;
+  font-size: 11px;
+}
+
+.cudm-subtitle {
+  font-size: 12.5px;
+  color: #8a7f78;
+  margin: 0 0 18px;
+}
+
+/* ---------- Form ---------- */
+.cudm-form {
+  text-align: left;
+}
+
+.cudm-field {
+  margin-bottom: 13px;
+}
+.cudm-field label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #7B1F3A;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.cudm-field-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #fdf1e3;
+  border: 1px solid #f4e0bd;
+  color: #7B1F3A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.cudm-field input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #f0e0cc;
+  background: #fff;
+  font-size: 16px; /* 16px+ stops iOS Safari from auto-zooming on focus */
+  color: #2a1c1e;
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+.cudm-field input:focus {
+  border-color: #f5a623;
+}
+
+.cudm-phone-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+.cudm-country-code {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1.5px solid #f0e0cc;
+  background: #fff;
+  font-weight: 700;
+  color: #7B1F3A;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.cudm-country-code i {
+  font-size: 10px;
+  color: #c9a06a;
+}
+.cudm-phone-row input {
+  flex: 1;
+  min-width: 0; /* lets the input shrink instead of pushing the row wider than the card */
+}
+
+/* ---------- Secure note ---------- */
+.cudm-secure-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fdf1e3;
+  border: 1px solid #f4e0bd;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  color: #6b5e58;
+  margin: 4px 0 16px;
+}
+.cudm-secure-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #7B1F3A;
+  color: #f5d88a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* ---------- Submit button ---------- */
+.cudm-submit-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #7B1F3A 0%, #4a0f1e 100%);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  font-family: Georgia, 'Times New Roman', serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(94, 23, 48, 0.35);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.cudm-submit-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.cudm-submit-btn i {
+  font-size: 14px;
+}
+
+/* ============================================
+   Responsive — mobile-only overrides below.
+   Nothing above this line affects screens wider
+   than 600px, so desktop view is untouched.
+   ============================================ */
+
+/* Tablets / small laptops — trim the outer overlay padding a bit */
+@media (max-width: 600px) {
+  .cudm-overlay {
+    padding: 12px;
+  }
+}
+
+/* Phones — bottom sheet, no scroll, compact sizing */
+@media (max-width: 480px) {
+  .cudm-overlay {
+    align-items: flex-end;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  .cudm-card {
+    max-width: 100%;
+    border-radius: 24px 24px 0 0;
+  }
+  .cudm-header {
+    height: 76px;
+    border-radius: 24px 24px 0 0;
+  }
+  .cudm-header-img {
+    width: 84px;
+    left: 8px;
+    top: -6px;
+  }
+  .cudm-avatar {
+    width: 42px;
+    height: 42px;
+    margin: -21px auto 0;
+    font-size: 16px;
+  }
+  .cudm-title {
+    font-size: 16px;
+    margin: 2px 0 4px;
+  }
+  .cudm-subtitle-row {
+    margin-bottom: 4px;
+  }
+  .cudm-subtitle {
+    font-size: 10.5px;
+    margin: 0 0 8px;
+  }
+  .cudm-body {
+    padding: 6px 16px 12px;
+  }
+  .cudm-field {
+    margin-bottom: 8px;
+  }
+  .cudm-field label {
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+  .cudm-field-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .cudm-field input {
+    padding: 7px 12px;
+  }
+  .cudm-phone-row {
+    gap: 6px;
+  }
+  .cudm-country-code {
+    padding: 0 9px;
+    font-size: 12.5px;
+  }
+  .cudm-secure-note {
+    padding: 7px 10px;
+    margin: 4px 0 8px;
+    font-size: 10.5px;
+  }
+  .cudm-secure-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .cudm-submit-btn {
+    padding: 10px;
+    font-size: 12.5px;
+    border-radius: 12px;
+    gap: 6px;
+  }
+  .cudm-submit-btn i {
+    font-size: 11px;
+  }
+}
+
+/* Very small / narrow phones — stack the phone-number row so nothing clips */
+@media (max-width: 340px) {
+  .cudm-phone-row {
+    flex-wrap: wrap;
+  }
+  .cudm-country-code {
+    width: 100%;
+    justify-content: center;
+    padding: 6px 0;
+  }
+  .cudm-phone-row input {
+    width: 100%;
+    flex: none;
+  }
+  .cudm-submit-btn {
+    padding: 9px;
+    font-size: 12px;
+  }
+}
+
+/* Short viewports (landscape phones, keyboard open) — mobile widths only */
+@media (max-width: 480px) and (max-height: 640px) {
+  .cudm-header {
+    height: 58px;
+  }
+  .cudm-avatar {
+    width: 36px;
+    height: 36px;
+    margin: -18px auto 0;
+    font-size: 14px;
+  }
+  .cudm-body {
+    padding-top: 4px;
+  }
+  .cudm-subtitle {
+    margin-bottom: 6px;
+  }
+  .cudm-field {
+    margin-bottom: 6px;
+  }
+}

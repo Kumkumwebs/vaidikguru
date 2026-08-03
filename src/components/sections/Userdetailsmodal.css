@@ -1,0 +1,287 @@
+/* ============================================
+   User Details Modal — Theme Styles
+   Palette: Maroon #7B1F3A · Gold #f5a623 · Cream #fdf8f2
+   ============================================ */
+
+.udm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 4, 6, 0.65);
+  backdrop-filter: blur(3px);
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.udm-card {
+  width: 100%;
+  max-width: 460px;
+  background: #fffaf3;
+  border-radius: 40px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- Header ---------- */
+.udm-header {
+  position: relative;
+  height: 110px;
+  background: linear-gradient(135deg, #fdf0df 0%, #fbe4cf 100%);
+  border-radius: 40px 40px 0 0;
+  overflow: hidden;
+}
+
+.udm-header-img {
+  position: absolute;
+  left: 14px;
+  top: 10px;
+  width: 130px;
+  height: auto;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.udm-header-pattern {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 75% 30%, rgba(245, 166, 35, 0.1) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.udm-handle {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(123, 31, 58, 0.18);
+}
+
+.udm-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  color: #7B1F3A;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+}
+.udm-close:hover {
+  background: #fdf0f4;
+}
+
+/* ---------- Floating avatar ---------- */
+.udm-avatar {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: -32px auto 0;
+  border-radius: 50%;
+  background: #fffaf3;
+  border: 2px solid #f5a623;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #7B1F3A;
+  box-shadow: 0 10px 24px rgba(245, 166, 35, 0.3);
+  z-index: 2;
+}
+
+/* ---------- Body ---------- */
+.udm-body {
+  padding: 8px 30px 26px;
+  text-align: center;
+}
+
+.udm-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #7B1F3A;
+  margin: 2px 0 6px;
+}
+
+.udm-subtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.udm-line {
+  width: 26px;
+  height: 1px;
+  background: #f5a623;
+  opacity: 0.6;
+}
+.udm-subtitle-row i {
+  color: #f5a623;
+  font-size: 11px;
+}
+
+.udm-subtitle {
+  font-size: 12.5px;
+  color: #8a7f78;
+  margin: 0 0 18px;
+}
+
+/* ---------- Form ---------- */
+.udm-form {
+  text-align: left;
+}
+
+.udm-field {
+  margin-bottom: 13px;
+}
+.udm-field label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #7B1F3A;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.udm-field-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #fdf1e3;
+  border: 1px solid #f4e0bd;
+  color: #7B1F3A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.udm-field input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #f0e0cc;
+  background: #fff;
+  font-size: 14px;
+  color: #2a1c1e;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.udm-field input:focus {
+  border-color: #f5a623;
+}
+
+.udm-phone-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+.udm-country-code {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1.5px solid #f0e0cc;
+  background: #fff;
+  font-weight: 700;
+  color: #7B1F3A;
+  font-size: 15px;
+}
+.udm-country-code i {
+  font-size: 10px;
+  color: #c9a06a;
+}
+.udm-phone-row input {
+  flex: 1;
+}
+
+/* ---------- Secure note ---------- */
+.udm-secure-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fdf1e3;
+  border: 1px solid #f4e0bd;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  color: #6b5e58;
+  margin: 4px 0 16px;
+}
+.udm-secure-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #7B1F3A;
+  color: #f5d88a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* ---------- Submit button ---------- */
+.udm-submit-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #7B1F3A 0%, #4a0f1e 100%);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  font-family: Georgia, 'Times New Roman', serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(94, 23, 48, 0.35);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.udm-submit-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.udm-submit-btn i {
+  font-size: 14px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .udm-header {
+    height: 140px;
+  }
+  .udm-header-img {
+    width: 170px;
+    left: 12px;
+    top: 14px;
+  }
+  .udm-title {
+    font-size: 24px;
+  }
+  .udm-body {
+    padding: 12px 22px 26px;
+  }
+}
+

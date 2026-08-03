@@ -1,0 +1,330 @@
+/* ============================================
+   App Download Modal — Theme Styles
+   Palette: Maroon #7B1F3A · Gold #f5a623 · Cream #fdf8f2
+   ============================================ */
+
+.dvm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 4, 6, 0.72);
+  backdrop-filter: blur(3px);
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.dvm-card {
+  width: 100%;
+  max-width: 440px;
+  background: #fdf8f2;
+  border-radius: 40px;
+  border: 2px solid #f5a623;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- Close button ---------- */
+.dvm-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 5;
+  transition: background 0.15s ease;
+}
+.dvm-close:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Header (curved banner) ---------- */
+.dvm-header {
+  position: relative;
+  padding: 24px 32px 42px;
+  text-align: center;
+  background:
+    /* linear-gradient(180deg, rgba(20, 4, 10, 0.55) 0%, rgba(74, 11, 30, 0.82) 55%, #3a0a1c 100%), */
+    url('/assets/img/pooja/popupbanner.png') center 30% / cover no-repeat;
+  overflow: hidden;
+}
+
+.dvm-header-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(245, 166, 35, 0.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.dvm-title {
+  position: relative;
+  z-index: 1;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.2;
+  color: #fff;
+  margin: 0 0 10px;
+}
+.dvm-title span {
+  display: block;
+  color: var(--pb-gold, #f5a623);
+  font-size: 29px;
+}
+
+.dvm-subtitle {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12.5px;
+  line-height: 1.55;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* the concave scoop at the bottom of the header */
+.dvm-curve {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -1px;
+  height: 44px;
+  background: #fdf8f2;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  z-index: 2;
+}
+
+/* ---------- Om badge straddling the curve ---------- */
+.dvm-om-badge {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  margin: -23px auto 0;
+  border-radius: 50%;
+  background: #fdf8f2;
+  border: 2px solid var(--pb-gold, #f5a623);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7B1F3A;
+  font-size: 19px;
+  box-shadow: 0 0 0 6px #fdf8f2, 0 8px 18px rgba(245, 166, 35, 0.4);
+  z-index: 3;
+}
+
+/* ---------- Body ---------- */
+.dvm-body {
+  padding: 8px 24px 18px;
+  text-align: center;
+}
+
+/* feature row */
+.dvm-features {
+  display: flex;
+  align-items: center;
+  background: #fff6e9;
+  border: 1px solid #f4e0bd;
+  border-radius: 16px;
+  padding: 10px 10px;
+  margin-bottom: 14px;
+}
+.dvm-feature {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 0 8px;
+}
+.dvm-feature-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7B1F3A 0%, #5e1730 100%);
+  color: var(--pb-gold, #f5a623);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.dvm-feature-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dvm-feature-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #7B1F3A;
+  line-height: 1.3;
+}
+.dvm-feature-sub {
+  font-size: 11px;
+  color: #9a8f88;
+  font-weight: 600;
+}
+.dvm-feature-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #ecdcc0;
+  margin: 0 2px;
+}
+
+/* section label */
+.dvm-section-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #6b5e58;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.dvm-section-label strong {
+  color: #7B1F3A;
+}
+.dvm-section-label i {
+  color: var(--pb-gold, #f5a623);
+  font-size: 11px;
+}
+.dvm-line {
+  width: 30px;
+  height: 1px;
+  background: #e4cda0;
+}
+
+/* store buttons */
+.dvm-store-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.dvm-store-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.dvm-store-btn:hover {
+  transform: translateY(-1px);
+}
+.dvm-store-btn i:first-child {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.dvm-store-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.dvm-store-text small {
+  font-size: 9.5px;
+  letter-spacing: 0.4px;
+  opacity: 0.75;
+}
+.dvm-store-text strong {
+  font-size: 14.5px;
+  font-weight: 800;
+}
+.dvm-store-arrow {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.dvm-store-btn-google {
+  background: linear-gradient(135deg, #7B1F3A 0%, #4a0f1e 100%);
+  border: none;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(94, 23, 48, 0.3);
+}
+.dvm-store-btn-google i:first-child {
+  background: linear-gradient(135deg, #00d2ff 0%, #00b347 50%, #ffcd00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dvm-store-btn-google .dvm-store-arrow {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.dvm-store-btn-apple {
+  background: #fff;
+  border: 1.5px solid #ecdcc0;
+  color: #1f1320;
+}
+.dvm-store-btn-apple i:first-child {
+  color: #111;
+}
+.dvm-store-btn-apple strong {
+  color: #7B1F3A;
+}
+.dvm-store-btn-apple .dvm-store-arrow {
+  background: #fdf1e3;
+  color: #7B1F3A;
+}
+
+/* maybe later */
+.dvm-maybe-later {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: #9a8f88;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.dvm-maybe-later i {
+  color: var(--pb-gold, #f5a623);
+  font-size: 10px;
+}
+.dvm-maybe-later:hover {
+  color: #7B1F3A;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .dvm-header {
+    padding: 36px 24px 60px;
+  }
+  .dvm-title {
+    font-size: 24px;
+  }
+  .dvm-title span {
+    font-size: 28px;
+  }
+  .dvm-body {
+    padding: 14px 18px 24px;
+  }
+}

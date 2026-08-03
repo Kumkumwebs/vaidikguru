@@ -1,0 +1,1000 @@
+/* ═══════════════════════════════════════════════════
+   ChatConsultation.css — DiviniQ Live Chat Page
+   Full viewport — NO page scroll (desktop/tablet)
+   Full-screen chat with its own scroll (mobile ≤900px)
+   ═══════════════════════════════════════════════════ */
+
+   .cc-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f9f0f3 0%, #fdf5ee 50%, #f9ede0 100%);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  /* Header removed — page renders without site header/footer */
+  
+  /* ═══ MAIN ═══ */
+  .cc-main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+    padding: 8px 12px;
+    gap: 10px;
+    overflow: hidden;
+  }
+  
+  /* ═══ LEFT SIDEBAR ═══ */
+  .cc-left {
+    width: 255px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .cc-left::-webkit-scrollbar { width: 3px; }
+  .cc-left::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+  
+  .cc-back { display: inline-flex; align-items: center; gap: 5px; color: #555; font-size: 12.5px; cursor: pointer; text-decoration: none; font-weight: 500; margin-bottom: 10px; align-self: flex-start; }
+  .cc-back:hover { color: #7b1a3a; }
+  .cc-back i { font-size: 11px; }
+  
+  /* Sidebar back link — a bit more presence than a bare text link */
+  .cc-left .cc-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7b1a3a;
+    padding: 6px 10px;
+    border-radius: 20px;
+    transition: background 0.15s ease;
+  }
+  .cc-left .cc-back:hover {
+    background: #fdeef2;
+  }
+  
+  /* Profile Card */
+  .cc-profile-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 14px 12px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .cc-avatar-wrap { position: relative; display: inline-block; margin-bottom: 8px; }
+  .cc-avatar {
+    width: 88px; height: 88px; border-radius: 50%;
+    border: 3px solid #f3e8de; display: flex; align-items: center;
+    justify-content: center; overflow: hidden;
+    background: linear-gradient(135deg,#d4a574,#b8764e);
+  }
+  .cc-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .cc-avatar-init { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: rgba(255,255,255,0.7); }
+  .cc-online-dot { width: 14px; height: 14px; background: #4caf50; border-radius: 50%; border: 3px solid #fff; position: absolute; bottom: 3px; right: 3px; }
+  
+  .cc-profile-name { font-size: 14.5px; font-weight: 700; color: #333; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .cc-verified-check { color: #1e88e5; font-size: 14px; }
+  
+  .cc-verified-label { display: inline-flex; align-items: center; gap: 4px; color: #e87a2e; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+  .cc-verified-label i { font-size: 10px; color: #4caf50; }
+  
+  .cc-rating { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 8px; }
+  .cc-rating-star { color: #f5a623; font-size: 12px; }
+  .cc-rating-score { font-weight: 700; font-size: 12.5px; color: #333; }
+  .cc-rating-count { font-size: 11px; color: #888; }
+  
+  /* Tags Slider */
+  .cc-tags-slider {
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: 10px;
+    mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+  }
+  .cc-tags-track {
+    display: flex;
+    gap: 6px;
+    animation: ccTagScroll 12s linear infinite;
+    width: max-content;
+  }
+  .cc-tags-track:hover { animation-play-state: paused; }
+  @keyframes ccTagScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .cc-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 14px; font-size: 10.5px; font-weight: 500;
+    border: 1px solid #f3e0d0; background: #fef8f3; color: #b85c2a;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .cc-tag i { font-size: 7px; opacity: 0.5; }
+  
+  /* Stats */
+  .cc-stats { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; padding: 0 2px; width: 100%; }
+  .cc-stat-row { display: flex; justify-content: space-between; align-items: center; }
+  .cc-stat-label { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #777; }
+  .cc-stat-label i { font-size: 11px; color: #aaa; width: 14px; text-align: center; }
+  .cc-stat-value { font-size: 11.5px; font-weight: 600; color: #333; }
+  
+  .cc-view-profile-btn { width: 100%; padding: 9px; background: #7b1a3a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+  .cc-view-profile-btn:hover { background: #6a1533; }
+  
+  /* Safety Card */
+  .cc-safety-card { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); flex-shrink: 0; }
+  .cc-safety-title { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: #333; margin-bottom: 8px; }
+  .cc-safety-title i { color: #e87a2e; font-size: 14px; }
+  .cc-safety-item { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; font-size: 11.5px; color: #555; }
+  .cc-safety-check { color: #4caf50; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .cc-safety-warning { background: #fef8f3; border: 1px solid #f3e0d0; border-radius: 7px; padding: 8px 10px; font-size: 10.5px; color: #888; margin-top: 8px; line-height: 1.5; }
+  
+  /* ═══ CHAT CENTER ═══ */
+  .cc-chat-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    overflow: hidden;
+  }
+  
+  /* Chat Header */
+  .cc-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid #f0e8e0;
+    flex-shrink: 0;
+    min-height: 58px;
+  }
+  .cc-chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  /* Chat header right cluster (info button + end chat) */
+  .cc-chat-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  /* Online dot + "Online" label — left column */
+  .cc-chat-online-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+  .cc-chat-online-dot {
+    width: 11px; height: 11px; background: #4caf50;
+    border-radius: 50%; flex-shrink: 0;
+  }
+  .cc-chat-online-text {
+    font-size: 11px; font-weight: 600; color: #4caf50; white-space: nowrap;
+  }
+  /* Name + reply time — right column */
+  .cc-chat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cc-chat-name { font-size: 16px; font-weight: 700; color: #333; line-height: 1.2; }
+  .cc-chat-reply-time { font-size: 11.5px; color: #999; }
+  
+  /* Header minimize button — dedicated class, no longer shares/overrides
+     the sidebar's .cc-back styling with an inline style hack. */
+  .cc-minimize-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: #f3f4f6;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-right: 8px;
+    font-size: 14px;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .cc-minimize-btn:hover {
+    background: #e5e7eb;
+  }
+  .cc-minimize-btn:active {
+    transform: scale(0.94);
+  }
+  
+  /* Info button — hidden on desktop (sidebars already show this info),
+     shown only on mobile where the sidebars are hidden. */
+  .cc-info-btn {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 20px;
+    border: none;
+    background: #fdeef2;
+    color: #7b1a3a;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .cc-info-btn i {
+    font-size: 14px;
+  }
+  .cc-info-btn:hover {
+    background: #f9dbe4;
+  }
+  
+  .cc-end-chat-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 16px; border: 1.5px solid #d32f2f; color: #d32f2f;
+    background: #fff; border-radius: 20px; font-size: 12px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+    white-space: nowrap; transition: background 0.2s;
+  }
+  .cc-end-chat-btn:hover { background: #fef0f0; }
+  .cc-end-chat-btn i { font-size: 11px; }
+  
+  /* Chat Body — ONLY scrollable area */
+  .cc-chat-body {
+    flex: 1;
+    min-height: 0;
+    padding: 0 16px 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .cc-chat-body::-webkit-scrollbar { width: 4px; }
+  .cc-chat-body::-webkit-scrollbar-track { background: transparent; }
+  .cc-chat-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+  
+  /* Encryption Notice — compact centered pill instead of a wide block that
+     wraps awkwardly with the lock icon stranded off to one side. */
+  .cc-encrypt-notice {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+    background: #fef8f3;
+    border: 1px solid #f3e0d0;
+    border-radius: 14px;
+    padding: 8px 14px;
+    margin: 10px auto;
+    font-size: 10.5px;
+    line-height: 1.45;
+    color: #9a8a7e;
+    width: fit-content;
+    max-width: 240px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .cc-encrypt-notice i {
+    font-size: 10px;
+    color: #cbb198;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  
+  /* Date Divider */
+  .cc-date-divider { display: flex; align-items: center; justify-content: center; margin: 8px 0; flex-shrink: 0; }
+  .cc-date-divider span { background: #f0ebe5; color: #888; font-size: 10.5px; font-weight: 500; padding: 3px 14px; border-radius: 10px; }
+  
+  /* Messages */
+  .cc-message { display: flex; margin-bottom: 10px; gap: 7px; max-width: 74%; }
+  .cc-message.incoming { align-self: flex-start; }
+  .cc-message.outgoing { align-self: flex-end; flex-direction: row-reverse; }
+  
+  .cc-msg-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg,#d4a574,#b8764e); margin-top: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .cc-msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  
+  .cc-msg-content { display: flex; flex-direction: column; }
+  .cc-msg-bubble { padding: 9px 13px; border-radius: 13px; font-size: 13px; line-height: 1.48; color: #333; }
+  .cc-message.incoming .cc-msg-bubble { background: #f5f0ea; border-top-left-radius: 4px; }
+  .cc-message.outgoing .cc-msg-bubble { background: #fdf0e0; border-top-right-radius: 4px; }
+  
+  /* Let the audio card size itself instead of stretching to whatever width
+     .cc-msg-bubble normally allows for text bubbles. */
+  .cc-message .cc-msg-bubble:has(.cc-audio-player) {
+    padding: 6px;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  
+  .cc-msg-time { font-size: 10px; color: #aaa; margin-top: 3px; display: flex; align-items: center; gap: 3px; }
+  .cc-message.outgoing .cc-msg-time { justify-content: flex-end; }
+  .cc-msg-ticks { color: #4fc3f7; font-size: 11px; letter-spacing: -3px; font-weight: 700; }
+  
+  /* Typing */
+  .cc-typing { display: flex; align-items: center; gap: 7px; align-self: flex-start; margin-bottom: 4px; }
+  .cc-typing-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#d4a574,#b8764e); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .cc-typing-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .cc-typing-bubble { background: #f5f0ea; border-radius: 13px; border-top-left-radius: 4px; padding: 9px 14px; display: flex; align-items: center; gap: 3px; }
+  .cc-typing-text { font-size: 12px; color: #888; margin-right: 5px; }
+  .cc-typing-dot { width: 6px; height: 6px; background: #ccc; border-radius: 50%; animation: ccBounce 1.4s infinite ease-in-out; }
+  .cc-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .cc-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes ccBounce { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-4px);opacity:1} }
+  
+  /* Typing indicator dots used inline in the message list */
+  .cc-typing-dots span {
+    display: inline-block;
+    font-size: 22px;
+    line-height: 1;
+    animation: ccTypingBounce 1.2s infinite;
+    animation-delay: calc(var(--i, 0) * 0.15s);
+  }
+  .cc-typing-dots span:nth-child(1) { --i: 0; }
+  .cc-typing-dots span:nth-child(2) { --i: 1; }
+  .cc-typing-dots span:nth-child(3) { --i: 2; }
+  @keyframes ccTypingBounce {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-3px); }
+  }
+  
+  /* ═══ CHAT INPUT ═══ */
+  .cc-chat-input-area {
+    position: relative; /* anchors the scroll-to-bottom arrow */
+    padding: 10px 16px 8px;
+    border-top: 1px solid #f0e8e0;
+    flex-shrink: 0;
+    background: #fff;
+  }
+  .cc-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e8e0d8;
+    border-radius: 30px;
+    padding: 5px 8px 5px 14px;
+  }
+  .cc-attach-btn { background: none; border: none; cursor: pointer; color: #aaa; font-size: 18px; display: flex; align-items: center; padding: 3px; flex-shrink: 0; }
+  .cc-attach-btn:hover { color: #888; }
+  .cc-chat-input { flex: 1; border: none; outline: none; background: transparent; font-size: 13.5px; color: #333; font-family: inherit; padding: 7px 0; }
+  .cc-chat-input::placeholder { color: #bbb; font-size: 13.5px; }
+  .cc-emoji-btn { background: none; border: none; cursor: pointer; font-size: 22px; display: flex; align-items: center; padding: 2px; flex-shrink: 0; }
+  .cc-send-btn {
+    width: 38px; height: 38px; border-radius: 50%; background: #7b1a3a;
+    border: none; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: #fff; font-size: 14px; flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .cc-send-btn:hover { background: #6a1533; }
+  .cc-secure-note { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 10.5px; color: #bbb; margin-top: 6px; }
+  .cc-secure-note i { font-size: 10px; }
+  
+  /* Emoji picker panel */
+  .cc-emoji-picker {
+    position: absolute;
+    bottom: 52px;
+    right: 90px;
+    width: 240px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+    padding: 10px;
+    z-index: 30;
+  }
+  .cc-emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+  }
+  .cc-emoji-item {
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 4px;
+    line-height: 1;
+  }
+  .cc-emoji-item:hover {
+    background: #fdeef2;
+  }
+  
+  /* Recording indicator (replaces text input while recording) */
+  .cc-recording-indicator {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #dc2626;
+    padding: 0 10px;
+  }
+  .cc-rec-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dc2626;
+    animation: ccBlink 1s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes ccBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  
+  /* Mic / stop button */
+  .cc-mic-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #16a34a;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .cc-mic-btn:hover {
+    background: #15803d;
+  }
+  .cc-mic-btn.recording {
+    background: #dc2626;
+    animation: ccPulse 1s infinite;
+  }
+  .cc-mic-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  @keyframes ccPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  
+  /* Audio message — self-contained card so it looks the same regardless of
+     what background the surrounding message bubble uses (outgoing/incoming),
+     instead of floating as a bare, edge-to-edge bar. */
+  .cc-audio-player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 220px;
+    max-width: 100%;
+    padding: 8px 10px;
+    border-radius: 16px;
+    background: #fff5f7;
+    border: 1px solid #f6dbe2;
+    box-sizing: border-box;
+  }
+  .cc-audio-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #7b1a3a;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  .cc-audio-toggle:hover {
+    background: #611a2e;
+  }
+  .cc-audio-track {
+    flex: 1;
+    min-width: 0;
+  }
+  .cc-audio-bar {
+    position: relative;
+    height: 6px;
+    background: #e9cdd5;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .cc-audio-fill {
+    height: 100%;
+    background: #7b1a3a;
+    border-radius: 10px;
+    transition: width 0.1s linear;
+  }
+  .cc-audio-time {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 600;
+    color: #a3596f;
+    margin-top: 4px;
+  }
+  .cc-audio-fallback {
+    font-size: 12px;
+    text-decoration: underline;
+    color: inherit;
+  }
+  
+  /* Personal-info warning banner (phone/email/link blocked) */
+  .cc-send-error-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    animation: ccBannerIn 0.15s ease;
+  }
+  @keyframes ccBannerIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Scroll-to-bottom arrow (WhatsApp-style) — floats just above the
+     message editor. Anchored to .cc-chat-input-area (position: relative,
+     set above) rather than the scrollable chat body, so it doesn't need
+     to know the chat body's exact pixel height — which varies with the
+     recording indicator / warning banner — to sit in the right place. */
+  .cc-scroll-down-btn {
+    position: absolute;
+    top: -52px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #7b1a3a;
+    color: #fff;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(123, 26, 58, 0.35);
+    z-index: 6;
+    animation: ccScrollBtnIn 0.15s ease;
+  }
+  .cc-scroll-down-btn:hover {
+    background: #611a2e;
+  }
+  @keyframes ccScrollBtnIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* ═══ RIGHT SIDEBAR ═══ */
+  .cc-right {
+    width: 270px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .cc-right::-webkit-scrollbar { width: 3px; }
+  .cc-right::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+  
+  /* Consultation Details */
+  .cc-consult-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); flex-shrink: 0; }
+  .cc-consult-title { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; color: #333; margin-bottom: 12px; }
+  .cc-consult-title i { font-size: 15px; color: #7b1a3a; }
+  .cc-consult-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7px; }
+  .cc-consult-label { font-size: 11px; color: #999; }
+  .cc-consult-value { font-size: 12px; font-weight: 600; color: #333; text-align: right; }
+  .cc-consult-divider { border: none; border-top: 1px solid #f0e8e0; margin: 8px 0; }
+  .cc-timer-icon { font-size: 10px; margin-right: 3px; color: #777; }
+  .cc-view-more-btn { width: 100%; padding: 8px; background: #fef8f3; color: #7b1a3a; border: 1px solid #f3e0d0; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; font-family: inherit; }
+  .cc-view-more-btn:hover { background: #fdf0e0; }
+  
+  /* Quick Actions */
+  .cc-qa-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); flex-shrink: 0; }
+  .cc-qa-title { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; color: #333; margin-bottom: 10px; }
+  .cc-qa-title i { color: #e87a2e; font-size: 15px; }
+  .cc-qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .cc-qa-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 11px 6px; background: #fef8f3; border: 1px solid #f3e0d0; border-radius: 9px; cursor: pointer; transition: background 0.2s; }
+  .cc-qa-btn:hover { background: #fdf0e0; }
+  .cc-qa-btn i { font-size: 22px; color: #7b1a3a; }
+  .cc-qa-btn.cc-qa-end i { color: #d32f2f; }
+  .cc-qa-btn span { font-size: 10.5px; font-weight: 500; color: #555; text-align: center; }
+  
+  /* Notes */
+  .cc-notes-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); flex-shrink: 0; }
+  .cc-notes-title { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px; }
+  .cc-notes-title i { font-size: 14px; color: #555; }
+  .cc-notes-empty { background: #fef8f3; border: 1px dashed #f3e0d0; border-radius: 7px; padding: 12px; text-align: center; }
+  .cc-notes-empty p { font-size: 11px; color: #999; margin: 0 0 7px; line-height: 1.5; }
+  .cc-add-note-btn { display: inline-flex; align-items: center; gap: 4px; color: #d32f2f; font-size: 11.5px; font-weight: 600; cursor: pointer; background: none; border: none; font-family: inherit; }
+  .cc-add-note-btn i { font-size: 12px; }
+  
+  .cc-notes-list { display: flex; flex-direction: column; gap: 6px; }
+  .cc-note-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    background: #fef8f3;
+    border: 1px solid #f3e0d0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11.5px;
+    color: #555;
+    line-height: 1.45;
+  }
+  .cc-note-item span { flex: 1; word-break: break-word; }
+  .cc-note-item button {
+    background: none;
+    border: none;
+    color: #bbb;
+    cursor: pointer;
+    font-size: 11px;
+    flex-shrink: 0;
+    padding: 2px;
+  }
+  .cc-note-item button:hover { color: #d32f2f; }
+  .cc-notes-list .cc-add-note-btn { margin-top: 4px; align-self: flex-start; }
+  
+  .cc-note-input-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .cc-note-input-row input {
+    flex: 1;
+    border: 1px solid #e8e0d8;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 11.5px;
+    font-family: inherit;
+    outline: none;
+    color: #333;
+  }
+  .cc-note-input-row input:focus { border-color: #d4a574; }
+  .cc-note-input-row button {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: #7b1a3a;
+    color: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .cc-note-input-row button:hover { background: #6a1533; }
+  
+  /* Trust badges card — right sidebar */
+  .cc-trust-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .cc-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .cc-trust-icon {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 50%;
+    background: #fdeef2;
+    color: #7b1a3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .cc-trust-icon i {
+    font-size: 14px;
+    line-height: 1;
+  }
+  .cc-trust-title { font-size: 12px; font-weight: 700; color: #333; line-height: 1.3; }
+  .cc-trust-sub { font-size: 10.5px; color: #999; margin-top: 2px; line-height: 1.3; }
+  
+  /* Footer removed */
+  
+  /* ═══ MOBILE INFO MODAL ═══
+     Bottom sheet combining profile card, consultation details,
+     safety & privacy, and quick actions — opened via .cc-info-btn. */
+  .cc-info-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .cc-info-modal-sheet {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85dvh;
+    background: #f9fafb;
+    border-radius: 24px 24px 0 0;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    animation: ccSheetUp 0.22s ease;
+  }
+  @keyframes ccSheetUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .cc-info-modal-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 4px;
+    background: #d1d5db;
+    margin: 0 auto 10px;
+    flex-shrink: 0;
+  }
+  .cc-info-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: #eef0f2;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .cc-info-modal-scroll {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .cc-profile-card--modal {
+    background: #fff;
+    border-radius: 18px;
+    padding: 20px 16px;
+  }
+  
+  /* ═══ RESPONSIVE — tablet (unchanged from original design) ═══
+     These stack the sidebars as horizontal-scrolling rows above/below a
+     capped-height chat. They still apply in the 768–1024px range; below
+     900px the full-screen mobile block further down takes over instead. */
+  @media (max-width: 1280px) {
+    .cc-main { padding: 6px 10px; gap: 8px; }
+    .cc-left { width: 230px; }
+    .cc-right { width: 248px; }
+    .cc-nav { gap: 20px; }
+    .cc-nav a { font-size: 13px; }
+    .cc-footer { gap: 28px; }
+  }
+  
+  @media (max-width: 1024px) {
+    .cc-page { height: auto; min-height: 100vh; overflow: auto; }
+    .cc-main { flex-direction: column; padding: 8px; gap: 8px; overflow: visible; }
+    .cc-left { width: 100%; overflow: visible; flex-direction: row; gap: 8px; overflow-x: auto; }
+    .cc-back { display: none; }
+    .cc-profile-card { min-width: 240px; flex-shrink: 0; }
+    .cc-safety-card { min-width: 220px; flex-shrink: 0; }
+    .cc-chat-center { order: -1; width: 100%; min-height: 400px; max-height: 500px; }
+    .cc-right { width: 100%; overflow: visible; flex-direction: row; gap: 8px; overflow-x: auto; }
+    .cc-consult-card,.cc-qa-card,.cc-notes-card,.cc-trust-card { min-width: 250px; flex-shrink: 0; }
+  }
+  
+  @media (max-width: 768px) {
+    .cc-main { flex-direction: column; }
+    .cc-left { flex-direction: column; width: 100%; overflow-x: visible; }
+    .cc-profile-card,.cc-safety-card { min-width: auto; }
+    .cc-chat-center { min-height: 340px; max-height: 440px; border-radius: 10px; }
+    .cc-chat-header { padding: 7px 12px; }
+    .cc-chat-name { font-size: 14px; }
+    .cc-end-chat-btn { padding: 6px 12px; font-size: 11.5px; }
+    .cc-chat-body { padding: 0 10px 8px; }
+    .cc-message { max-width: 88%; }
+    .cc-right { flex-direction: column; width: 100%; overflow-x: visible; }
+    .cc-consult-card,.cc-qa-card,.cc-notes-card,.cc-trust-card { min-width: auto; }
+  }
+  
+  @media (max-width: 480px) {
+    .cc-main { padding: 6px; }
+    .cc-avatar { width: 72px; height: 72px; }
+    .cc-msg-avatar,.cc-typing-avatar { width: 28px; height: 28px; }
+    .cc-msg-bubble { padding: 7px 11px; font-size: 12.5px; }
+    .cc-send-btn { width: 32px; height: 32px; font-size: 13px; }
+    .cc-qa-btn { padding: 9px 4px; }
+    .cc-qa-btn i { font-size: 20px; }
+  }
+  
+  /* ═══ RESPONSIVE — phone: full-screen chat ═══
+     At ≤900px this wins over the tablet rules above (later in source +
+     !important on the layout-critical properties): sidebars hidden
+     entirely, chat takes the full viewport, input bar pinned to the
+     bottom with safe-area padding, info button visible in the header. */
+  @media (max-width: 900px) {
+    /* Defensive: make sure the height chain has something solid to anchor
+       to. If html/body/#root don't have an explicit height, a 100dvh
+       value further down the tree can still end up not filling the real
+       viewport in some browsers/embeds, leaving background visible below
+       the chat card instead of the card stretching all the way down. */
+    html, body, #root {
+      height: 100%;
+      margin: 0;
+    }
+  
+    .cc-page {
+      height: 100dvh !important;
+      overflow: hidden !important;
+    }
+    .cc-main {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 100dvh !important;
+      width: 100% !important;
+      padding: 0 !important;
+      gap: 0 !important;
+      margin: 0 !important;
+    }
+    .cc-left,
+    .cc-right {
+      display: none !important;
+    }
+    .cc-chat-center {
+      display: flex !important;
+      flex-direction: column !important;
+      flex: 1 1 auto !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+    }
+    .cc-chat-body {
+      flex: 1 !important;
+      min-height: 0 !important;
+    }
+    .cc-chat-input-area {
+      position: sticky !important;
+      bottom: 0 !important;
+      z-index: 5 !important;
+      background: #fff !important;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    }
+    .cc-info-btn {
+      display: flex !important;
+    }
+  }
+  
+  /* Toast notifications — top-right, confirm image/audio sends */
+  .cc-toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: min(320px, calc(100vw - 32px));
+  }
+  .cc-toast {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+    animation: ccToastIn 0.18s ease;
+  }
+  .cc-toast--success {
+    background: #16a34a;
+    color: #fff;
+  }
+  .cc-toast--error {
+    background: #dc2626;
+    color: #fff;
+  }
+  .cc-toast i:first-child {
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .cc-toast span {
+    flex: 1;
+    line-height: 1.35;
+  }
+  .cc-toast-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    font-size: 11px;
+    flex-shrink: 0;
+    padding: 2px;
+  }
+  .cc-toast-close:hover {
+    color: #fff;
+  }
+  @keyframes ccToastIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (max-width: 900px) {
+    .cc-toast-container {
+      top: calc(10px + env(safe-area-inset-top));
+      right: 10px;
+      left: 10px;
+      max-width: none;
+    }
+  }
+  /* Extra-narrow phones (≤400px): trim the header so the Info pill and
+     End Chat button both fit without wrapping or crowding each other. */
+  @media (max-width: 400px) {
+    .cc-chat-header {
+      padding: 8px 10px !important;
+    }
+    .cc-chat-header-left {
+      gap: 6px !important;
+    }
+    .cc-chat-online-text {
+      display: none !important;
+    }
+    .cc-chat-name {
+      font-size: 14px !important;
+    }
+    .cc-chat-reply-time {
+      font-size: 10.5px !important;
+    }
+    .cc-end-chat-btn span,
+    .cc-end-chat-btn {
+      padding: 0 10px !important;
+      height: 34px !important;
+    }
+    .cc-end-chat-btn {
+      font-size: 0 !important; /* hide "End Chat" text, keep icon only */
+    }
+    .cc-end-chat-btn i {
+      font-size: 15px !important;
+    }
+  }

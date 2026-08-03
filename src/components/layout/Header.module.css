@@ -1,0 +1,413 @@
+/* Container */
+.userMenu {
+    position: relative;
+    display: inline-block;
+}
+.goog-te-banner-frame.skiptranslate { display: none !important; }
+body { top: 0px !important; }
+#google_translate_element { display: none !important; }
+.goog-te-banner-frame.skiptranslate,
+iframe.skiptranslate,
+iframe[id^="goog-te-banner-frame"] {
+	display: none !important;
+	visibility: hidden !important;
+	height: 0 !important;
+}
+body { top: 0px !important; }
+#google_translate_element { display: none !important; }
+
+/* Profile Trigger Button */
+.userBtn {
+    background: #ffffff;
+    border: 1.5px solid #e0e0e0;
+    padding: 3px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.userBtn:hover {
+    border-color: #f37335; /* DivinIQ Primary Orange */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(243, 115, 53, 0.15);
+}
+
+.userBtn img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.userInitial {
+    background: linear-gradient(135deg, #f37335 0%, #fdc830 100%);
+    color: white;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 50%;
+}
+
+/* Dropdown Card */
+.dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 300px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    animation: fadeInScale 0.25s ease-out;
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* User Profile Header */
+.userInfo {
+    padding: 20px;
+    background: linear-gradient(to bottom, #fffaf8, #ffffff);
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.userName {
+    margin: 0;
+    font-weight: 700;
+    font-size: 17px;
+    color: #1a1a1a;
+    letter-spacing: -0.3px;
+}
+
+.userPhone {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #777;
+    font-weight: 400;
+}
+
+/* Menu Navigation */
+.menuList {
+    padding: 8px;
+}
+
+.menuItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    color: #444;
+    text-decoration: none !important;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    margin-bottom: 2px;
+}
+
+.menuItem:hover {
+    background: #fff5f0;
+    color: #f37335;
+}
+
+.menuItemLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.menuIcon {
+    width: 20px;
+    color: #f37335; /* Orange accents for icons */
+    opacity: 0.8;
+}
+
+.chevron {
+    font-size: 10px;
+    color: #bbb;
+}
+
+.badgeNew {
+    background: #f37335;
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-right: 8px;
+    text-transform: uppercase;
+}
+
+/* Help & Support Section */
+.helpSection {
+    padding: 16px;
+    background: #fafafa;
+    border-top: 1px solid #f0f0f0;
+}
+
+.helpTitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.supportBox {
+    background: #ffffff;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.supportRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+}
+
+.supportTime {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+}
+
+.contactBtns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.contactBtn {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    padding: 7px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.contactBtn:hover {
+    border-color: #f37335;
+    color: #f37335;
+}
+
+/* Logout Section */
+.logoutSection {
+    padding: 12px 16px 16px;
+}
+
+.logoutBtn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: #fff1f0;
+    border-radius: 10px;
+    color: #e53935;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.logoutBtn:hover {
+    background: #ffe5e3;
+}
+
+/* Confirmation Modal */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modalContent {
+    background: white;
+    padding: 32px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 340px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.modalTitle {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.modalText {
+    color: #666;
+    font-size: 15px;
+    margin-bottom: 24px;
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+}
+
+.btnCancel, .btnConfirm {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.btnCancel { background: #f5f5f5; color: #666; }
+.btnConfirm { background: #f37335; color: white; }
+/* --- Improved User Info Section --- */
+.userInfo {
+    padding: 24px 20px;
+    background: linear-gradient(135deg, #fffcfb 0%, #ffffff 100%);
+    text-align: center;
+    border-bottom: 1px solid #f3f3f3;
+}
+
+.userName {
+    margin: 0;
+    font-weight: 700;
+    font-size: 18px;
+    color: #1a1a1a;
+    letter-spacing: -0.2px;
+    line-height: 1.2;
+}
+
+.userPhone {
+    margin: 6px auto 0;
+    font-size: 13px;
+    color: #f37335; /* Using brand color for the contact detail */
+    font-weight: 500;
+    background: #fff5f0;
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 20px;
+    border: 1px solid #ffe8db;
+}
+
+/* --- Improved Help & Support Section --- */
+.helpSection {
+    padding: 20px;
+    background: #fcfcfc;
+    border-top: 1px solid #eee;
+}
+
+.helpTitle {
+    font-size: 11px;
+    font-weight: 800;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.supportBox {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #eaeaea;
+    padding: 12px 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    transition: border-color 0.3s;
+}
+
+.supportBox:hover {
+    border-color: #f37335;
+}
+
+.supportRow {
+    display: flex;
+    flex-direction: column; /* Stack phone and time */
+    gap: 2px;
+}
+
+.supportRow span {
+    font-weight: 700;
+    font-size: 15px;
+    color: #333;
+}
+
+.supportTime {
+    font-size: 11px;
+    color: #888;
+    margin: 0;
+}
+
+/* Elegant Contact Buttons */
+.contactBtns {
+    display: flex;
+    gap: 10px;
+}
+
+.contactBtn {
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.contactBtn i {
+    font-size: 14px;
+}
+
+/* Specific colors for branding */
+.contactBtn:hover {
+    border-color: #f37335;
+    color: #f37335;
+    background: #fffafa;
+}
+
+.contactBtn:last-child:hover {
+    border-color: #25d366; /* WhatsApp Green on hover */
+    color: #25d366;
+    background: #f7fffb;
+}

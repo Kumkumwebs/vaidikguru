@@ -1,0 +1,518 @@
+/* ============================================
+   Puja Booking List Page — Theme Styles
+   Palette: Maroon #7B1F3A · Gold #f5a623 · Cream #fdf8f2
+   ============================================ */
+
+:root {
+  --pb-maroon: #7B1F3A;
+  --pb-maroon-dark: #5e1730;
+  --pb-gold: #f5a623;
+  --pb-gold-dark: #d6890f;
+  --pb-cream: #fdf8f2;
+  --pb-ink: #1f1320;
+  --pb-muted: #9a8f88;
+  --pb-success: #0b845c;
+}
+
+.bg-light {
+  background: #faf6f0 !important;
+}
+
+/* ---------- Hero Banner ---------- */
+.puja-hero {
+  position: relative;
+  margin: 28px auto 0;
+  max-width: 1320px;
+  padding: 0 20px;
+}
+
+.puja-hero-inner {
+  position: relative;
+  border-radius: 26px;
+  overflow: hidden;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  padding: 46px 60px;
+  background:
+    linear-gradient(100deg, rgba(15, 6, 10, 0.55) 0%, rgba(94, 23, 48, 0.35) 45%, rgba(94, 23, 48, 0.1) 100%),
+    url('/assets/img/pooja/banner_book_details.png')
+      center/cover no-repeat;
+  box-shadow: 0 20px 50px rgba(94, 23, 48, 0.28);
+}
+
+.puja-hero-border {
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(245, 166, 35, 0.4);
+  border-radius: 19px;
+  pointer-events: none;
+}
+
+.puja-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--pb-gold);
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 1;
+}
+.puja-hero-eyebrow::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: var(--pb-gold);
+  opacity: 0.8;
+}
+
+.puja-hero-title {
+  font-size: 40px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 6px;
+  line-height: 1.15;
+  position: relative;
+  z-index: 1;
+}
+.puja-hero-title span {
+  color: var(--pb-gold);
+}
+
+.puja-hero-sub {
+  font-size: 14.5px;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 12px 0 0;
+  line-height: 1.6;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+}
+
+.puja-hero-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  position: relative;
+  z-index: 1;
+}
+.puja-hero-divider .line {
+  width: 50px;
+  height: 1px;
+  background: var(--pb-gold);
+  opacity: 0.55;
+}
+.puja-hero-divider .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pb-gold);
+}
+
+.puja-hero-badge {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--pb-cream);
+  border: 2px solid var(--pb-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pb-maroon);
+  font-size: 18px;
+  box-shadow: 0 6px 16px rgba(245, 166, 35, 0.35);
+  z-index: 3;
+}
+
+/* ---------- Section wrapper ---------- */
+.puja-list-section {
+  padding: 50px 0 64px;
+}
+
+/* ---------- Section header + filter bar ---------- */
+.puja-section-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.puja-section-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--pb-maroon);
+  margin: 0 0 6px;
+}
+
+.puja-section-underline {
+  width: 64px;
+  height: 3px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--pb-maroon) 0%, var(--pb-gold) 100%);
+}
+
+.puja-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.puja-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  background: var(--pb-maroon);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.puja-filter-pill.outline {
+  background: #fff;
+  color: var(--pb-ink);
+  border-color: #e9ddc9;
+}
+.puja-filter-pill .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pb-muted);
+}
+.puja-filter-pill.success .dot { background: var(--pb-success); }
+.puja-filter-pill.pending .dot { background: var(--pb-gold); }
+.puja-filter-pill .count {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--pb-muted);
+  margin-left: 2px;
+}
+.puja-filter-pill.outline.active.success {
+  border-color: var(--pb-success);
+  color: var(--pb-success);
+  background: rgba(11, 132, 92, 0.08);
+}
+.puja-filter-pill.outline.active.pending {
+  border-color: var(--pb-gold-dark);
+  color: var(--pb-gold-dark);
+  background: rgba(245, 166, 35, 0.1);
+}
+.puja-filter-pill:not(.outline):hover,
+.puja-filter-pill.outline:hover {
+  transform: translateY(-1px);
+}
+
+.puja-time-select {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 130px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1.5px solid #e9ddc9;
+  background: #fff;
+  color: var(--pb-ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  appearance: auto;
+}
+.puja-time-select:focus {
+  outline: none;
+  border-color: var(--pb-gold);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+}
+
+/* ---------- Booking Card ---------- */
+.puja-card {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid #f0e6d8;
+  box-shadow: 0 3px 14px rgba(94, 23, 48, 0.06);
+  overflow: hidden;
+  height: 100%;
+  position: relative;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.puja-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 36px rgba(94, 23, 48, 0.16);
+  border-color: rgba(245, 166, 35, 0.4);
+}
+
+/* subtle decorative watermark blob, bottom-right corner */
+.puja-card-watermark {
+  position: absolute;
+  right: -30px;
+  bottom: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 166, 35, 0.1) 0%, rgba(123, 31, 58, 0.05) 60%, transparent 75%);
+  pointer-events: none;
+}
+
+.puja-card-body {
+  padding: 20px 20px 22px;
+  position: relative;
+}
+
+/* header row */
+.puja-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin-bottom: 16px;
+}
+.puja-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(94, 23, 48, 0.2);
+}
+.puja-card-icon.success {
+  background: linear-gradient(135deg, var(--pb-maroon) 0%, var(--pb-maroon-dark) 100%);
+}
+.puja-card-icon.pending {
+  background: linear-gradient(135deg, var(--pb-gold) 0%, var(--pb-gold-dark) 100%);
+}
+.puja-card-icon.failed {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+}
+.puja-card-icon.default {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+}
+
+.puja-card-header-text {
+  flex: 1;
+  min-width: 0;
+}
+.puja-card-id {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--pb-gold-dark);
+  display: block;
+  margin-bottom: 3px;
+}
+.puja-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--pb-maroon);
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* status badge — top right of card */
+.puja-status {
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
+  flex-shrink: 0;
+  white-space: nowrap;
+  height: fit-content;
+}
+.puja-status.success {
+  background: rgba(11, 132, 92, 0.12);
+  color: var(--pb-success);
+  border: 1px solid rgba(11, 132, 92, 0.25);
+}
+.puja-status.pending {
+  background: rgba(245, 166, 35, 0.14);
+  color: var(--pb-gold-dark);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+}
+.puja-status.failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.puja-status.default {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+}
+
+/* details list */
+.puja-card-details {
+  background: var(--pb-cream);
+  border: 1px solid #f4e8d4;
+  border-radius: 13px;
+  padding: 13px 15px;
+  margin-bottom: 17px;
+  position: relative;
+  z-index: 1;
+}
+.puja-card-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  padding: 5px 0;
+}
+.puja-card-detail-row + .puja-card-detail-row {
+  border-top: 1px dashed #e9dcc3;
+}
+.puja-card-detail-label {
+  color: var(--pb-muted);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.puja-card-detail-label i {
+  color: var(--pb-gold);
+  font-size: 11px;
+  width: 14px;
+}
+.puja-card-detail-value {
+  color: var(--pb-ink);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+/* footer row */
+.puja-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid #f3ece1;
+  position: relative;
+  z-index: 1;
+}
+.puja-card-amount-label {
+  font-size: 10px;
+  color: var(--pb-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: block;
+  margin-bottom: 2px;
+}
+.puja-card-amount-value {
+  font-size: 21px;
+  font-weight: 900;
+  color: var(--pb-gold-dark);
+  margin: 0;
+}
+
+.puja-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 19px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, var(--pb-maroon) 0%, var(--pb-maroon-dark) 100%);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(94, 23, 48, 0.3);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.puja-view-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* ---------- Empty state ---------- */
+.puja-empty {
+  text-align: center;
+  padding: 64px 24px 72px;
+  background: #fff;
+  border-radius: 20px;
+  border: 1.5px dashed #e8d8b8;
+}
+.puja-empty-icon {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--pb-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  color: var(--pb-gold);
+  border: 3px solid #f4e8d4;
+}
+.puja-empty-title {
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: var(--pb-maroon);
+}
+.puja-empty-text {
+  color: var(--pb-muted);
+  margin-bottom: 26px;
+}
+.puja-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 30px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, var(--pb-maroon) 0%, var(--pb-maroon-dark) 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(94, 23, 48, 0.28);
+}
+.puja-empty-filtered {
+  margin-top: 4px;
+}
+
+/* ---------- Loading state ---------- */
+.puja-loading {
+  text-align: center;
+  padding: 110px 0;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .puja-hero-inner {
+    padding: 34px 24px;
+    min-height: auto;
+  }
+  .puja-hero-title {
+    font-size: 28px;
+  }
+  .puja-hero-sub {
+    font-size: 13px;
+  }
+  .puja-section-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .puja-filter-bar {
+    width: 100%;
+  }
+}

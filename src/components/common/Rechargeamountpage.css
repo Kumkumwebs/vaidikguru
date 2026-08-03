@@ -1,0 +1,226 @@
+/* ─────────────────────────────────────
+   RechargeAmountPage.css
+   Styles for the DivinIQ recharge amount-selection page
+───────────────────────────────────── */
+
+.recharge-amount-page {
+  min-height: 100vh;
+  background-color: #fdf3e7;
+  position: relative;
+  overflow: hidden;
+}
+
+.recharge-amount-page__content {
+  position: relative;
+  z-index: 10;
+  padding: 40px 0 64px;
+}
+
+/* Decorative hanging diyas, top-right */
+.recharge-amount-diya-decor {
+  position: absolute;
+  top: 0;
+  right: 40px;
+  width: 200px;
+  opacity: 0.9;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+@media (min-width: 768px) {
+  .recharge-amount-diya-decor {
+    width: 280px;
+    right: 80px;
+  }
+}
+
+.recharge-amount-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Breadcrumb + title */
+.recharge-amount-breadcrumb {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recharge-amount-breadcrumb span:first-child {
+  cursor: pointer;
+}
+
+.recharge-amount-breadcrumb span:first-child:hover {
+  text-decoration: underline;
+}
+
+.recharge-amount-breadcrumb__sep {
+  color: #c7bdb0;
+}
+
+.recharge-amount-breadcrumb__current {
+  color: #7a1f3d;
+  font-weight: 600;
+}
+
+.recharge-amount-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #7a1f3d;
+}
+
+@media (min-width: 768px) {
+  .recharge-amount-title {
+    font-size: 40px;
+  }
+}
+
+.recharge-amount-title__accent {
+  color: #e9a93b;
+}
+
+.recharge-amount-subtitle {
+  font-size: 15px;
+  color: #4b4b4b;
+  margin: 0 0 32px;
+}
+
+/* Card */
+.recharge-amount-card {
+  background: #fffdf9;
+  border: 1px solid #f0e2cf;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.recharge-amount-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 16px;
+}
+
+/* Enter amount input */
+.recharge-amount-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid #e6d9c6;
+  border-radius: 10px;
+  padding: 0 16px;
+  background: #ffffff;
+}
+
+.recharge-amount-input-wrap:focus-within {
+  border-color: #e9a93b;
+}
+
+.recharge-amount-input-icon {
+  color: #9ca3af;
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.recharge-amount-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 14px 0;
+  font-size: 16px;
+  background: transparent;
+}
+
+.recharge-amount-input::placeholder {
+  color: #b0aaa2;
+}
+
+/* Quick recharge grid */
+.recharge-amount-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .recharge-amount-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.recharge-amount-tile {
+  position: relative;
+  border: 1px solid #e6d9c6;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 24px 12px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.recharge-amount-tile:hover {
+  border-color: #e9a93b;
+  transform: translateY(-1px);
+}
+
+.recharge-amount-tile--selected {
+  border-color: #7a1f3d;
+  box-shadow: 0 0 0 2px rgba(122, 31, 61, 0.15);
+}
+
+.recharge-amount-tile__badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a9d4c;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.recharge-amount-tile__value {
+  display: block;
+  font-size: 19px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* Proceed button */
+.recharge-amount-proceed-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(90deg, #e9711c, #f4a13c);
+  box-shadow: 0 8px 20px rgba(233, 113, 28, 0.3);
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.recharge-amount-proceed-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.recharge-amount-proceed-btn:not(:disabled):hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
