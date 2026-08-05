@@ -51,7 +51,7 @@ export default function WalletPage() {
 
             // NOTE: adjust the method/signature below to match your actual
             // apiService wrapper (e.g. apiService.get(url) vs apiService.get(url, config))
-           const res = await apiService.getBearer("https://admin.diviniq.in/user_api/get_profile");
+           const res = await apiService.getBearer("https://admin.vaidikguru.com/user_api/get_profile");
 
             if (res.status) {
                 const data = res.results_web || res.results;
@@ -117,7 +117,7 @@ export default function WalletPage() {
                             <span className="wallet-breadcrumb__current">Wallet</span>
                         </p>
                         <h1 className="wallet-title">
-                            Divin<span className="wallet-title__accent">IQ</span> Wallet
+                            Vaidik<span className="wallet-title__accent">Guru</span> Wallet
                         </h1>
                         <p className="wallet-subtitle">
                             Manage your wallet balance and transactions.

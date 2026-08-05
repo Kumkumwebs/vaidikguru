@@ -385,7 +385,7 @@ const ChadhavaDetails = () => {
     let isMounted = true;
     const fetchCart = async () => {
       try {
-        const res = await apiService.postBearer('https://admin.diviniq.in/puja/getChadhavaCart', {});
+        const res = await apiService.postBearer('https://admin.vaidikguru.com/puja/getChadhavaCart', {});
         if (!isMounted) return;
         if (res?.status && Array.isArray(res.data) && res.data.length > 0) {
           const rawData = res.data[0];
@@ -473,7 +473,7 @@ const ChadhavaDetails = () => {
           .filter(([, qty]) => qty > 0)
           .map(([prasad_id, qty]) => ({ prasad_id, qty })),
       };
-      await apiService.postBearer('https://admin.diviniq.in/puja/ChadhavaaddToCart', payload);
+      await apiService.postBearer('https://admin.vaidikguru.com/puja/ChadhavaaddToCart', payload);
     } catch (err) {
       console.error('Add to cart error:', err);
     } finally {

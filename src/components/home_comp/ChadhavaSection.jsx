@@ -45,37 +45,37 @@ const ChadhavaSection = ({ chadhava }) => {
 	// group, most recently added Chadhava comes first.
 	const sortedItems = rawItems
 		? [...rawItems].sort((a, b) => {
-				const aHasImg = hasRealImage(a);
-				const bHasImg = hasRealImage(b);
-				if (aHasImg !== bHasImg) return aHasImg ? -1 : 1;
+			const aHasImg = hasRealImage(a);
+			const bHasImg = hasRealImage(b);
+			if (aHasImg !== bHasImg) return aHasImg ? -1 : 1;
 
-				const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
-				const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
-				if (dateB !== dateA) return dateB - dateA;
-				return (b._id || '').localeCompare(a._id || '');
-		  })
+			const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
+			const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
+			if (dateB !== dateA) return dateB - dateA;
+			return (b._id || '').localeCompare(a._id || '');
+		})
 		: null;
 
 	const items = sortedItems
 		? sortedItems.map((c) => ({
-				id: c._id,
-				name: c.title,
-				temple: c.templeName,
-				// Same fallback chain as the Chadhava detail page: some
-				// records only have chadhavaImage populated, others only
-				// have bannerImages (or galleryImages/gallery/images).
-				// Check every possible field before falling back to the
-				// placeholder, so the listing image matches what the
-				// detail page shows for the same record.
-				image:
-					c.chadhavaImage ||
-					c.bannerImages?.[0] ||
-					c.galleryImages?.[0] ||
-					c.gallery?.[0] ||
-					c.images?.[0] ||
-					PLACEHOLDER,
-				price: c.price,
-		  }))
+			id: c._id,
+			name: c.title,
+			temple: c.templeName,
+			// Same fallback chain as the Chadhava detail page: some
+			// records only have chadhavaImage populated, others only
+			// have bannerImages (or galleryImages/gallery/images).
+			// Check every possible field before falling back to the
+			// placeholder, so the listing image matches what the
+			// detail page shows for the same record.
+			image:
+				c.chadhavaImage ||
+				c.bannerImages?.[0] ||
+				c.galleryImages?.[0] ||
+				c.gallery?.[0] ||
+				c.images?.[0] ||
+				PLACEHOLDER,
+			price: c.price,
+		}))
 		: FALLBACK_ITEMS.map((c) => ({ ...c, image: c.image || PLACEHOLDER }));
 
 	return (
@@ -86,63 +86,66 @@ const ChadhavaSection = ({ chadhava }) => {
 					<a href="/chadhava">Explore Chadhava</a>
 				</div>
 
-				<div className="dq-chadhava-grid">
+				{/* <div className="dq-chadhava-grid row g-3"> */}
+				<div className="row g-md-5 g-3">
 					{items.map((item) => (
-						<a
-							href={`/chadhava/${item.id}`}
-							className="dq-chadhava-item"
-							key={item.id || item.name}
-						>
-							<div className="dq-chadhava-img-wrap" style={{ position: "relative" }}>
-								<img
-									src={item.image}
-									alt={item.name}
-									loading="lazy"
-									onError={handleImgError}
-									style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", objectPosition: "center", display: "block" }}
-								/>
-								{/* Title overlaid on the banner's blank space (right side of
+						<div key={item.id} className="col-12 col-md-6 col-lg-4 overflow-hidden">
+							<a
+								href={`/chadhava/${item.id}`}
+								className="dq-chadhava-item"
+								key={item.id || item.name}
+							>
+								<div className="dq-chadhava-img-wrap" style={{ position: "relative" }}>
+									<img
+										src={item.image}
+										alt={item.name}
+										loading="lazy"
+										onError={handleImgError}
+										style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", objectPosition: "center", display: "block" }}
+									/>
+									{/* Title overlaid on the banner's blank space (right side of
 								    the artwork) — mirrors the empty area every banner image
 								    already leaves for this. */}
-								<div
-									style={{
-										position: "absolute",
-										inset: 0,
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "flex-end",
-										padding: "10px 14px",
-										pointerEvents: "none",
-									}}
-								>
-									<span
+									<div
 										style={{
-											maxWidth: "58%",
-											textAlign: "right",
-											fontSize: 13.5,
-											fontWeight: 700,
-											lineHeight: 1.3,
-											color: "#5e1730",
-											textShadow: "0 1px 3px rgba(255,255,255,0.55)",
+											position: "absolute",
+											inset: 0,
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "flex-end",
+											padding: "10px 14px",
+											pointerEvents: "none",
 										}}
 									>
-										{item.name}
+										<span
+											style={{
+												maxWidth: "58%",
+												textAlign: "right",
+												fontSize: 13.5,
+												fontWeight: 700,
+												lineHeight: 1.3,
+												color: "#5e1730",
+												textShadow: "0 1px 3px rgba(255,255,255,0.55)",
+											}}
+										>
+											{item.name}
+										</span>
+									</div>
+									<span className="dq-chadhava-price">
+										{item.price > 0 ? `₹${item.price}` : 'Free Seva'}
 									</span>
 								</div>
-								<span className="dq-chadhava-price">
-									{item.price > 0 ? `₹${item.price}` : 'Free Seva'}
-								</span>
-							</div>
-							<div className="dq-chadhava-info">
-								<span className="dq-chadhava-name" title={item.name}>{item.name}</span>
-								{item.temple && (
-									<small className="dq-chadhava-temple">{item.temple}</small>
-								)}
-								<div className="dq-chadhava-footer">
-									<a href={`/chadhava/${item.id}`} className="dq-btn dq-btn-sm">Book Now</a>
+								<div className="dq-chadhava-info">
+									<span className="dq-chadhava-name" title={item.name}>{item.name}</span>
+									{item.temple && (
+										<small className="dq-chadhava-temple">{item.temple}</small>
+									)}
+									<div className="dq-chadhava-footer">
+										<span className="dq-btn dq-btn-sm">Book Now</span>
+									</div>
 								</div>
-							</div>
-						</a>
+							</a>
+						</div>
 					))}
 				</div>
 			</div>

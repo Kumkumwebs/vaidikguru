@@ -9,6 +9,7 @@ import WhyTrustSection from '../components/home_comp/WhyTrustSection';
 import PujaListSection from '../components/home_comp/PujaListSection';
 import ChadhavaSection from '../components/home_comp/ChadhavaSection';
 import TeamSection from '../components/home_comp/TeamSection';
+import LiveAstrologerSection from '../components/home_comp/LiveAstrologerSection';
 import BlogSection from '../components/home_comp/BlogSection';
 import FAQSection from '../components/home_comp/FAQSection';
 import QuickLinksSection from '../components/home_comp/QuickLinksSection';
@@ -89,6 +90,10 @@ const Home = () => {
 
 			{/* Top Astrologers */}
 			<TeamSection astrologer={homeData?.astrologer} />
+
+			{/* From Our Blog + stats panel */}
+{/* Live Astrologers — only renders if someone is currently live */}
+			<LiveAstrologerSection />
 
 			{/* From Our Blog + stats panel */}
 			<BlogSection blog={homeData?.blog} />

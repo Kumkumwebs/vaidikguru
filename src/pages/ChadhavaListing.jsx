@@ -15,9 +15,9 @@ import MobileBottomNav from '../components/layout/MobileNavbar';
 // NOTE: verify this exact path against your backend router mount point —
 // the handler is `router.post("/new_consultation_add", ...)`, normally
 // mounted under a prefix. Follows the same pattern as other endpoints in
-// this codebase (https://admin.diviniq.in/user_api/..., /puja/..., etc).
+// this codebase (https://admin.vaidikguru.com/user_api/..., /puja/..., etc).
 // Adjust the prefix below if your backend mounts it differently.
-const CONSULTATION_API = "https://admin.diviniq.in/user_api/new_consultation_add";
+const CONSULTATION_API = "https://admin.vaidikguru.com/user_api/new_consultation_add";
 
 /* ── helpers ── */
 const BADGE_MAP = [

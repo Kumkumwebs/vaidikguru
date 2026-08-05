@@ -17,7 +17,7 @@ const PujaBookingListPage = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await apiService.postBearer('https://admin.diviniq.in/puja/mypujabookings', {});
+        const res = await apiService.postBearer('https://admin.vaidikguru.com/puja/mypujabookings', {});
         if (res && res.status) {
           const list = Array.isArray(res.bookPooja) ? res.bookPooja : [];
           const sorted = [...list].sort(

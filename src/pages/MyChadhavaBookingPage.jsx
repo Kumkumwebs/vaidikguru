@@ -26,7 +26,7 @@ const ChadhavaBookingListPage = () => {
   useEffect(() => {
     const fetchChadhava = async () => {
       try {
-        const res = await apiService.postBearer('https://admin.diviniq.in/puja/mychdhavabookings', {});
+        const res = await apiService.postBearer('https://admin.vaidikguru.com/puja/mychdhavabookings', {});
         if (res && res.status) {
           const list = Array.isArray(res.bookPooja) ? res.bookPooja : [];
           // API does not guarantee ordering — sort newest first so today's

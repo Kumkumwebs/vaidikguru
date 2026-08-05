@@ -21,7 +21,7 @@ const MobileMenu = ({ isOpen, onClose }) => {
 				</button>
 				<div className="mobile-logo">
 					<Link to="/" onClick={onClose}>
-						<img src="/assets/img/logo123.svg" alt="DivinIQ" />
+						<img src="/assets/img/logo123.svg" alt="VaidikGuru" />
 					</Link>
 				</div>
 				<div className="th-mobile-menu">
@@ -69,6 +69,15 @@ const MobileMenu = ({ isOpen, onClose }) => {
 								onClick={onClose}
 							>
 								Consult With Astrologer
+							</Link>
+						</li>
+						<li>
+							<Link
+								className={isActive('/live-astrologer') ? 'active' : ''}
+								to="/live-astrologer"
+								onClick={onClose}
+							>
+							Live Astrologers
 							</Link>
 						</li>
 						<li>

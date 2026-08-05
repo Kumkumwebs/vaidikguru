@@ -8,7 +8,7 @@ import ScrollTop from "../components/common/ScrollTop";
 import { motion } from "framer-motion";
 import axios from "axios";
 
-const API_BASE_URL = "https://admin.diviniq.in";
+const API_BASE_URL = "https://admin.vaidikguru.com";
 
 // ── Static fallback content (mirrors the content used in the v2 page) ──
 const STATIC_SECTIONS = [
@@ -599,8 +599,8 @@ const PrivacyPolicy = () => {
           font-size: 16px;
           margin: 14px 0 8px;
         }
-        .pp-section-card__body p  { margin: 0 0 14px; }
-        .pp-section-card__body p:last-child { margin-bottom: 0; }
+        .pp-section-card__body p  { margin: 0 0 14px;  color: #3d343b; }
+        .pp-section-card__body p:last-child { margin-bottom: 0;  color: #3d343b; }
         .pp-section-card__body ul, .pp-section-card__body ol { padding-left: 20px; margin: 0 0 14px; }
         .pp-section-card__body li { margin-bottom: 6px; }
         .pp-section-card__body a  {

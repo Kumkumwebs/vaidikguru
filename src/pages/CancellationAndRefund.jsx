@@ -50,8 +50,11 @@ const CancellationAndRefund = () => {
     useEffect(() => {
         const fetchPolicy = async () => {
             try {
-                const res = await axios.get('https://admin.diviniq.in/links/cancleandrefund');
-                const html = res.data.content || res.data.data || res.data;
+                const res = await axios.get('https://admin.vaidikguru.com/links/cancleandrefund');
+                let html = res.data.content || res.data.data || res.data;
+                // Backend content still references the old brand name — swap
+                // it for display only (case-insensitive, keeps punctuation/spacing intact).
+                html = html.replace(/Astrogurujii/gi, "VaidikGuru");
                 setContent(html);
                 setSections(parseSectionsFromHtml(html));
             } catch (error) {
@@ -286,7 +289,7 @@ const CancellationAndRefund = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="cr-content-grid">
+                                <div className="cr-content-grid d-block">
                                     {sections.map((section, i) => (
                                         <motion.div
                                             key={i}
@@ -483,8 +486,8 @@ const CancellationAndRefund = () => {
         .cr-section-card__body h3,.cr-section-card__body h4 {
           color:var(--cr-maroon); font-weight:700; font-size:16px; margin:13px 0 8px;
         }
-        .cr-section-card__body p { margin:0 0 13px; }
-        .cr-section-card__body p:last-child { margin-bottom:0; }
+        .cr-section-card__body p { margin:0 0 13px; color:var(--cr-ink); }
+        .cr-section-card__body p:last-child { margin-bottom:0; color:var(--cr-muted); font-size:13.5px; }
         .cr-section-card__body ul,.cr-section-card__body ol { padding-left:20px; margin:0 0 13px; }
         .cr-section-card__body li { margin-bottom:6px; }
         .cr-section-card__body a {

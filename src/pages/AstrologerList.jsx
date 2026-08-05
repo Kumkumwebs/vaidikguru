@@ -15,9 +15,9 @@ import MobileBottomNav from '../components/layout/MobileNavbar';
 // NOTE: verify this exact path against your backend router mount point —
 // the handler is `router.post("/new_consultation_add", ...)`, normally
 // mounted under a prefix. Follows the same pattern as other endpoints in
-// this codebase (https://admin.diviniq.in/user_api/..., /puja/..., etc).
+// this codebase (https://admin.vaidikguru.com/user_api/..., /puja/..., etc).
 // Adjust the prefix below if your backend mounts it differently.
-const CONSULTATION_API = "https://admin.diviniq.in/user_api/new_consultation_add";
+const CONSULTATION_API = "https://admin.vaidikguru.com/user_api/new_consultation_add";
 
 /* helpers */
 const COLORS = ['#7c3aed','#059669','#dc2626','#d97706','#2563eb','#db2777'];
@@ -368,7 +368,7 @@ const AstrologerList = () => {
   const fetchAstrologers = useCallback(async (p=1) => {
     setLoading(true); setError(false);
     try {
-      const res = await apiService.postBearer('https://admin.diviniq.in/user_api/astrologer_list',{
+      const res = await apiService.postBearer('https://admin.vaidikguru.com/user_api/astrologer_list',{
         search:'',page:String(p),is_chat:'on',followAstro:'',
         is_voice_call:'on',is_video_call:'on',cat_id:filters.specs.join(','),
         language_id:'',gender:'',sort_val:filters.sortBy,is_question:'',

@@ -14,7 +14,7 @@ import { useState, useRef, useEffect } from "react";
    ───────────────────────────────────────────────────────────────────────── */
 
 /* ── CONFIGURATION & API ─────────────────────────────────────────────── */
-const API_BASE = "https://admin.diviniq.in/user_api/user_login_new";
+const API_BASE = "https://admin.vaidikguru.com/user_api/user_login_new";
 const OTP_LEN = 4; // Single source of truth for dynamic OTP rendering
 
 // Step 1: send OTP

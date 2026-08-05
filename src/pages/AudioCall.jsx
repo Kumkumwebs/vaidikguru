@@ -146,7 +146,7 @@ const AudioCall = () => {
         if (!resumeWallet || parseFloat(resumeWallet) <= 0) {
           console.warn('[AudioCall] ctx.callInfo.wallet was empty/zero on resume — fetching real balance from get_profile');
           try {
-            const profile = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+            const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
             resumeWallet = profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? resumeWallet;
             console.log('[AudioCall] fetched wallet for resume:', resumeWallet);
           } catch (err) {
@@ -204,7 +204,7 @@ const AudioCall = () => {
           // already makes.
           let realWallet = data2.total_amount || '0';
           try {
-            const profile = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+            const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
             realWallet = profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? realWallet;
           } catch (err) {
             console.error('[AudioCall] failed to fetch real wallet balance for countdown fallback:', err);

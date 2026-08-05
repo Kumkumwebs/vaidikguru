@@ -10,7 +10,7 @@ const ChadhavaService = {
       const data = search ? { search } : {};
 
       const response = await apiService.postBearer(
-        'https://admin.diviniq.in/puja/chadhavalisting',
+        'https://admin.vaidikguru.com/puja/chadhavalisting',
         data
       );
 
@@ -29,7 +29,7 @@ const ChadhavaService = {
       const data = chadhavaId ? { chadhavaId } : {};
 
       const response = await apiService.postBearer(
-        'https://admin.diviniq.in/puja/chadhavabyid',
+        'https://admin.vaidikguru.com/puja/chadhavabyid',
         data
       );
 

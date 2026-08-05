@@ -544,7 +544,7 @@ const AppDownload = () => (
           </div>
           <div className="ab-app-stores">
             <div className="ab-store-scan">Scan to Download</div>
-            <div className="ab-store-sub">Get the DiviniQ App Now</div>
+            <div className="ab-store-sub">Get the VaidikGuru App Now</div>
             <div className="ab-store-btns">
               <a href="https://play.google.com/store" className="ab-store-btn">
                 <i className="fab fa-google-play" />

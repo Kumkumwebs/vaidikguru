@@ -893,7 +893,7 @@
 }
 
 @media (max-width: 991px) {
-  .ab-app-overlay { width: 32%; padding-right: 1%; }
+  .ab-app-overlay { width: 32%; padding-right: 1%; margin-top:10px}
   .ab-app-qr { width: 60px; height: 60px; }
   .ab-app-qr svg { width: 56px; height: 56px; }
 }
@@ -912,13 +912,13 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 10px 12px;
+    gap: 14px 16px;
   }
   .ab-app-stores { display: contents; }
   .ab-store-scan { order: 1; flex: 1 0 100%; text-align: center; }
-  .ab-store-sub { order: 2; flex: 1 0 100%; text-align: center; margin-bottom: 2px; }
-  .ab-app-qr { order: 3; }
-  .ab-store-btns { order: 4; flex-direction: row; flex-wrap: nowrap; gap: 8px; }
+  .ab-store-sub { order: 2; flex: 1 0 100%; text-align: center; margin-bottom: 6px; }
+  .ab-app-qr { order: 3; margin-right: 6px; }
+  .ab-store-btns { order: 4; flex-direction: row; flex-wrap: nowrap; gap: 12px; }
   .ab-store-btn { padding: 6px 10px; font-size: 10.5px; white-space: nowrap; }
   .ab-store-btn i { font-size: 15px; }
   .ab-store-btn small { font-size: 7px; }
@@ -1180,10 +1180,10 @@
   .ab-carousel-btn.left { left: -2px; }
   .ab-carousel-btn.right { right: -2px; }
 
-  .ab-app-qr { width: 46px; height: 46px; }
+ .ab-app-qr { width: 46px; height: 46px; margin-right: 8px; }
   .ab-app-qr img { width: 40px !important; height: 40px !important; }
-  .ab-store-btns { flex-direction: row; flex-wrap: nowrap; justify-content: center; }
-  .ab-store-btn { flex: 0 1 auto; justify-content: center; padding: 5px 8px; font-size: 9.5px; }
+  .ab-store-btns { flex-direction: row; flex-wrap: nowrap; justify-content: center; gap: 10px; }
+  .ab-store-btn { flex: 0 1 auto; justify-content: center; padding: 5px 10px; font-size: 9.5px; }
   .ab-store-btn i { font-size: 13px; }
   .ab-store-btn small { font-size: 6.5px; }
 

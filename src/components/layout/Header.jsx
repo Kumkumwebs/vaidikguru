@@ -159,7 +159,7 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 				.dqh-nav-col .main-menu ul {
 					display: flex;
 					align-items: center;
-					gap: 2px;
+					gap: 0px;
 					margin: 0;
 					padding: 0;
 					list-style: none;
@@ -180,19 +180,26 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 					display: flex;
 					align-items: center;
 					gap: 6px;
-					background: transparent;
-					border: 1px solid rgba(0,0,0,0.12);
+					background: #fff;
+					border: 1.5px solid rgba(123,28,56,0.25);
 					border-radius: 50px;
 					padding: 8px 12px;
 					font-size: 13px;
 					font-weight: 600;
 					cursor: pointer;
-					color: inherit;
-					transition: border-color .2s ease, background .2s ease;
+					color: #7B1C38;
+					transition: border-color .2s ease, background .2s ease, color .2s ease;
+				}
+				.dqh-lang-btn i.fa-globe {
+					color: #7B1C38;
 				}
 				.dqh-lang-btn:hover {
-					border-color: rgba(0,0,0,0.25);
-					background: rgba(0,0,0,0.03);
+					border-color: #7B1C38;
+					background: #7B1C38;
+					color: #fff;
+				}
+				.dqh-lang-btn:hover i.fa-globe {
+					color: #fff;
 				}
 				.dqh-lang-dropdown {
 					position: absolute;
@@ -368,6 +375,14 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 											</li>
 											<li>
 												<Link
+													className={location.pathname.startsWith('/live-astrologer') || location.pathname.startsWith('/live/') ? 'dqh-active' : ''}
+													to="/live-astrologer"
+												>
+													Live Astrologers
+												</Link>
+											</li>
+											<li>
+												<Link
 													className={location.pathname.startsWith('/panchang') ? 'dqh-active' : ''}
 													to="/panchang"
 												>
@@ -384,14 +399,14 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 												</Link>
 											</li>
 
-											<li>
+											{/* <li>
 												<Link
 													className={location.pathname.startsWith('/horoscope') ? 'dqh-active' : ''}
 													to="/horoscope"
 												>
 													Horoscope
 												</Link>
-											</li>
+											</li> */}
 										</ul>
 									</nav>
 									<button

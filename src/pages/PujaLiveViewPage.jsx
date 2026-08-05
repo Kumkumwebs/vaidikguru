@@ -77,7 +77,7 @@ const PujaLiveViewPage = () => {
     const fetchBooking = async () => {
       try {
         const res = await apiService.postBearer(
-          "https://admin.diviniq.in/puja/mypujabookings",
+          "https://admin.vaidikguru.com/puja/mypujabookings",
           {}
         );
         if (res && res.status) {

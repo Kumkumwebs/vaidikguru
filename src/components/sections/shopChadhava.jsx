@@ -13,7 +13,7 @@ const ShopChadhava = ({ chadhava }) => {
 
 	const fetchCart = async () => {
 		try {
-			const res = await apiService.postBearer('https://admin.diviniq.in/puja/getChadhavaCart', {});
+			const res = await apiService.postBearer('https://admin.vaidikguru.com/puja/getChadhavaCart', {});
 			if (res && res.status && res.data.length > 0) {
 				const serverCart = res.data[0];
 				// Get ID from the populated object or string
@@ -57,7 +57,7 @@ const ShopChadhava = ({ chadhava }) => {
 			};
 
 			const res = await apiService.postBearer(
-				'https://admin.diviniq.in/puja/ChadhavaaddToCart',
+				'https://admin.vaidikguru.com/puja/ChadhavaaddToCart',
 				payload
 			);
 			if (res && res.status) {

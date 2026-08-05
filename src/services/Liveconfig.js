@@ -18,7 +18,7 @@
  * │                      Firebase console → Project settings → Web app, or   │
  * │                      from google-services.json of the astrologer app.    │
  * │                                                                          │
- * │  3. Confirm admin.diviniq.in exposes the /user_api/* endpoints listed    │
+ * │  3. Confirm admin.vaidikguru.com exposes the /user_api/* endpoints listed    │
  * │      under ENDPOINTS (call_initiate, agora_token, etc.). They almost     │
  * │      certainly do — your existing endpoints already match astroguruji.   │
  * └────────────────────────────────────────────────────────────────────────┘
@@ -26,7 +26,7 @@
 
 // ── Backend ───────────────────────────────────────────────────────────────────
 // DivinIq's API host (same host your existing apiService already hits).
-export const API_BASE = 'https://admin.diviniq.in';
+export const API_BASE = 'https://admin.vaidikguru.com';
 
 // ── Agora (audio call) ────────────────────────────────────────────────────────
 // TODO(diviniq): replace with DivinIq's real Agora App ID.
@@ -89,8 +89,8 @@ export const getUserName = () => {
 // These mirror the Flutter/astroguruji backend contract. If DivinIq named any
 // of them differently, change the string here — nothing else needs to move.
 export const ENDPOINTS = {
-  call_initiate: 'https://admin.diviniq.in/user_api/call_initiate',
-  call_initiate_status: 'https://admin.diviniq.in/user_api/call_initiate_status',
+  call_initiate: 'https://admin.vaidikguru.com/user_api/call_initiate',
+  call_initiate_status: 'https://admin.vaidikguru.com/user_api/call_initiate_status',
   call_status_update: '/user_api/call_status_update',
   add_rating: '/user_api/add_rating',
   geocode: '/user_api/geocode',

@@ -404,7 +404,7 @@ const ChatConsultation = () => {
         if (!w || w <= 0) {
           console.warn('[ChatConsultation] chatCtx.chatInfo.wallet was empty/zero on resume — fetching real balance');
           try {
-            const profile = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+            const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
             w = parseFloat(profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? 0);
           } catch (err) {
             console.error('[ChatConsultation] failed to fetch wallet on resume:', err);
@@ -474,7 +474,7 @@ const ChatConsultation = () => {
           // the user's real balance. Fetch that separately.
           let realWallet = data2.total_amount || '0';
           try {
-            const profile = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+            const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
             realWallet = profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? realWallet;
           } catch (err) {
             console.error('[ChatConsultation] failed to fetch real wallet balance:', err);
@@ -632,7 +632,7 @@ const ChatConsultation = () => {
     let cancelled = false;
     (async () => {
       try {
-        const resp = await apiService.getBearer('https://admin.diviniq.in/user_api/get_gifts');
+        const resp = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts');
         console.log('[get_gifts] raw response:', resp); // ← check this in devtools
         const arr = resp?.data ?? resp?.results ?? (Array.isArray(resp) ? resp : []);
         if (!cancelled && Array.isArray(arr) && arr.length > 0) {
@@ -671,7 +671,7 @@ const ChatConsultation = () => {
       if (!realWallet || realWallet <= 0) {
         console.warn('[ChatConsultation] resolved wallet was empty/zero — fetching real balance from get_profile');
         try {
-          const profile = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+          const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
           realWallet = parseFloat(profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? 0);
           console.log('[ChatConsultation] fetched wallet:', realWallet);
         } catch (err) {
@@ -1093,7 +1093,7 @@ const saveNoteToFirebase = useCallback(async (text) => {
       return;
     }
     try {
-      await apiService.postBearer('https://admin.diviniq.in/user_api/gift_transaction', {
+      await apiService.postBearer('https://admin.vaidikguru.com/user_api/gift_transaction', {
         to: String(astrologer_id),
         giftId: String(gift._id),
         amount: Number(gift.price),

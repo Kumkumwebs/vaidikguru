@@ -35,13 +35,13 @@ const PujaListSection = ({ puja }) => {
 
 	const items = rawItems
 		? rawItems.map((p) => ({
-				id: p._id,
-				name: p.title,
-				image: p.pujaImage || PLACEHOLDER,
-				mandir: p.mandirName,
-				purpose: p.purposeOfPooja,
-				date: formatDate(p.pujaDatetime),
-		  }))
+			id: p._id,
+			name: p.title,
+			image: p.pujaImage || PLACEHOLDER,
+			mandir: p.mandirName,
+			purpose: p.purposeOfPooja,
+			date: formatDate(p.pujaDatetime),
+		}))
 		: FALLBACK_PUJAS.map((p) => ({ ...p, image: p.image || PLACEHOLDER }));
 
 	return (
@@ -52,31 +52,37 @@ const PujaListSection = ({ puja }) => {
 					<a href="/puja">View All Pujas</a>
 				</div>
 
-				<div className="dq-cards-row dq-cards-scroll">
+				{/* <div className="dq-cards-row dq-cards-scroll"> */}
+				<div className="row">
 					{items.map((item) => (
-						<a 			href={`/puja/${item.name}/${item.id}`}
- className="dq-puja-card" key={item.id || item.name}>
-							<img
-								src={item.image}
-								alt={item.name}
-								loading="lazy"
-								onError={handleImgError}
-								style={{ width: "100%", height: 130, minHeight: 130, maxHeight: 130, objectFit: "cover", objectPosition: "center", display: "block" }}
-							/>
-							<div className="dq-puja-body">
-								<h4>{item.name}</h4>
-								{item.date && <div className="dq-puja-meta">📅 {item.date}</div>}
-								<div className="dq-puja-sub">{item.mandir}</div>
-								{/* {item.purpose && <p className="dq-puja-purpose">{item.purpose}</p>} */}
-								<div className="dq-puja-footer">
-									<a href={`/puja/${item.name}/${item.id}`} className="dq-btn dq-btn-sm">Book Now</a>
+						<div key={item.id} className="col-lg-4 col-md-6 col-12">
+							<div className="dq-puja-link overflow-hidden border rounded shadow-sm mb-4">
+								<a href={`/puja/${item.name}/${item.id}`}
+								 key={item.id || item.name}>
+								<img
+									src={item.image}
+									alt={item.name}
+									loading="lazy"
+									onError={handleImgError}
+									style={{ width: "100%", }}
+									// style={{ width: "100%", minHeight: 230, maxHeight: 230, objectPosition: "center", }}
+								/>
+								<div className="dq-puja-body">
+									<h4>{item.name}</h4>
+									{item.date && <div className="dq-puja-meta">📅 {item.date}</div>}
+									<div className="dq-puja-sub">{item.mandir}</div>
+									{/* {item.purpose && <p className="dq-puja-purpose">{item.purpose}</p>} */}
+									<div className="dq-puja-footer">
+										<span className="dq-btn dq-btn-sm">Book Now</span>
+									</div>
 								</div>
+								</a>
 							</div>
-						</a>
+						</div>
 					))}
 				</div>
 
-				</div>
+			</div>
 		</section>
 	);
 };

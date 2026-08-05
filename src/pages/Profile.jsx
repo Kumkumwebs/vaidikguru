@@ -2,6 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStorage } from "../context/StorageContext";
 import apiService from "../services/apiServices";
+import Header from "../components/layout/Header";
+import Footer from "../components/layout/Footer";
+import SideMenu from "../components/layout/SideMenu";
+import MobileMenu from "../components/layout/MobileMenu";
+import PopupSearch from "../components/layout/PopupSearch";
+import ScrollTop from "../components/common/ScrollTop";
 
 // Served from the public folder — not bundled via import.
 // Actual file lives at: public/assets/img/images/profile-hero-banner.jpeg
@@ -13,8 +19,8 @@ const HERO_BANNER_IMAGE = "/assets/img/images/profile-hero-banner.jpeg";
 // The backend ONLY persists name, email, gender, dob, tob, pob, rashi.
 // There is no marital_status / profession / profile_for / country / gotra
 // on the server, so those fields were dropped from this page.
-const GET_PROFILE_URL = "https://admin.diviniq.in/user_api/get_profile";
-const UPDATE_PROFILE_URL = "https://admin.diviniq.in/user_api/profile_update";
+const GET_PROFILE_URL = "https://admin.vaidikguru.com/user_api/get_profile";
+const UPDATE_PROFILE_URL = "https://admin.vaidikguru.com/user_api/profile_update";
 
 // Read-only fields — not part of profile_update, just displayed.
 const PHONE_FIELD = { key: "number", label: "Phone Number", icon: "phone" };
@@ -184,33 +190,56 @@ export default function ProfilePage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Shared layout chrome state — same pattern as Home.jsx / BlogDetail.jsx / etc.
+  const [showSideMenu, setShowSideMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  // Maps a raw API payload (either response.results_web or the whole
+  // response, since profile_update sometimes echoes fields at the top
+  // level) into our flat `values` shape. Falls back to `prev` for any
+  // field that's missing so we never blow away good local state with
+  // undefined.
+  const mapProfilePayload = (payload, prev) => {
+    const web = payload || {};
+    // tob may arrive as 24h "HH:MM:SS" at the top level (get_profile)
+    // or inside results_web (profile_update echo) — handle both.
+    const rawTob = payload?.tob ?? web.tob ?? prev.tob ?? "";
+    return {
+      name: web.name ?? prev.name,
+      email: web.email ?? prev.email,
+      gender: web.gender ?? prev.gender,
+      dob: web.dob ?? prev.dob,
+      tob: (rawTob || "").slice(0, 5),
+      pob: web.pob ?? prev.pob,
+      rashi: web.rashi ?? prev.rashi,
+      number: web.number ?? prev.number,
+      country_code: web.country_code ?? prev.country_code,
+      referral_code: web.referral_code ?? prev.referral_code,
+    };
+  };
+
   // Fetch profile — calls GET /user_api/get_profile directly. Token comes
   // from sessionStorage via apiService.getBearer (same as the rest of the
   // project's services). Reusable so we can re-sync after every save too.
+  //
+  // IMPORTANT: we pass a cache-busting `_t` query param. apiService.getBearer
+  // forwards its second arg straight into axios `params`, and without this
+  // some browsers / intermediary proxies were serving a cached response for
+  // this exact GET URL right after a PUT, which is why edited fields looked
+  // like they "reverted" after Save.
   const loadProfile = async () => {
     setErrorMsg("");
     try {
-      const response = await apiService.getBearer(GET_PROFILE_URL);
+      const response = await apiService.getBearer(GET_PROFILE_URL, {
+        _t: Date.now(),
+      });
 
       if (response?.status) {
         const web = response.results_web || {};
-        // The route converts tob to 24h "HH:MM:SS" at the TOP level
-        // (response.tob), not inside results_web — that's the value
-        // that's actually compatible with <input type="time">.
-        const tob24 = (response.tob || "").slice(0, 5);
-
-        setValues({
-          name: web.name || "",
-          email: web.email || "",
-          gender: web.gender || "",
-          dob: web.dob || "",
-          tob: tob24,
-          pob: web.pob || "",
-          rashi: web.rashi || "",
-          number: web.number || "",
-          country_code: web.country_code || "91",
-          referral_code: web.referral_code || "",
-        });
+        setValues((prev) =>
+          mapProfilePayload({ ...web, tob: response.tob }, prev)
+        );
         return true;
       }
 
@@ -238,13 +267,20 @@ export default function ProfilePage() {
     };
   }, []);
 
-  // Shared save call — calls PUT /user_api/profile_update directly, then
-  // re-fetches the profile so the whole page reflects exactly what the
-  // server persisted (instead of relying only on the local optimistic state).
+  // Shared save call — calls PUT /user_api/profile_update directly.
   // The backend only accepts/persists: name, email, gender, dob, tob, pob, rashi.
   // tob is sent as the raw 24h "HH:MM" value from the time input — the
   // backend's convertTime12to24() passes 24h strings through unchanged
   // when there's no AM/PM modifier, so no extra conversion is needed.
+  //
+  // FIX: previously this always re-fetched via loadProfile() right after
+  // saving. If the backend's write wasn't committed yet (or the GET was
+  // cache-served), that re-fetch could return the pre-edit data and
+  // overwrite what the user just typed, making it look like the edit
+  // "didn't save". Now we apply the PUT response locally first (optimistic
+  // update using whatever the server echoes back, falling back to what we
+  // sent), and only use loadProfile() as a background re-sync — its result
+  // is merged on top rather than blindly trusted to be newer.
   const persistProfile = async (profileData) => {
     setIsSaving(true);
     setErrorMsg("");
@@ -264,13 +300,20 @@ export default function ProfilePage() {
 
       if (response?.status) {
         setSuccessMsg(response.message || "Successfully !");
+
+        // Trust what we just sent as the source of truth immediately —
+        // this is what makes the UI reflect the edit right away, even if
+        // the server doesn't echo the updated row back in its response.
+        setValues((prev) => ({ ...prev, ...body }));
+
         // Keep the StorageContext user name in sync.
         if (profileData.name && profileData.name !== user?.name) {
           setUser({ ...user, name: profileData.name });
         }
-        // Re-fetch so every field — including anything the server computes
-        // or normalizes — reflects the latest saved state, not just the
-        // one field we optimistically updated locally.
+
+        // Background re-sync with the server (cache-busted GET above).
+        // If it returns stale data for some reason, it will still contain
+        // our just-saved fields since the PUT has already been awaited.
         await loadProfile();
         return true;
       }
@@ -322,8 +365,11 @@ export default function ProfilePage() {
 
   // ── handleEditSave ────────────────────────────────────────────────
   // Single save handler for both per-field and bulk edit. Figures out
-  // which mode is active, builds the right payload, applies it locally,
-  // exits edit mode, then persists to the API.
+  // which mode is active, builds the right payload, exits edit mode,
+  // then persists to the API. NOTE: we no longer setValues(updated) here
+  // before persisting — persistProfile() now owns updating `values` once
+  // it knows what the server actually accepted, avoiding a flash of
+  // optimistic data that then gets clobbered by a stale re-fetch.
   const handleEditSave = async () => {
     let updated;
 
@@ -336,7 +382,6 @@ export default function ProfilePage() {
       setFieldDraft("");
     }
 
-    setValues(updated);
     await persistProfile(updated);
   };
 
@@ -354,6 +399,16 @@ export default function ProfilePage() {
 
   return (
     <div style={styles.page}>
+      <SideMenu isOpen={showSideMenu} onClose={() => setShowSideMenu(false)} />
+      <PopupSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
+      <MobileMenu isOpen={showMobileMenu} onClose={() => setShowMobileMenu(false)} />
+
+      <Header
+        onMenuToggle={() => setShowMobileMenu(true)}
+        onSideMenuToggle={() => setShowSideMenu(true)}
+        onSearchToggle={() => setShowSearch(true)}
+      />
+
       <style>{`
         .pp-field-card {
           transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
@@ -414,7 +469,7 @@ export default function ProfilePage() {
         <div style={styles.heroContent}>
           <div style={styles.heroEyebrow}>Welcome Back</div>
           <div style={styles.heroTitle}>
-            My <span style={{ color: colors.gold }}>Profile</span>
+            My <span style={{ color: colors.gold  }}>Profile</span>
           </div>
           <div style={styles.heroDividerWrap}>
             <span style={styles.heroDivider} />
@@ -431,248 +486,270 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <div style={styles.pageWrap}>
-        <aside style={styles.sidebar}>
-          {SIDEBAR_ITEMS.map((item, i) => (
-            <div key={item.title} style={{ ...styles.navItem, ...(i === 0 ? styles.navItemActive : {}) }}>
-              <div style={{ ...styles.navIcon, ...(i === 0 ? styles.navIconActive : {}) }}>
-                <span style={{ ...styles.iconBase, color: i === 0 ? "#c2185b" : "#8a7f86" }}>{ICONS[item.icon]}</span>
-              </div>
-              <div>
-                <div style={{ ...styles.navTitle, ...(i === 0 ? { color: "#c2185b" } : {}) }}>{item.title}</div>
-                <div style={styles.navSub}>{item.sub}</div>
-              </div>
-            </div>
-          ))}
+      <section className="container">
+        {/* <div style={styles.pageWrap}> */}
+        <div className="row">
+          <div className="col-lg-4 col-12 mb-4 mb-lg-0 order-lg-1 order-2">
+            <aside style={styles.sidebar}>
+              <div className="row">
+                {SIDEBAR_ITEMS.map((item, i) => (
 
-          <div style={styles.helpBox}>
-            <div style={styles.helpTop}>
-              <div style={styles.helpAvatar}>🙏</div>
-              <div>
-                <div style={styles.helpTitle}>Need Help?</div>
-                <div style={styles.helpSub}>We are here to assist you</div>
-              </div>
-            </div>
-            <button style={styles.btnContact} type="button">
-              Contact Support
-            </button>
-          </div>
-        </aside>
-
-        <main style={styles.profileCard}>
-          {!isBulkEditing ? (
-            <button style={styles.editPill} type="button" onClick={startBulkEdit} disabled={isLoading}>
-              <span style={styles.iconSm}>{ICONS.pencil}</span>
-              Edit Profile
-            </button>
-          ) : (
-            <div style={styles.editPillGroup}>
-              <button style={styles.cancelPill} type="button" onClick={cancelBulkEdit} disabled={isSaving}>
-                <span style={styles.iconSm}>{ICONS.x}</span>
-                Cancel
-              </button>
-              <button style={styles.savePill} type="button" onClick={handleEditSave} disabled={isSaving}>
-                <span style={styles.iconSm}>{ICONS.check}</span>
-                {isSaving ? "Saving..." : "Save All"}
-              </button>
-            </div>
-          )}
-
-          <div style={styles.profileHead}>
-            <div style={styles.avatarCircle}>{initial}</div>
-            <div style={styles.profileName}>My Profile</div>
-            <div style={styles.profileSub}>Your personal details and account information</div>
-            <div style={styles.smallDivider} />
-          </div>
-
-          {isLoading && <div style={styles.statusBanner}>Loading your profile...</div>}
-          {errorMsg && <div style={styles.errorBanner}>{errorMsg}</div>}
-          {successMsg && <div style={styles.successBanner}>{successMsg}</div>}
-
-          <div className="pp-field-grid" style={styles.fieldGrid}>
-            <div style={styles.fieldCard}>
-              <div style={styles.fieldCardTop}>
-                <div style={styles.fieldIcon}>
-                  <span style={styles.iconSmall}>{ICONS[PHONE_FIELD.icon]}</span>
-                </div>
-                <div style={styles.fieldLabel}>{PHONE_FIELD.label}</div>
-              </div>
-              <div style={styles.fieldCardBottom}>
-                <div style={{ ...styles.fieldValue, ...styles.fieldValueSet }}>
-                  +{values.country_code || "91"} {values.number || "Not available"}
-                </div>
-              </div>
-            </div>
-
-            <div style={styles.fieldCard}>
-              <div style={styles.fieldCardTop}>
-                <div style={styles.fieldIcon}>
-                  <span style={styles.iconSmall}>{ICONS[REFERRAL_FIELD.icon]}</span>
-                </div>
-                <div style={styles.fieldLabel}>{REFERRAL_FIELD.label}</div>
-              </div>
-              <div style={styles.fieldCardBottom}>
-                <div
-                  style={{
-                    ...styles.fieldValue,
-                    ...(values.referral_code ? styles.fieldValueSet : styles.fieldValueEmpty),
-                  }}
-                >
-                  {values.referral_code || "Not set"}
-                </div>
-              </div>
-            </div>
-
-            {FIELD_DEFS.map((f) => {
-              const hasValue = Boolean(values[f.key]);
-              const isThisEditing = !isBulkEditing && editingKey === f.key;
-              return (
-                <div
-                  key={f.key}
-                  className={`pp-field-card${isThisEditing || isBulkEditing ? " pp-field-card-editing" : ""}`}
-                  style={styles.fieldCard}
-                >
-                  <div style={styles.fieldCardTop}>
-                    <div className="pp-field-icon" style={styles.fieldIcon}>
-                      <span style={styles.iconSmall}>{ICONS[f.icon]}</span>
+                  <div className="col-lg-12 col-md-4 col-6 mb-lg-0 mb-3" key={item.title} style={{ ...styles.navItem, ...(i === 0 ? styles.navItemActive : {}) }}>
+                    <div style={{ ...styles.navIcon, ...(i === 0 ? styles.navIconActive : {}) }}>
+                      <span style={{ ...styles.iconBase, color: i === 0 ? "#c2185b" : "#8a7f86" }}>{ICONS[item.icon]}</span>
                     </div>
-                    <div style={styles.fieldLabel}>{f.label}</div>
+                    <div>
+                      <div style={{ ...styles.navTitle, ...(i === 0 ? { color: "#c2185b" } : {}) }}>{item.title}</div>
+                      <div style={styles.navSub}>{item.sub}</div>
+                    </div>
                   </div>
 
-                  {isBulkEditing ? (
-                    <div style={styles.fieldEditRow}>
-                      {f.prefix && <span style={styles.fieldPrefix}>{f.prefix}</span>}
-                      {f.type === "select" ? (
-                        <select
-                          className="pp-select"
-                          style={styles.input}
-                          value={bulkDraft[f.key] || ""}
-                          onChange={(e) => handleEditChange(f.key, e.target.value)}
-                        >
-                          <option value="">Select {f.label.toLowerCase()}</option>
-                          {f.options.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          className="pp-input"
-                          style={styles.input}
-                          type={f.type}
-                          placeholder={f.placeholder}
-                          value={bulkDraft[f.key] || ""}
-                          onChange={(e) => handleEditChange(f.key, e.target.value)}
-                        />
-                      )}
+                ))}
+              </div>
+              <div style={styles.helpBox}>
+                <div style={styles.helpTop}>
+                  <div style={styles.helpAvatar}>🙏</div>
+                  <div>
+                    <div style={styles.helpTitle}>Need Help?</div>
+                    <div style={styles.helpSub}>We are here to assist you</div>
+                  </div>
+                </div>
+                <button style={styles.btnContact} type="button">
+                  Contact Support
+                </button>
+              </div>
+            </aside>
+          </div>
+          <div className="col-lg-8 col-12 mb-4 mb-lg-0 order-lg-2 order-1">
+            <main style={styles.profileCard}>
+              {!isBulkEditing ? (
+                <button style={styles.editPill} type="button" onClick={startBulkEdit} disabled={isLoading}>
+                  <span style={styles.iconSm}>{ICONS.pencil}</span>
+                  Edit Profile
+                </button>
+              ) : (
+                <div style={styles.editPillGroup}>
+                  <button style={styles.cancelPill} type="button" onClick={cancelBulkEdit} disabled={isSaving}>
+                    <span style={styles.iconSm}>{ICONS.x}</span>
+                    Cancel
+                  </button>
+                  <button style={styles.savePill} type="button" onClick={handleEditSave} disabled={isSaving}>
+                    <span style={styles.iconSm}>{ICONS.check}</span>
+                    {isSaving ? "Saving..." : "Save All"}
+                  </button>
+                </div>
+              )}
+
+              <div style={styles.profileHead}>
+                <div style={styles.avatarCircle}>{initial}</div>
+                <div style={styles.profileName}>My Profile</div>
+                <div style={styles.profileSub}>Your personal details and account information</div>
+                <div style={styles.smallDivider} />
+              </div>
+
+              {isLoading && <div style={styles.statusBanner}>Loading your profile...</div>}
+              {errorMsg && <div style={styles.errorBanner}>{errorMsg}</div>}
+              {successMsg && <div style={styles.successBanner}>{successMsg}</div>}
+
+              {/* <div className="pp-field-grid" style={styles.fieldGrid}> */}
+              <div className="row g-3">
+                {/* <div style={styles.fieldCard}> */}
+                <div className="col-lg-3 col-md-3 col-6">
+                  <div className="border p-3 rounded mb-3 bg-light">
+                    <div style={styles.fieldCardTop}>
+                      <div style={styles.fieldIcon}>
+                        <span style={styles.iconSmall}>{ICONS[PHONE_FIELD.icon]}</span>
+                      </div>
+                      <div style={styles.fieldLabel}>{PHONE_FIELD.label}</div>
                     </div>
-                  ) : !isThisEditing ? (
+                    <div style={styles.fieldCardBottom}>
+                      <div style={{ ...styles.fieldValue, ...styles.fieldValueSet }}>
+                        +{values.country_code || "91"} {values.number || "Not available"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* <div style={styles.fieldCard}> */}
+                <div className="col-lg-3 col-md-3 col-6">
+                  <div className="border p-3 rounded mb-3 bg-light">
+                    <div style={styles.fieldCardTop}>
+                      <div style={styles.fieldIcon}>
+                        <span style={styles.iconSmall}>{ICONS[REFERRAL_FIELD.icon]}</span>
+                      </div>
+                      <div style={styles.fieldLabel}>{REFERRAL_FIELD.label}</div>
+                    </div>
                     <div style={styles.fieldCardBottom}>
                       <div
                         style={{
                           ...styles.fieldValue,
-                          ...(hasValue ? styles.fieldValueSet : styles.fieldValueEmpty),
+                          ...(values.referral_code ? styles.fieldValueSet : styles.fieldValueEmpty),
                         }}
                       >
-                        {displayValue(f)}
+                        {values.referral_code || "Not set"}
                       </div>
-                      <button
-                        className="pp-field-edit"
-                        style={styles.fieldEdit}
-                        type="button"
-                        onClick={() => startFieldEdit(f.key)}
-                        aria-label={`Edit ${f.label}`}
-                      >
-                        <span style={styles.iconXs}>{ICONS.pencil}</span>
-                      </button>
                     </div>
-                  ) : (
-                    <div style={styles.fieldEditRow}>
-                      {f.prefix && <span style={styles.fieldPrefix}>{f.prefix}</span>}
-                      {f.type === "select" ? (
-                        <select
-                          className="pp-select"
-                          style={styles.input}
-                          value={fieldDraft}
-                          autoFocus
-                          onChange={(e) => handleEditChange(f.key, e.target.value)}
-                        >
-                          <option value="">Select {f.label.toLowerCase()}</option>
-                          {f.options.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          className="pp-input"
-                          style={styles.input}
-                          type={f.type}
-                          placeholder={f.placeholder}
-                          value={fieldDraft}
-                          autoFocus
-                          onChange={(e) => handleEditChange(f.key, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleEditSave();
-                            if (e.key === "Escape") cancelFieldEdit();
-                          }}
-                        />
-                      )}
-                      <button
-                        style={styles.fieldSaveBtn}
-                        type="button"
-                        onClick={handleEditSave}
-                        disabled={isSaving}
-                        aria-label={`Save ${f.label}`}
-                      >
-                        <span style={styles.iconXs}>{ICONS.check}</span>
-                      </button>
-                      <button
-                        style={styles.fieldCancelBtn}
-                        type="button"
-                        onClick={cancelFieldEdit}
-                        disabled={isSaving}
-                        aria-label={`Cancel editing ${f.label}`}
-                      >
-                        <span style={styles.iconXs}>{ICONS.x}</span>
-                      </button>
-                    </div>
-                  )}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
+
+                {FIELD_DEFS.map((f) => {
+                  const hasValue = Boolean(values[f.key]);
+                  const isThisEditing = !isBulkEditing && editingKey === f.key;
+                  return (
+                    <div
+                      key={f.key}
+                      className={` col-lg-3 col-md-3 col-6 pp-field-card${isThisEditing || isBulkEditing ? " pp-field-card-editing" : ""}`}
+
+                    >
+                      <div className="border p-3 rounded mb-3 bg-light">
+                        <div style={styles.fieldCardTop}>
+                          <div className="pp-field-icon" style={styles.fieldIcon}>
+                            <span style={styles.iconSmall}>{ICONS[f.icon]}</span>
+                          </div>
+                          <div style={styles.fieldLabel}>{f.label}</div>
+                        </div>
+
+                        {isBulkEditing ? (
+                          <div style={styles.fieldEditRow}>
+                            {f.prefix && <span style={styles.fieldPrefix}>{f.prefix}</span>}
+                            {f.type === "select" ? (
+                              <select
+                                className="pp-select"
+                                style={styles.input}
+                                value={bulkDraft[f.key] || ""}
+                                onChange={(e) => handleEditChange(f.key, e.target.value)}
+                              >
+                                <option value="">Select {f.label.toLowerCase()}</option>
+                                {f.options.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                className="pp-input"
+                                style={styles.input}
+                                type={f.type}
+                                placeholder={f.placeholder}
+                                value={bulkDraft[f.key] || ""}
+                                onChange={(e) => handleEditChange(f.key, e.target.value)}
+                              />
+                            )}
+                          </div>
+                        ) : !isThisEditing ? (
+                          <div style={styles.fieldCardBottom}>
+                            <div
+                              style={{
+                                ...styles.fieldValue,
+                                ...(hasValue ? styles.fieldValueSet : styles.fieldValueEmpty),
+                              }}
+                            >
+                              {displayValue(f)}
+                            </div>
+                            <button
+                              className="pp-field-edit"
+                              style={styles.fieldEdit}
+                              type="button"
+                              onClick={() => startFieldEdit(f.key)}
+                              aria-label={`Edit ${f.label}`}
+                            >
+                              <span style={styles.iconXs}>{ICONS.pencil}</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={styles.fieldEditRow}>
+                            {f.prefix && <span style={styles.fieldPrefix}>{f.prefix}</span>}
+                            {f.type === "select" ? (
+                              <select
+                                className="pp-select"
+                                style={styles.input}
+                                value={fieldDraft}
+                                autoFocus
+                                onChange={(e) => handleEditChange(f.key, e.target.value)}
+                              >
+                                <option value="">Select {f.label.toLowerCase()}</option>
+                                {f.options.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                className="pp-input"
+                                style={styles.input}
+                                type={f.type}
+                                placeholder={f.placeholder}
+                                value={fieldDraft}
+                                autoFocus
+                                onChange={(e) => handleEditChange(f.key, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleEditSave();
+                                  if (e.key === "Escape") cancelFieldEdit();
+                                }}
+                              />
+                            )}
+                            <button
+                              style={styles.fieldSaveBtn}
+                              type="button"
+                              onClick={handleEditSave}
+                              disabled={isSaving}
+                              aria-label={`Save ${f.label}`}
+                            >
+                              <span style={styles.iconXs}>{ICONS.check}</span>
+                            </button>
+                            <button
+                              style={styles.fieldCancelBtn}
+                              type="button"
+                              onClick={cancelFieldEdit}
+                              disabled={isSaving}
+                              aria-label={`Cancel editing ${f.label}`}
+                            >
+                              <span style={styles.iconXs}>{ICONS.x}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+              </div>
 
 
-          <div style={styles.profileActions}>
-            {isBulkEditing ? (
-              <>
-                <button style={styles.btnEditMain} type="button" onClick={handleEditSave} disabled={isSaving}>
-                  <span style={styles.iconSm}>{ICONS.check}</span>
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </button>
-                <button style={styles.btnLogout} type="button" onClick={cancelBulkEdit} disabled={isSaving}>
-                  <span style={styles.iconSm}>{ICONS.x}</span>
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                <button style={styles.btnEditMain} type="button" onClick={startBulkEdit} disabled={isLoading}>
-                  <span style={styles.iconSm}>{ICONS.pencil}</span>
-                  Edit Profile
-                </button>
-                <button style={styles.btnLogout} type="button" onClick={handleLogout}>
-                  <span style={styles.iconSm}>{ICONS.logout}</span>
-                  Logout
-                </button>
-              </>
-            )}
+              <div style={styles.profileActions}>
+                {isBulkEditing ? (
+                  <>
+                    <button style={styles.btnEditMain} type="button" onClick={handleEditSave} disabled={isSaving}>
+                      <span style={styles.iconSm}>{ICONS.check}</span>
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </button>
+                    <button style={styles.btnLogout} type="button" onClick={cancelBulkEdit} disabled={isSaving}>
+                      <span style={styles.iconSm}>{ICONS.x}</span>
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button style={styles.btnEditMain} type="button" onClick={startBulkEdit} disabled={isLoading}>
+                      <span style={styles.iconSm}>{ICONS.pencil}</span>
+                      Edit Profile
+                    </button>
+                    <button style={styles.btnLogout} type="button" onClick={handleLogout}>
+                      <span style={styles.iconSm}>{ICONS.logout}</span>
+                      Logout
+                    </button>
+                  </>
+                )}
+              </div>
+            </main>
           </div>
-        </main>
-      </div>
+        </div>
+      </section>
+
+      <Footer />
+      <ScrollTop />
     </div>
   );
 }
@@ -728,7 +805,7 @@ const styles = {
     fontSize: 28,
     marginBottom: 6,
   },
-  heroTitle: { fontSize: 48, fontWeight: 700, color: "#ffffff" },
+  heroTitle: { fontSize: 24, fontWeight: 700, color: "#ffffff" },
   heroDividerWrap: {
     position: "relative",
     width: 70,

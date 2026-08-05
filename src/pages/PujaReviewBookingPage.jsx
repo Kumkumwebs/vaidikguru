@@ -90,7 +90,7 @@ const PujaReviewBookingPage = () => {
       try {
         console.log("[ReviewPage] fetching addons for puja id:", pujaId);
         const res = await apiService.postBearer(
-          "https://admin.diviniq.in/puja/pujabyinstaid",
+          "https://admin.vaidikguru.com/puja/pujabyinstaid",
           { instaId: pujaId }
         );
         console.log("[ReviewPage] pujabyinstaid response:", res);
@@ -116,7 +116,7 @@ const PujaReviewBookingPage = () => {
   /* ── Fetch cart ── */
   const fetchCartFromServer = useCallback(async () => {
     try {
-      const res = await apiService.postBearer("https://admin.diviniq.in/puja/getPujaCart", {});
+      const res = await apiService.postBearer("https://admin.vaidikguru.com/puja/getPujaCart", {});
       if (res?.status && res.data) {
         const cart = res.data;
         setCartData(cart);
@@ -146,7 +146,7 @@ const PujaReviewBookingPage = () => {
         is_home_delivery_required: Object.keys(newHomeQty).length > 0,
         userDetails: { name: devoteeDetails?.name || "" },
       };
-      const res = await apiService.postBearer("https://admin.diviniq.in/puja/pujaaddToCart", payload);
+      const res = await apiService.postBearer("https://admin.vaidikguru.com/puja/pujaaddToCart", payload);
       if (res?.status && res.data) setCartData(res.data);
       else fetchCartFromServer();
     } catch (err) {

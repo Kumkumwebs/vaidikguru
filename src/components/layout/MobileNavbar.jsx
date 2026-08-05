@@ -15,6 +15,8 @@ const IMG = {
 	chadhavaActive: '/assets/img/bottomnav/activechadhawa.png',
 	astrologerDefault: '/assets/img/bottomnav/inactiveastro.png',
 	astrologerActive: '/assets/img/bottomnav/astroactive.png',
+	liveDefault: '/assets/img/bottomnav/inactivelive.png',
+	liveActive: '/assets/img/bottomnav/liveactive.png',
 };
 
 const NAV_ITEMS = [
@@ -22,6 +24,7 @@ const NAV_ITEMS = [
 	{ label: 'Puja', path: '/puja', imgDefault: IMG.pujaDefault, imgActive: IMG.pujaActive },
 	{ label: 'Chadhava', path: '/chadhava', imgDefault: IMG.chadhavaDefault, imgActive: IMG.chadhavaActive },
 	{ label: 'Astrologer', path: '/astrologer', imgDefault: IMG.astrologerDefault, imgActive: IMG.astrologerActive },
+	{ label: 'Live', path: '/live-astrologer', imgDefault: IMG.liveDefault, imgActive: IMG.liveActive },
 ];
 
 /**

@@ -19,6 +19,7 @@ const Footer = () => {
                 { label: "Puja", url: "/puja" },
                 { label: "Chadhava", url: "/chadhava" },
                 { label: "Panchang", url: "/panchang" },
+                { label: "Horoscope", url: "/horoscope" },
                 { label: "Astrology Tools", url: "/astrology_calculator_hub" },
 
             ]
@@ -130,7 +131,7 @@ const Footer = () => {
 
                 {/* --- 3. Bottom Bar --- */}
                 <div className="mt-100 pt-40  border-white-10 d-flex flex-wrap justify-content-between align-items-center">
-                    <p className="small text-white-50 opacity-30 mb-0">© 2025 VaidikGuru. Designed for Celestial Excellence.</p>
+                    <p className="small text-white-50 opacity-30 mb-0">© 2025 VaidikGuru</p>
                     <div className="d-flex gap-4 mt-3 mt-md-0">
                         <Link to="/privacy_policy" className="small text-white-50 text-decoration-none hover-white">Privacy Policy</Link>
                         <Link to="/terms_of_use" className="small text-white-50 text-decoration-none hover-white">Terms of Service</Link>

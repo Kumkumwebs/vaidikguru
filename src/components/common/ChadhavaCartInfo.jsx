@@ -68,7 +68,7 @@ const ChadhavaCartPage = () => {
 
 	const fetchCartFromServer = useCallback(async () => {
 		try {
-			const response = await apiService.postBearer('https://admin.diviniq.in/puja/getChadhavaCart', {});
+			const response = await apiService.postBearer('https://admin.vaidikguru.com/puja/getChadhavaCart', {});
 			if (response && response.status === true && response.data.length > 0) {
 				const rawData = response.data[0];
 				setCartResponse(rawData);
@@ -109,7 +109,7 @@ const ChadhavaCartPage = () => {
 	}, []);
 	const fetchWalletBalance = useCallback(async () => {
 		try {
-			const res = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+			const res = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
 			if (res?.status && res?.results) {
 				setWalletBalance(Number(res.results.wallet || 0));
 			}
@@ -158,7 +158,7 @@ const ChadhavaCartPage = () => {
 					.map(i => ({ prasad_id: i.prasad_id, qty: i.qty })),
 			};
 			const res = await apiService.postBearer(
-				'https://admin.diviniq.in/puja/ChadhavaaddToCart',
+				'https://admin.vaidikguru.com/puja/ChadhavaaddToCart',
 				payload
 			);
 			if (res && res.status) fetchCartFromServer();
@@ -183,7 +183,7 @@ const ChadhavaCartPage = () => {
 				userDetails: { name: userDetails.name, whatsapp: userDetails.whatsapp },
 			};
 			const res = await apiService.postBearer(
-				'https://admin.diviniq.in/puja/createChadhavaBooking',
+				'https://admin.vaidikguru.com/puja/createChadhavaBooking',
 				payload
 			);
 			if (res && res.status === true) {
@@ -233,7 +233,7 @@ const ChadhavaCartPage = () => {
 	};
 	const verifyPayment = async (paymentResponse) => {
 		try {
-			const res = await fetch(`https://admin.diviniq.in/puja/chadhava_payment_status/${paymentResponse}`, {
+			const res = await fetch(`https://admin.vaidikguru.com/puja/chadhava_payment_status/${paymentResponse}`, {
 				method: 'GET',
 			});
 			const data = await res.json();
@@ -576,7 +576,7 @@ const ChadhavaCartPage = () => {
 													checked={paymentMode === "wallet"}
 													onChange={() => setPaymentMode("wallet")}
 												/>
-												DivinIQ Wallet <span className="cc-wallet-amt">₹{formatINR(walletBalance)}</span>
+												Vaidik Wallet <span className="cc-wallet-amt">₹{formatINR(walletBalance)}</span>
 											</label>
 										</div>
 

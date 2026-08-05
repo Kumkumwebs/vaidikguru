@@ -239,7 +239,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 	useEffect(() => {
 		const fetchCart = async () => {
 			try {
-				const res = await apiService.postBearer('https://admin.diviniq.in/puja/getPujaCart', {});
+				const res = await apiService.postBearer('https://admin.vaidikguru.com/puja/getPujaCart', {});
 				if (res?.status && res.data) {
 					setCart(res.data);
 				} else {
@@ -253,7 +253,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 
 		const fetchWallet = async () => {
 			try {
-				const res = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+				const res = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
 				if (res?.status && res?.results) {
 					setWalletBalance(Number(res.results.wallet || 0));
 				}
@@ -267,7 +267,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 			if (!pujaId) return;
 			try {
 				const res = await apiService.postBearer(
-					'https://admin.diviniq.in/puja/pujabyinstaid',
+					'https://admin.vaidikguru.com/puja/pujabyinstaid',
 					{ instaId: pujaId }
 				);
 				if (res?.status && res?.data) {
@@ -346,7 +346,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 					}
 					: null,
 			};
-			const res = await apiService.postBearer("https://admin.diviniq.in/puja/pujaaddToCart", payload);
+			const res = await apiService.postBearer("https://admin.vaidikguru.com/puja/pujaaddToCart", payload);
 			if (res?.status) setIsConfirmModalOpen(true);
 			else alert("Something went wrong. Please try again.");
 		} catch (error) {
@@ -361,7 +361,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 		stopPolling();
 		pollIntervalRef.current = setInterval(async () => {
 			try {
-				const res = await fetch(`https://admin.diviniq.in/puja/payment_status/${orderId}`, { method: "GET" });
+				const res = await fetch(`https://admin.vaidikguru.com/puja/payment_status/${orderId}`, { method: "GET" });
 				const data = await res.json();
 				if (data.payment_status === "Success") { stopPolling(); setBookingStatus("success"); }
 				else if (data.payment_status === "Failed") { stopPolling(); setBookingStatus("failed"); }
@@ -373,7 +373,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 		setIsConfirmModalOpen(false);
 		setBookingStatus("pending");
 		try {
-			const response = await apiService.postBearer("https://admin.diviniq.in/puja/bookpuja", { payment_mode: paymentMode });
+			const response = await apiService.postBearer("https://admin.vaidikguru.com/puja/bookpuja", { payment_mode: paymentMode });
 			if (response?.status === true) {
 				if (paymentMode === "razorpay") {
 					const razorpayLoaded = await loadRazorpay();

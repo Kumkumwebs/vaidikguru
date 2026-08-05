@@ -119,7 +119,7 @@ const OrdersPage = () => {
             setLoadError(null);
             try {
                 // Requesting /user_api/transaction via apiService automatically appends Bearer Token
-                const json = await apiService.postBearer('https://admin.diviniq.in/user_api/transaction');
+                const json = await apiService.postBearer('https://admin.vaidikguru.com/user_api/transaction');
 
                 console.log('Response:', json);
                 if (!isMounted) return;

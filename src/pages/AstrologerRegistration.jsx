@@ -137,10 +137,10 @@ const AstrologerRegistration = () => {
         const fetchMetadata = async () => {
             try {
                 const [catRes, langRes, skillRes, countryRes] = await Promise.all([
-                    apiService.post('https://admin.diviniq.in/astrologer_api/category_list', {}),
-                    apiService.post('https://admin.diviniq.in/astrologer_api/language_list', {}),
-                    apiService.post('https://admin.diviniq.in/astrologer_api/skill_list', {}),
-                    apiService.post('https://admin.diviniq.in/astrologer_api/location_list', {})
+                    apiService.post('https://admin.vaidikguru.com/astrologer_api/category_list', {}),
+                    apiService.post('https://admin.vaidikguru.com/astrologer_api/language_list', {}),
+                    apiService.post('https://admin.vaidikguru.com/astrologer_api/skill_list', {}),
+                    apiService.post('https://admin.vaidikguru.com/astrologer_api/location_list', {})
                 ]);
 
                 if (catRes.status) setCategories(catRes.results);
@@ -283,7 +283,7 @@ const AstrologerRegistration = () => {
         });
 
         try {
-            const res = await apiService.postMultipart('https://admin.diviniq.in/astrologer_api/astrologer_register', data);
+            const res = await apiService.postMultipart('https://admin.vaidikguru.com/astrologer_api/astrologer_register', data);
             if (res.status) {
                 setModal({
                     open: true,

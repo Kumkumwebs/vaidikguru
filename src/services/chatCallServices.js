@@ -1,6 +1,6 @@
 import apiService from './apiServices';
 
-const BASE = 'https://admin.diviniq.in';
+const BASE = 'https://admin.vaidikguru.com';
 
 const ChatCallService = {
   initiateChat: async ({ astrologerId, callType, intake }) => {

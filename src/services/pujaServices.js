@@ -10,7 +10,7 @@ const PujaService = {
       const data = search ? { search } : {};
 
       const response = await apiService.postBearer(
-        'https://admin.diviniq.in/puja/pujalisting',
+        'https://admin.vaidikguru.com/puja/pujalisting',
         data
       );
 
@@ -29,7 +29,7 @@ const PujaService = {
       const data = instaId ? { instaId } : {};
 
       const response = await apiService.postBearer(
-        'https://admin.diviniq.in/puja/pujabyinstaid',
+        'https://admin.vaidikguru.com/puja/pujabyinstaid',
         data
       );
 

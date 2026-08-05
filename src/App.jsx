@@ -33,6 +33,8 @@ import PanchangPage from './pages/PanchangPage';
 import Profile from './pages/Profile';
 import AstrologerList from './pages/AstrologerList';
 import AstrologerDetail from './pages/AstrologerDetail';
+import LiveAstrologersPage from './pages/Liveastrologerspage';
+import LiveWatchScreen from './pages/Livewatchscreen';
 import ChatConsultation from './pages/Chatconsultation';
 import AudioCall from './pages/AudioCall';
 import Check from './pages/check';
@@ -98,6 +100,8 @@ function NotFound() {
 				<Route path="/puja/:name/:id" element={<PujaDetails />} />
 				<Route path="/astrologer" element={<AstrologerList />} />
 				<Route path="/astrologer/:id" element={<AstrologerDetail />} />
+				<Route path="/live-astrologer" element={<LiveAstrologersPage />} />
+				<Route path="/live/:liveId" element={<LiveWatchScreen />} />
 				<Route path="/nakshatra_finder" element={<NakshatraFinder />} />
 				<Route path="/janm_rashi_finder" element={<JanmaRashiFinder />} />
 				<Route path="/panchang" element={<PanchangPage />} />

@@ -9,7 +9,7 @@ import PopupSearch from "../components/layout/PopupSearch";
 import SideMenu from "../components/layout/SideMenu";
 import ScrollTop from "../components/common/ScrollTop";
 
-const API_BASE_URL = "https://admin.diviniq.in";
+const API_BASE_URL = "https://admin.vaidikguru.com";
 
 // ── Static fallback content (mirrors the content used in the v2 page) ──
 const STATIC_SECTIONS = [

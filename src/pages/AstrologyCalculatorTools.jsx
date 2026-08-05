@@ -253,7 +253,7 @@ const AstrologyCalculatorHub = () => {
             <div className="col-12 col-md-7 text-start">
               <div className="at-cta-text text-md-center text-center">
                 Unlock the secrets of the universe<br />
-                with <u>DivinIQ</u>'s advanced tools.
+                with <u>VaidikGuru</u>'s advanced tools.
               </div>
             </div>
             <div className="col-12 col-md-4 text-md-end text-center">

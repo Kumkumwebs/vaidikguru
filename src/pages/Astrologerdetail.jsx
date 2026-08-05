@@ -142,7 +142,7 @@ const AstrologerDetail = () => {
     setLoading(true);
     try {
       const res = await apiService.postBearer(
-        'https://admin.diviniq.in/user_api/astrologer_profile',
+        'https://admin.vaidikguru.com/user_api/astrologer_profile',
         { id: id }
       );
       if (res?.results?.length) {
@@ -157,7 +157,7 @@ const AstrologerDetail = () => {
       }
       // Wallet balance comes from get_profile → results.wallet (or results_web.wallet)
       try {
-        const w = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+        const w = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
         setWalletBalance(Number(w?.results?.wallet ?? w?.results_web?.wallet ?? w?.wallet ?? 0));
       } catch (_) { setWalletBalance(0); }
     } catch (e) { console.error(e); }
@@ -171,7 +171,7 @@ const AstrologerDetail = () => {
     let cancelled = false;
     (async () => {
       try {
-        const resp = await apiService.getBearer('https://admin.diviniq.in/user_api/get_gifts');
+        const resp = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts');
         // Backend may return the list under `data`, `results`, or at the root.
         const arr = resp?.data ?? resp?.results ?? (Array.isArray(resp) ? resp : []);
         if (!cancelled && Array.isArray(arr) && arr.length > 0) {
@@ -201,7 +201,7 @@ const AstrologerDetail = () => {
     console.log('[QuickSendGift] payload:', { to: astroId, giftId: gift._id, amount: gift.price, isStaticFallbackId: typeof gift._id === 'string' && !/^[a-f0-9]{24}$/i.test(gift._id) });
     try {
       const res = await apiService.postBearer(
-        'https://admin.diviniq.in/user_api/gift_transaction',
+        'https://admin.vaidikguru.com/user_api/gift_transaction',
         { to: String(astroId), giftId: String(gift._id), amount: Number(gift.price), type: 'normal' }
       );
       if (res?.status === false) {
@@ -756,7 +756,7 @@ const AstrologerDetail = () => {
           // trusting a value that may be stale by several seconds.
           let freshWallet = walletBalance;
           try {
-            const w = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+            const w = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
             freshWallet = Number(w?.results?.wallet ?? w?.results_web?.wallet ?? w?.wallet ?? walletBalance);
           } catch (_) { /* keep last-known walletBalance */ }
         

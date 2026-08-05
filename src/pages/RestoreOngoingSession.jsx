@@ -149,7 +149,7 @@ const RestoreOngoingSession = () => {
         const rate = String(data2.call_rate || '5');
         let wallet = String(data2.total_amount || '0');
         try {
-          const profile = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+          const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
           wallet = String(profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? wallet);
         } catch (err) {
           console.error('[RestoreOngoingSession] failed to fetch real wallet balance:', err);

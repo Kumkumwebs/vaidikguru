@@ -125,7 +125,7 @@ body {
   font-family: var(--body-font);
   font-size: 16px;
   font-weight: 400;
-  color: var(--body-color);
+  color: var(#5d6363);
   line-height: 26px;
   -webkit-font-smoothing: antialiased;
 }
@@ -250,7 +250,7 @@ p:empty {
 p {
   font-family: var(--body-font);
   margin: 0 0 18px 0;
-  color: var(--body-color);
+  /* color: var(--body-color); */
   line-height: 1.75;
 }
 
@@ -7836,7 +7836,7 @@ ol.wp-block-rss {
   -webkit-align-items: center;
       -ms-flex-align: center;
           align-items: center;
-  gap: 15px;
+  gap: 1px;
 }
 
 .header-button .th-btn {

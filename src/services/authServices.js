@@ -15,7 +15,7 @@ const AuthService = {
 		};
 
 		try {
-			const response = await apiService.post('https://admin.diviniq.in/user_api/user_login_new', body);
+			const response = await apiService.post('https://admin.vaidikguru.com/user_api/user_login_new', body);
 
 			if (response?.status === true) {
 				return {
@@ -47,7 +47,7 @@ const AuthService = {
 		};
 
 		try {
-			const response = await apiService.post('https://admin.diviniq.in/user_api/user_login_new', body);
+			const response = await apiService.post('https://admin.vaidikguru.com/user_api/user_login_new', body);
 
 			if (response?.status === true && response.results) {
 				storageService.setToken(response.token);
@@ -79,7 +79,7 @@ const AuthService = {
 	},
 	getHomeData: async () => {
 		try {
-			const response = await apiService.getBearer('https://admin.diviniq.in/web/home_data');
+			const response = await apiService.getBearer('https://admin.vaidikguru.com/web/home_data');
 
 			if (response) {
 				return response; // map to model in UI if needed
@@ -93,7 +93,7 @@ const AuthService = {
 	},
 	getProfile: async () => {
 		try {
-			const response = await apiService.getBearer('https://admin.diviniq.in/user_api/get_profile');
+			const response = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
 			debugger;
 
 			if (response?.status === true) {
@@ -157,7 +157,7 @@ const AuthService = {
 
 		try {
 			const response = await apiService.putBearer(
-				'https://admin.diviniq.in/user_api/profile_update',
+				'https://admin.vaidikguru.com/user_api/profile_update',
 				body
 			);
 

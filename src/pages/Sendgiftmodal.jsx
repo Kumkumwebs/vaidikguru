@@ -3,8 +3,8 @@ import { createPortal } from "react-dom";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import apiService from '../services/apiServices';
 
-// Bound to the DivinIQ backend (reference used admin.diviniq.in)
-const API = "https://admin.diviniq.in";
+// Bound to the DivinIQ backend (reference used admin.vaidikguru.com)
+const API = "https://admin.vaidikguru.com";
 
 // Fallback list — used until get_gifts loads, or if it fails / returns empty.
 // API gifts arrive with an `image` URL; static ones use an emoji glyph.

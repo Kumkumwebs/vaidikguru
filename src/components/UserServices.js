@@ -11,7 +11,7 @@ const UserService = {
    * PujaService calls.
    */
   getProfile: async () => {
-    const res = await axios.get('https://admin.diviniq.in/user_api/get_profile');
+    const res = await axios.get('https://admin.vaidikguru.com/user_api/get_profile');
     return res.data; // expected shape: { status: true, data: { name, gender, dob, tob, birthPlace, ... } }
   },
 
@@ -21,7 +21,7 @@ const UserService = {
    * — they're saved against the account, not the browser.
    */
   updateProfile: async (details) => {
-    const res = await axios.patch('https://admin.diviniq.in/user_api/get_profile', details);
+    const res = await axios.patch('https://admin.vaidikguru.com/user_api/get_profile', details);
     return res.data; // expected shape: { status: true, data: {...} }
   },
 };
