@@ -15,7 +15,7 @@ const AuthService = {
 		};
 
 		try {
-			const response = await apiService.post('https://admin.vaidikguru.com/user_api/user_login_new', body);
+			const response = await apiService.post('/user_api/user_login_new', body);
 
 			if (response?.status === true) {
 				return {
@@ -33,7 +33,7 @@ const AuthService = {
 			console.error('checkNumber error:', error);
 			return {
 				success: false,
-				message: 'Network error',
+				message: error?.response?.data?.message || 'Network error',
 			};
 		}
 	},
@@ -47,7 +47,7 @@ const AuthService = {
 		};
 
 		try {
-			const response = await apiService.post('https://admin.vaidikguru.com/user_api/user_login_new', body);
+			const response = await apiService.post('/user_api/user_login_new', body);
 
 			if (response?.status === true && response.results) {
 				storageService.setToken(response.token);
@@ -79,7 +79,7 @@ const AuthService = {
 	},
 	getHomeData: async () => {
 		try {
-			const response = await apiService.getBearer('https://admin.vaidikguru.com/web/home_data');
+			const response = await apiService.getBearer('/web/home_data');
 
 			if (response) {
 				return response; // map to model in UI if needed

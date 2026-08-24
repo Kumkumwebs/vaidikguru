@@ -41,7 +41,7 @@ const PujaBookingDetailsPage = () => {
     const fetchBooking = async () => {
       try {
         // AFTER
-        const res = await apiService.getBearer(`https://admin.vaidikguru.com/puja/pujabookingdetails/${id}`);
+        const res = await apiService.getBearer(`/puja/pujabookingdetails/${id}`);
         if (res && res.status) {
           setBooking(res.results || res.data || res.booking || null);
         }
@@ -106,7 +106,7 @@ const PujaBookingDetailsPage = () => {
   const handleDownloadInvoice = async () => {
     try {
       const blob = await apiService.getBearerBlob(
-        `https://admin.vaidikguru.com/puja/downloadinvoice/${booking._id}`
+        `/puja/downloadinvoice/${booking._id}`
       );
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

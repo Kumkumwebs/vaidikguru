@@ -231,14 +231,16 @@
 }
 
 .wallet-balance-card__text {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .wallet-balance-label {
-  font-size: 15px;
-  font-weight: 500;
-  opacity: 0.9;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff !important;
+  opacity: 0.95;
   margin: 0;
+  letter-spacing: 0.01em;
 }
 
 .wallet-balance-amount {

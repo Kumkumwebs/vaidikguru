@@ -52,7 +52,11 @@ export const FIREBASE_CONFIG = {
 export const TOKEN_KEY = 'token';
 export const getToken = () => {
   try {
-    return sessionStorage.getItem('token') || '';
+    const localVal = localStorage.getItem('token');
+    if (localVal && localVal !== 'null' && localVal !== 'undefined') return localVal;
+    const sessionVal = sessionStorage.getItem('token');
+    if (sessionVal && sessionVal !== 'null' && sessionVal !== 'undefined') return sessionVal;
+    return '';
   } catch {
     return '';
   }

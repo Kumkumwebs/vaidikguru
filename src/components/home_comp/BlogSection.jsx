@@ -13,6 +13,25 @@ const STATS = [
 	{ icon: '/assets/img/home/gifthome.png', value: '1L+', label: 'Pujas Performed' },
 ];
 
+// API still returns some image URLs hosted on legacy domains — rewrite to the current active backend.
+const fixImgHost = (url) => {
+	if (!url || typeof url !== 'string') return '';
+	let clean = url
+		.replace('admin.astrogurujii.com', 'admin.vaidikguru.com')
+		.replace('admin.astropush.com', 'admin.vaidikguru.com');
+	if (clean.startsWith('/')) {
+		clean = `https://admin.vaidikguru.com${clean}`;
+	}
+	return clean;
+};
+
+const handleImgError = (e) => {
+	const img = e.currentTarget;
+	if (img.dataset.fallback === 'done') return;
+	img.dataset.fallback = 'done';
+	img.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&q=80';
+};
+
 const BlogSection = ({ blog }) => {
 	const items = blog && blog.length ? blog : FALLBACK_BLOGS;
 
@@ -32,8 +51,12 @@ const BlogSection = ({ blog }) => {
 								key={item.id || item._id || item.title}
 								onClick={() => (window.location.href = `/blog/${item._id || item.id}`)}
 								style={{ cursor: 'pointer' }}
-							>
-								<img src={item.img} alt={item.title} />
+							> 
+								<img
+									src={fixImgHost(item.img || item.image || item.file)}
+									alt={item.title}
+									onError={handleImgError}
+								/>
 								<div className="dq-blog-body">
 									<span className="dq-blog-tag">{item.tag}</span>
 									<h4>{item.title}</h4>

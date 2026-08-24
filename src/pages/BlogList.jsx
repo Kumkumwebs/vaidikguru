@@ -40,6 +40,18 @@ const estimateReadTime = (text) => {
   return `${Math.max(3, minutes)} min read`;
 };
 
+// Helper to fix old image domain URLs
+const fixImgHost = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  let clean = url
+    .replace('admin.astrogurujii.com', 'admin.vaidikguru.com')
+    .replace('admin.astropush.com', 'admin.vaidikguru.com');
+  if (clean.startsWith('/')) {
+    clean = `https://admin.vaidikguru.com${clean}`;
+  }
+  return clean;
+};
+
 const ITEMS_PER_PAGE = 9;
 
 const BlogList = () => {
@@ -67,8 +79,11 @@ const BlogList = () => {
       setError(false);
       try {
         const res = await AuthService.getHomeData();
-        if (res && res.blog) {
-          setBlogs(res.blog);
+        const list = res?.blog || res?.blogs || res?.data || [];
+        if (list && list.length > 0) {
+          setBlogs(list);
+        } else if (res) {
+          setBlogs(list);
         } else {
           setError(true);
         }
@@ -86,7 +101,8 @@ const BlogList = () => {
   const categoriesList = useMemo(() => {
     const uniqueCategories = new Set();
     blogs.forEach((blog) => {
-      const catName = CATEGORY_MAP[blog.category_id] || 'Astrology';
+      const catId = blog.category_id || blog.category;
+      const catName = CATEGORY_MAP[catId] || (typeof catId === 'string' && catId.length < 20 ? catId : 'Astrology');
       uniqueCategories.add(catName);
     });
     return ['All Categories', ...Array.from(uniqueCategories)];
@@ -107,25 +123,26 @@ const BlogList = () => {
     // Search filter (handles title and plain-text description)
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (blog) =>
-          blog.title.toLowerCase().includes(term) ||
-          stripHtml(blog.description).toLowerCase().includes(term)
-      );
+      result = result.filter((blog) => {
+        const title = (blog.title || blog.name || '').toLowerCase();
+        const desc = stripHtml(blog.description || blog.content || blog.details).toLowerCase();
+        return title.includes(term) || desc.includes(term);
+      });
     }
 
     // Category filter using ID map
     if (selectedCategory !== 'All Categories') {
       result = result.filter((blog) => {
-        const catName = CATEGORY_MAP[blog.category_id] || 'Astrology';
+        const catId = blog.category_id || blog.category;
+        const catName = CATEGORY_MAP[catId] || (typeof catId === 'string' && catId.length < 20 ? catId : 'Astrology');
         return catName === selectedCategory;
       });
     }
 
     // Date Sorting
     result.sort((a, b) => {
-      const dateA = new Date(a.Created_date);
-      const dateB = new Date(b.Created_date);
+      const dateA = new Date(a.Created_date || a.createdAt || a.created_at || a.date || 0);
+      const dateB = new Date(b.Created_date || b.createdAt || b.created_at || b.date || 0);
       if (sortBy === 'Latest') {
         return dateB - dateA;
       } else if (sortBy === 'Oldest') {
@@ -289,20 +306,24 @@ const BlogList = () => {
               {/* Blogs Card Grid */}
               <div className="bl-grid">
                 {paginatedBlogs.map((blog) => {
-                  const plainTextDescription = stripHtml(blog.description);
-                  const blogCategory = CATEGORY_MAP[blog.category_id] || 'Astrology';
+                  const plainTextDescription = stripHtml(blog.description || blog.content || blog.details);
+                  const catId = blog.category_id || blog.category;
+                  const blogCategory = CATEGORY_MAP[catId] || (typeof catId === 'string' && catId.length < 20 ? catId : 'Astrology');
+                  const imgUrl = fixImgHost(blog.img || blog.image || blog.blog_image || blog.webImage || blog.mobileImage);
+                  const blogTitle = blog.title || blog.name || blog.blog_title || "Sacred Insights";
+                  const blogDate = blog.Created_date || blog.createdAt || blog.created_at || blog.date;
                   return (
                     <div
                       className="bl-card"
-                      key={blog._id}
-                      onClick={() => navigate(`/blog/${blog._id}`)}
+                      key={blog._id || blog.id}
+                      onClick={() => navigate(`/blog/${blog._id || blog.id}`)}
                       style={{ cursor: 'pointer' }}
                     >
                       <div className="bl-card-img-wrap">
                         <span className="bl-card-badge">{blogCategory}</span>
                         <img
-                          src={blog.img}
-                          alt={blog.title}
+                          src={imgUrl}
+                          alt={blogTitle}
                           className="bl-card-img"
                           onError={(e) => {
                             e.target.onerror = null;
@@ -311,14 +332,14 @@ const BlogList = () => {
                         />
                       </div>
                       <div className="bl-card-body">
-                        <h3 className="bl-card-title">{blog.title}</h3>
+                        <h3 className="bl-card-title">{blogTitle}</h3>
                         <p className="bl-card-desc">{plainTextDescription}</p>
                         <div className="bl-card-footer">
                           <span className="bl-card-meta">
-                            {apiService.formatDate(blog.Created_date)} &bull; {estimateReadTime(plainTextDescription)}
+                            {apiService.formatDate(blogDate)} &bull; {estimateReadTime(plainTextDescription)}
                           </span>
                           <Link
-                            to={`/blog/${blog._id}`}
+                            to={`/blog/${blog._id || blog.id}`}
                             className="bl-card-link"
                             onClick={(e) => e.stopPropagation()}
                           >

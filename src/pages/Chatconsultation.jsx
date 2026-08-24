@@ -17,6 +17,7 @@ import {
 } from '../services/liveService';
 import { getUserId, getUserName } from '../services/Liveconfig';
 import apiService from '../services/apiServices';
+import { recordGiftTransaction } from '../services/giftService';
 import './ChatConsultation.css';
 
 /* ── helpers ── */
@@ -627,7 +628,9 @@ const ChatConsultation = () => {
     return () => off(typingRef);
   }, [gid, astrologer_id]);
 
-
+// API still returns gift images hosted on the old domain — rewrite to the current one.
+const fixImgHost = (url) =>
+  typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -635,14 +638,15 @@ const ChatConsultation = () => {
         const resp = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts');
         console.log('[get_gifts] raw response:', resp); // ← check this in devtools
         const arr = resp?.data ?? resp?.results ?? (Array.isArray(resp) ? resp : []);
-        if (!cancelled && Array.isArray(arr) && arr.length > 0) {
-          setGiftList(arr.map(g => ({
-            _id: g._id,
-            title: g.title,
-            price: g.price,
-            image: g.image,
-            emoji: emojiFor(g.title),
-          })));
+      if (!cancelled && Array.isArray(arr) && arr.length > 0) {
+  setGiftList(arr.map(g => ({
+    _id: g._id,           // keep the REAL server id — this is what gift_transaction needs
+    title: g.title,
+    price: g.price,
+    image: fixImgHost(g.image),
+    emoji: emojiFor(g.title),
+  })));
+
         } else {
           console.warn('[get_gifts] empty or unrecognized shape, keeping static fallback:', resp);
         }
@@ -1099,6 +1103,7 @@ const saveNoteToFirebase = useCallback(async (text) => {
         amount: Number(gift.price),
         type: 'normal',
       });
+      recordGiftTransaction({ gift, astroName: name, astroId: astrologer_id, amount: gift.price });
     } catch (err) {
       console.error('[ChatConsultation] EndCallFlow gift send failed:', err?.response?.data || err.message);
     }

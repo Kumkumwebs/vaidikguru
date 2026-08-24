@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import apiService from "../../services/apiServices";
+import { mergeGiftTransactions } from "../../services/giftService";
 import Header from "../layout/Header";
 import Footer from "../layout/Footer";
 import ScrollToTop from "./ScrollToTop";
@@ -36,6 +37,60 @@ function TransactionItem({ data }) {
     );
 }
 
+const mapWalletTransaction = (t) => {
+    const amountType = (t.amount_type || '').toLowerCase();
+    const rawType = (t.type || t.category || '').toLowerCase();
+    const desc = (t.description || '').trim();
+    const astroName = (t.astro_name || '').trim();
+    const pujaName = (t.puja_name || '').trim();
+    
+    const isCredit = amountType === 'credit' || rawType === 'admin' || rawType === 'bank' || desc.toLowerCase().includes('recharge') || desc.toLowerCase().includes('credit');
+    
+    let message = desc;
+    if (!message) {
+        if (rawType === 'gift' || desc.toLowerCase().includes('gift')) {
+            message = astroName ? `Gift sent to ${astroName}` : 'Gift Transaction';
+        } else if (rawType === 'puja' || rawType === 'pooja' || rawType === 'chadhava' || desc.toLowerCase().includes('puja') || desc.toLowerCase().includes('chadhava')) {
+            message = pujaName ? `Puja Booking: ${pujaName}` : 'Puja / Sacred Offering Booking';
+        } else if (rawType === 'chat') {
+            message = astroName ? `Chat Consultation with ${astroName}` : 'Chat Consultation';
+        } else if (rawType === 'audio' || rawType === 'call') {
+            message = astroName ? `Call Consultation with ${astroName}` : 'Audio Call Consultation';
+        } else if (rawType === 'video') {
+            message = astroName ? `Video Consultation with ${astroName}` : 'Video Call Consultation';
+        } else {
+            message = isCredit ? "Wallet Recharge" : "Wallet Transaction";
+        }
+    }
+    
+    const rawDate = (t.transaction_date || t.created_at || '').trim();
+    let dateStr = "Recent";
+    if (rawDate) {
+        const isoish = rawDate.replace(' ', 'T');
+        const d = new Date(isoish);
+        if (!isNaN(d.getTime())) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const dateFormatted = `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+            let hours = d.getHours();
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            const timeFormatted = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+            dateStr = `${dateFormatted}, ${timeFormatted}`;
+        } else {
+            dateStr = rawDate;
+        }
+    }
+
+    return {
+        id: t.id || t.order_id || Math.random().toString(),
+        type: isCredit ? "credit" : "debit",
+        amount: Math.abs(Number(t.amount) || 0),
+        message: message,
+        date: dateStr,
+    };
+};
+
 export default function WalletPage() {
     const [loading, setLoading] = useState(true);
     const [wallet, setWallet] = useState(0);
@@ -49,36 +104,25 @@ export default function WalletPage() {
             setLoading(true);
             setError(null);
 
-            // NOTE: adjust the method/signature below to match your actual
-            // apiService wrapper (e.g. apiService.get(url) vs apiService.get(url, config))
-           const res = await apiService.getBearer("https://admin.vaidikguru.com/user_api/get_profile");
+            const [profileRes, txnRes] = await Promise.all([
+                apiService.getBearer("https://admin.vaidikguru.com/user_api/get_profile").catch(() => null),
+                apiService.postBearer("https://admin.vaidikguru.com/user_api/transaction").catch(() => null)
+            ]);
 
-            if (res.status) {
-                const data = res.results_web || res.results;
-
-                // ✅ Wallet
-                setWallet(data.wallet || 0);
-
-                // ❗ If your API doesn't give logs, use dummy or another API
-                setTransactions([
-                    {
-                        id: "1",
-                        type: "credit",
-                        amount: 100,
-                        message: "Wallet Recharge",
-                        date: "Today",
-                    },
-                    {
-                        id: "2",
-                        type: "debit",
-                        amount: 50,
-                        message: "Astrology Consultation",
-                        date: "Yesterday",
-                    },
-                ]);
-            } else {
-                setError("Unable to load your wallet balance right now.");
+            if (profileRes?.status) {
+                const data = profileRes.results_web || profileRes.results;
+                setWallet(Number(data?.wallet || 0));
             }
+
+            let apiList = [];
+            if (txnRes && txnRes.result && txnRes.transactions && Array.isArray(txnRes.transactions.data)) {
+                apiList = txnRes.transactions.data;
+            } else if (txnRes && Array.isArray(txnRes.data)) {
+                apiList = txnRes.data;
+            }
+
+            const merged = mergeGiftTransactions(apiList);
+            setTransactions(merged.map(mapWalletTransaction));
         } catch (e) {
             setError("Unable to load your wallet balance right now.");
         } finally {

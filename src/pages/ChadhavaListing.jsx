@@ -55,11 +55,25 @@ const SkeletonCard = () => (
   </div>
 );
 
+const fixImgHost = (url) => {
+  if (!url) return "";
+  let clean = typeof url === "string" ? url.replace("admin.astrogurujii.com", "admin.vaidikguru.com") : url;
+  if (typeof clean === "string" && clean.startsWith("/")) {
+    clean = `https://admin.vaidikguru.com${clean}`;
+  }
+  return clean;
+};
+
 /* ── Chadhava Card ── */
 const ChadhavaCard = ({ item, index, onView }) => {
   const [liked,  setLiked]  = useState(false);
   const [imgErr, setImgErr] = useState(false);
   const { label, cls, icon } = getBadge(index);
+
+  const title = item.title || item.name || item.chadhavaName || "Sacred Chadhava";
+  const imgSrc = fixImgHost(item.chadhavaImage || item.image || item.webImage || item.mobileImage || item.pimage);
+  const temple = item.templeName || item.mandirName || item.temple || "";
+  const price = Number(item.price || item.packagePrice || item.chadhavaPrice || 0);
 
   return (
     <motion.div className="ch-card"
@@ -79,50 +93,20 @@ const ChadhavaCard = ({ item, index, onView }) => {
 
       {/* Image */}
       <div className="ch-img-wrap">
-        {(() => {
-          const imgSrc = item.chadhavaImage || item.image || item.pimage;
-          return imgSrc && !imgErr
-            ? (
-              <>
-                <img src={imgSrc} alt={item.title || item.name} onError={()=>setImgErr(true)} />
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    padding: '10px 14px',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <span
-                    style={{
-                      maxWidth: '58%',
-                      textAlign: 'right',
-                      fontSize: 13.5,
-                      fontWeight: 700,
-                      lineHeight: 1.3,
-                      color: '#5e1730',
-                      textShadow: '0 1px 3px rgba(255,255,255,0.55)',
-                    }}
-                  >
-                    {item.title}
-                  </span>
-                </div>
-              </>
-            )
-            : <div className="ch-img-placeholder"><i className="fas fa-om" /></div>;
-        })()}
+        {imgSrc && !imgErr ? (
+          <img src={imgSrc} alt={title} onError={()=>setImgErr(true)} />
+        ) : (
+          <div className="ch-img-placeholder"><i className="fas fa-om" /></div>
+        )}
       </div>
 
       {/* Body */}
       <div className="ch-card-body">
-        <div className="ch-card-name">{item.title}</div>
-        {item.templeName && (
+        <div className="ch-card-name">{title}</div>
+        {temple && (
           <div className="ch-card-loc">
             <i className="fas fa-gopuram" />
-            {item.templeName}
+            {temple}
           </div>
         )}
         <div className="ch-card-desc">
@@ -134,7 +118,7 @@ const ChadhavaCard = ({ item, index, onView }) => {
       <div className="ch-card-footer">
         <div>
           <span className="ch-price-from">Starting from</span>
-          <div className="ch-price">₹{item.price > 0 ? item.price.toLocaleString('en-IN') : 'Free'}</div>
+          <div className="ch-price">{price > 0 ? `₹${price.toLocaleString('en-IN')}` : 'Free'}</div>
         </div>
         <button className="ch-details-btn" onClick={e=>{e.stopPropagation();onView(item)}}>
           Details View <i className="fas fa-arrow-right" />
@@ -301,10 +285,37 @@ const RecommendCard = ({ onOpen }) => (
 );
 
 /* ── Sidebar ── */
-const SidebarContent = ({ filters, setFilters, onApply, searchVal, setSearchVal }) => {
+const SidebarContent = ({ filters, setFilters, onApply, searchVal, setSearchVal, allItems = [] }) => {
   const set   = (k,v) => setFilters(f=>({...f,[k]:v}));
-  const reset = ()    => { setFilters({category:'all',priceBucket:'',sortBy:'popular',temple:'',occasion:'',search:''}); setSearchVal(''); };
-  const [rv, setRv]   = useState(10000);
+  const reset = ()    => { setFilters({category:'all',priceBucket:'',maxPrice:10000,sortBy:'popular',temple:'',occasion:'',search:''}); setSearchVal(''); };
+
+  const handleApplyClick = () => {
+    setFilters(f => ({ ...f, search: searchVal }));
+    onApply();
+  };
+
+  const templesFromData = Array.from(
+    new Set(allItems.map((i) => i.templeName).filter(Boolean))
+  );
+  const templeOptions = templesFromData.length
+    ? templesFromData
+    : ['Ujjain Mahakaleshwar','Kashi Vishwanath','Tirupati Balaji','Gaya Vishnupad','Moksha Dham, Haridwar'];
+
+  const getCatCount = (cat) => {
+    if (!allItems.length) return 0;
+    if (cat === "all") return allItems.length;
+    return allItems.filter((i) => {
+      const text = `${i.title || ""} ${i.category || ""} ${i.description || ""}`.toLowerCase();
+      if (cat === "saree") return /saree|sari/i.test(text);
+      if (cat === "vastra") return /vastra|cloth|poshak|dress/i.test(text);
+      if (cat === "chola") return /chola|shringar|sindoor/i.test(text);
+      if (cat === "pushpa") return /pushpa|phool|flower|garland|mala/i.test(text);
+      if (cat === "other") {
+        return !/saree|sari|vastra|cloth|poshak|dress|chola|shringar|sindoor|pushpa|phool|flower|garland|mala/i.test(text);
+      }
+      return text.includes(cat);
+    }).length;
+  };
 
   return (
     <>
@@ -320,10 +331,13 @@ const SidebarContent = ({ filters, setFilters, onApply, searchVal, setSearchVal 
           className="ch-sb-search-input"
           placeholder="Search offerings..."
           value={searchVal}
-          onChange={e=>setSearchVal(e.target.value)}
-          onKeyDown={e=>e.key==='Enter' && onApply()}
+          onChange={e=>{
+            setSearchVal(e.target.value);
+            setFilters(f => ({ ...f, search: e.target.value }));
+          }}
+          onKeyDown={e=>e.key==='Enter' && handleApplyClick()}
         />
-        <button className="ch-sb-search-btn" onClick={onApply}>
+        <button className="ch-sb-search-btn" onClick={handleApplyClick}>
           <i className="fas fa-search" />
         </button>
       </div>
@@ -332,9 +346,9 @@ const SidebarContent = ({ filters, setFilters, onApply, searchVal, setSearchVal 
 
       <div className="ch-fh">Category</div>
       {[
-        {v:'all',l:'All Chadhavas',c:45},{v:'saree',l:'Saree Chadava',c:12},
-        {v:'vastra',l:'Vastra Chadava',c:9},{v:'chola',l:'Chola Chadava',c:7},
-        {v:'pushpa',l:'Pushpa Chadava',c:6},{v:'other',l:'Other Chadavas',c:11},
+        {v:'all',l:'All Chadhavas',c:getCatCount('all')},{v:'saree',l:'Saree Chadava',c:getCatCount('saree')},
+        {v:'vastra',l:'Vastra Chadava',c:getCatCount('vastra')},{v:'chola',l:'Chola Chadava',c:getCatCount('chola')},
+        {v:'pushpa',l:'Pushpa Chadava',c:getCatCount('pushpa')},{v:'other',l:'Other Chadavas',c:getCatCount('other')},
       ].map(({v,l,c})=>(
         <RadioOpt key={v} label={l} count={c} checked={filters.category===v} onChange={()=>set('category',v)} />
       ))}
@@ -342,11 +356,11 @@ const SidebarContent = ({ filters, setFilters, onApply, searchVal, setSearchVal 
       <div className="ch-div" />
 
       <div className="ch-fh">Price Range</div>
-      <input type="range" className="ch-range-input" min={0} max={10000} step={100} value={rv}
-        onChange={e=>setRv(+e.target.value)}
-        style={{background:`linear-gradient(to right,#c0392b ${rv/100}%,#e5e7eb ${rv/100}%)`}}
+      <input type="range" className="ch-range-input" min={0} max={10000} step={100} value={filters.maxPrice || 10000}
+        onChange={e=>set('maxPrice',+e.target.value)}
+        style={{background:`linear-gradient(to right,#c0392b ${(filters.maxPrice || 10000)/100}%,#e5e7eb ${(filters.maxPrice || 10000)/100}%)`}}
       />
-      <div className="ch-range-ends"><span>₹0</span><span>₹10,000+</span></div>
+      <div className="ch-range-ends"><span>₹0</span><span>₹{(filters.maxPrice || 10000).toLocaleString('en-IN')}{filters.maxPrice >= 10000 ? '+' : ''}</span></div>
       <div className="ch-buckets">
         {[['₹0-₹499','0-499'],['₹500-₹1499','500-1499'],['₹1500-₹4999','1500-4999'],['₹5000+','5000+']].map(([l,v])=>(
           <button key={v} className={`ch-bucket${filters.priceBucket===v?' on':''}`}
@@ -366,8 +380,8 @@ const SidebarContent = ({ filters, setFilters, onApply, searchVal, setSearchVal 
       <div className="ch-fh">Temple</div>
       <select className="ch-sel" value={filters.temple} onChange={e=>set('temple',e.target.value)}>
         <option value="">All Temples</option>
-        {['Ujjain Mahakaleshwar','Kashi Vishwanath','Tirupati Balaji','Gaya Vishnupad','Moksha Dham, Haridwar'].map(t=>(
-          <option key={t}>{t}</option>
+        {templeOptions.map(t=>(
+          <option key={t} value={t}>{t}</option>
         ))}
       </select>
 
@@ -377,11 +391,11 @@ const SidebarContent = ({ filters, setFilters, onApply, searchVal, setSearchVal 
       <select className="ch-sel" value={filters.occasion} onChange={e=>set('occasion',e.target.value)}>
         <option value="">All Occasions</option>
         {['Ekadashi','Somvar','Purnima','Amavasya','Navratri','Mahashivratri'].map(o=>(
-          <option key={o}>{o}</option>
+          <option key={o} value={o}>{o}</option>
         ))}
       </select>
 
-      <button className="ch-apply" onClick={onApply}>
+      <button className="ch-apply" onClick={handleApplyClick}>
         <i className="fas fa-filter" /> Apply Filters
       </button>
     </>
@@ -396,9 +410,9 @@ const ChadhavaListing = () => {
   const [error,         setError]         = useState(false);
   const [drawerOpen,    setDrawerOpen]    = useState(false);
   const [page,          setPage]          = useState(1);
-  const [totalPages,    setTotalPages]    = useState(5);
+  const [totalPages,    setTotalPages]    = useState(1);
   const [searchVal,     setSearchVal]     = useState('');
-  const [filters, setFilters] = useState({category:'all',priceBucket:'',sortBy:'popular',temple:'',occasion:'',search:''});
+  const [filters, setFilters] = useState({category:'all',priceBucket:'',maxPrice:10000,sortBy:'popular',temple:'',occasion:'',search:''});
 
   const [showSideMenu,   setShowSideMenu]   = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -411,32 +425,125 @@ const ChadhavaListing = () => {
   const fetchItems = useCallback(async () => {
     setLoading(true); setError(false);
     try {
-      const res = await ChadhavaService.getChadhavaList(filters.search || null);
-      // API: { status:true, data:[{ result:[...] }] }
-      let list = null;
-      if (res?.status && res?.data?.[0]?.result) list = res.data[0].result;
-      else if (res?.results) list = res.results;
-      else if (Array.isArray(res)) list = res;
+      const res = await ChadhavaService.getChadhavaList(null);
+      let list = [];
+      if (res?.status) {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          list = res.data.flatMap((group) => group.result || (group.title || group.name ? [group] : []));
+        }
+        if (list.length === 0 && Array.isArray(res.result) && res.result.length > 0) {
+          list = res.result.flatMap((group) => group.result || (group.title || group.name ? [group] : []));
+        }
+        if (list.length === 0 && Array.isArray(res.promotionalBanner) && res.promotionalBanner.length > 0) {
+          list = res.promotionalBanner;
+        }
+        if (list.length === 0 && Array.isArray(res.results) && res.results.length > 0) {
+          list = res.results;
+        }
+        if (list.length === 0 && Array.isArray(res.data) && res.data.length > 0) {
+          list = res.data;
+        }
+      } else if (Array.isArray(res)) {
+        list = res;
+      }
 
-      if (list) {
+      if (list && list.length > 0) {
         setAllItems(list);
-        setTotalPages(Math.max(1, Math.ceil(list.length / PAGE_SIZE)));
       } else {
         setError(true);
       }
-    } catch (e) { console.error(e); setError(true); }
+    } catch (e) { console.error("Chadhava fetchItems error:", e); setError(true); }
     finally  { setLoading(false); }
-  }, [filters.search]);
+  }, []);
 
   useEffect(()=>{ fetchItems(); },[fetchItems]);
 
-  // Since the API returns everything in one shot, pagination here is
-  // purely a client-side slice of the already-fetched full list — the
-  // "page" state just picks which 9-item window of allItems to show.
+  // Client-side filtering, sorting, and pagination
   useEffect(() => {
+    if (!allItems.length) {
+      setItems([]);
+      setTotalPages(1);
+      return;
+    }
+
+    let list = [...allItems];
+
+    // 1. Search Filter
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      list = list.filter(
+        (i) =>
+          (i.title || "").toLowerCase().includes(q) ||
+          (i.templeName || "").toLowerCase().includes(q) ||
+          (i.description || "").toLowerCase().includes(q)
+      );
+    }
+
+    // 2. Category Filter
+    if (filters.category && filters.category !== "all") {
+      const cat = filters.category.toLowerCase();
+      list = list.filter((i) => {
+        const text = `${i.title || ""} ${i.category || ""} ${i.description || ""}`.toLowerCase();
+        if (cat === "saree") return /saree|sari/i.test(text);
+        if (cat === "vastra") return /vastra|cloth|poshak|dress/i.test(text);
+        if (cat === "chola") return /chola|shringar|sindoor/i.test(text);
+        if (cat === "pushpa") return /pushpa|phool|flower|garland|mala/i.test(text);
+        if (cat === "other") {
+          return !/saree|sari|vastra|cloth|poshak|dress|chola|shringar|sindoor|pushpa|phool|flower|garland|mala/i.test(text);
+        }
+        return text.includes(cat);
+      });
+    }
+
+    // 3. Price Bucket Filter
+    if (filters.priceBucket) {
+      const [min, max] = filters.priceBucket.split("-").map(Number);
+      list = list.filter((i) => {
+        const p = Number(i.price || 0);
+        if (filters.priceBucket === "5000+") return p >= 5000;
+        return p >= min && p <= max;
+      });
+    }
+
+    // 4. Price Range Slider Filter
+    if (filters.maxPrice && filters.maxPrice < 10000) {
+      list = list.filter((i) => Number(i.price || 0) <= filters.maxPrice);
+    }
+
+    // 5. Temple Filter
+    if (filters.temple) {
+      list = list.filter((i) =>
+        (i.templeName || "").toLowerCase().includes(filters.temple.toLowerCase())
+      );
+    }
+
+    // 6. Occasion Filter
+    if (filters.occasion) {
+      list = list.filter((i) =>
+        (i.occasion || i.description || i.title || "").toLowerCase().includes(filters.occasion.toLowerCase())
+      );
+    }
+
+    // 7. Sort By Filter
+    if (filters.sortBy === "price_low") {
+      list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+    } else if (filters.sortBy === "price_high") {
+      list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+    } else if (filters.sortBy === "recent") {
+      list.sort((a, b) => {
+        const da = new Date(a.createdAt || 0).getTime();
+        const db = new Date(b.createdAt || 0).getTime();
+        return db - da;
+      });
+    } else if (filters.sortBy === "az") {
+      list.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+    }
+
+    const total = Math.ceil(list.length / PAGE_SIZE) || 1;
+    setTotalPages(total);
     const start = (page - 1) * PAGE_SIZE;
-    setItems(allItems.slice(start, start + PAGE_SIZE));
-  }, [allItems, page]);
+    setItems(list.slice(start, start + PAGE_SIZE));
+  }, [allItems, filters, page]);
 
   const handleSearch = () => { setFilters(f=>({...f,search:searchVal})); setPage(1); };
   const handleApply  = () => { setPage(1); fetchItems(); setDrawerOpen(false); };
@@ -492,7 +599,7 @@ const ChadhavaListing = () => {
           <div className="ch-drawer-wrap">
             <div className={`ch-drawer-overlay${drawerOpen?' show':''}`} onClick={()=>setDrawerOpen(false)} />
             <div className={`ch-drawer${drawerOpen?' open':''}`}>
-              <SidebarContent filters={filters} setFilters={setFilters} onApply={handleApply} searchVal={searchVal} setSearchVal={setSearchVal} />
+              <SidebarContent filters={filters} setFilters={setFilters} onApply={handleApply} searchVal={searchVal} setSearchVal={setSearchVal} allItems={allItems} />
             </div>
           </div>
 
@@ -500,7 +607,7 @@ const ChadhavaListing = () => {
             {/* Sidebar */}
             <div className="col-md-3 ch-sidebar-desktop">
               <div className="ch-sidebar-box">
-                <SidebarContent filters={filters} setFilters={setFilters} onApply={handleApply} searchVal={searchVal} setSearchVal={setSearchVal} />
+                <SidebarContent filters={filters} setFilters={setFilters} onApply={handleApply} searchVal={searchVal} setSearchVal={setSearchVal} allItems={allItems} />
               </div>
             </div>
 

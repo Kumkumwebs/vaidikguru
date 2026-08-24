@@ -12,7 +12,12 @@ const firebaseConfig = {
   measurementId: "G-SGSTHWBF4D",
 };
 
-const app = initializeApp(firebaseConfig);
+// Named secondary app — this project (diviniq-5c0d0, used only for FCM
+// push notifications) is intentionally different from the [DEFAULT]
+// Firebase app initialized in liveFirebase.js (astrogurujii-production,
+// used for chat/call realtime signaling). Firebase only allows one
+// [DEFAULT] app per config, so this one must be named to coexist with it.
+const app = initializeApp(firebaseConfig, "notifications");
 
 let messaging;
 

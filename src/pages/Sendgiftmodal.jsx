@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import apiService from '../services/apiServices';
+import { useStorage } from '../context/StorageContext';
+import { recordGiftTransaction } from '../services/giftService';
 
 // Bound to the DivinIQ backend (reference used admin.vaidikguru.com)
 const API = "https://admin.vaidikguru.com";
@@ -19,14 +21,14 @@ const normGift = (g) => ({
 });
 
 const STATIC_GIFTS = [
-  { _id: "1", title: "Flowers", price: 11, emoji: "🌹" },
-  { _id: "2", title: "Namaste", price: 20, emoji: "🙏" },
-  { _id: "3", title: "Dakshina", price: 50, emoji: "💰" },
-  { _id: "4", title: "Pooja Thali", price: 199, emoji: "🍱" },
-  { _id: "5", title: "Kalash", price: 20, emoji: "🪔" },
-  { _id: "6", title: "Gemstone", price: 20, emoji: "💎" },
-  { _id: "7", title: "Sweets", price: 20, emoji: "🍬" },
-  { _id: "8", title: "Shivling", price: 20, emoji: "🛕" },
+  { _id: "1", title: "Flowers", price: 11, emoji: "🌸" },
+  { _id: "2", title: "Namaste", price: 5, emoji: "🙏" },
+  { _id: "3", title: "Dakshina", price: 501, emoji: "💰" },
+  { _id: "4", title: "Pooja Thali", price: 101, emoji: "🪔" },
+  { _id: "5", title: "Kalash", price: 51, emoji: "🏺" },
+  { _id: "6", title: "Gemstone", price: 1001, emoji: "💎" },
+  { _id: "7", title: "Sweets", price: 151, emoji: "🍬" },
+  { _id: "8", title: "Shivling", price: 5001, emoji: "🕉️" },
 ];
 
 // ─── Success Popup ────────────────────────────────────────────────────────────
@@ -156,6 +158,7 @@ export function SendGiftModal({
   const params = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { refreshProfile } = useStorage();
 
   // Route-aware fallbacks so it works at /send_gift/:id AND as an inline modal
   const open = isOpen === undefined ? true : isOpen;
@@ -188,7 +191,7 @@ export function SendGiftModal({
     }
 
     console.log('[SendGiftModal] no giftsProp — fetching get_gifts directly');
-    apiService.getBearer(`${API}/user_api/get_gifts`)
+    apiService.getBearer('/user_api/get_gifts')
       .then((res) => {
         console.log('[SendGiftModal] get_gifts response:', res);
         const raw = res?.data ?? res?.results ?? [];
@@ -226,10 +229,13 @@ export function SendGiftModal({
     console.log("[SendGift] payload:", { to: astroId, giftId: gift._id, amount: gift.price, priceType: typeof gift.price, giftTitle: gift.title, giftIndex: sel, totalGiftsShown: gifts.length });
     try {
       const res = await apiService.postBearer(
-        `${API}/user_api/gift_transaction`,
+        '/user_api/gift_transaction',
         {
           to: String(astroId),
+          astro_id: String(astroId),
+          astrologer_id: String(astroId),
           giftId: String(gift._id),
+          gift_id: String(gift._id),
           amount: Number(gift.price),
           type: "normal",
         }
@@ -239,6 +245,8 @@ export function SendGiftModal({
         setError(res?.message || "Could not send the gift. Please try again.");
       } else {
         setSentGift(gift); // show success popup
+        recordGiftTransaction({ gift, astroName, astroId, amount: gift.price });
+        refreshProfile?.(); // sync wallet balance immediately across the app
       }
     } catch (err) {
       console.error("[SendGift] error:", err?.response?.data || err.message);

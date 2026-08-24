@@ -25,7 +25,7 @@ const IMG = {
   svcPanchang: '/assets/img/about/calendar-icon.svg',
   svcRemedies: '/assets/img/about/home-green-icon.svg',
   svcGuidance: '/assets/img/about/id-card-purple.svg',
-  featWisdom: '/assets/img/about/om-mandala-icon.svg',
+  featWisdom: '/assets/img/about/om-icon.svg',
   featModern: '/assets/img/about/calendar-icon.svg',
   featExperts: '/assets/img/about/user-circle-purple.svg',
   featHolistic: '/assets/img/about/user-gold-icon.svg',
@@ -119,7 +119,7 @@ const TESTIMONIALS = [
   {
     img: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=80&h=80&fit=crop&crop=face',
     name: 'Amit Tiwari', loc: 'Lucknow, India',
-    text: "I was skeptical at first but the astrologer's predictions were amazingly accurate. DiviniQ has become a part of my daily spiritual routine."
+    text: "I was skeptical at first but the astrologer's predictions were amazingly accurate. VaidikGuru has become a part of my daily spiritual routine."
   },
   {
     img: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?w=80&h=80&fit=crop&crop=face',
@@ -129,7 +129,7 @@ const TESTIMONIALS = [
 ];
 
 const FAQS = [
-  { q: 'How does DiviniQ verify astrologers and experts?', a: 'Every astrologer and pandit on DiviniQ goes through a strict verification process including credential checks, background screening and a live evaluation before they are onboarded.' },
+  { q: 'How does VaidikGuru verify astrologers and experts?', a: 'Every astrologer and pandit on VaidikGuru goes through a strict verification process including credential checks, background screening and a live evaluation before they are onboarded.' },
   { q: 'Is my personal information and consultation private?', a: 'Yes, all your personal details and consultations are fully encrypted and kept 100% confidential. We never share your information with third parties.' },
   { q: 'How are online pujas performed?', a: 'Our verified pandits perform the puja at the chosen temple following authentic Vedic rituals, with a live video link sent to you so you can watch in real-time.' },
   { q: 'When will I receive the prasad after puja?', a: 'Prasad is couriered to your registered address within 5-7 business days after the puja is completed.' },
@@ -180,7 +180,7 @@ const OurStory = () => (
     <div className="container">
       <div className="ab-story-inner">
         <div className="ab-story-video">
-          <img src={IMG.storyThumb} alt="DiviniQ Story" className="ab-story-thumb" />
+          <img src={IMG.storyThumb} alt="VaidikGuru Story" className="ab-story-thumb" />
           <div className="ab-story-play-btn">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(80,20,90,0.9)">
               <path d="M8 5v14l11-7z" />
@@ -255,7 +255,7 @@ const WhyChoose = () => (
         <div className="ab-why-left">
           <div className="ab-why-label">
             <i className="fas fa-circle-dot" style={{ fontSize: 11, color: '#C0392B' }} />
-            &nbsp;WHY CHOOSE DIVINIQ?
+            &nbsp;WHY CHOOSE VAIDIK GURU?
           </div>
           <ul className="ab-why-list">
             {WHY_LIST.map(item => (
@@ -264,7 +264,7 @@ const WhyChoose = () => (
           </ul>
         </div>
         <div className="ab-stats-img-wrap">
-          <img src={IMG.statsBar} alt="DiviniQ Stats" className="ab-stats-img" />
+          <img src={IMG.statsBar} alt="VaidikGuru Stats" className="ab-stats-img" />
         </div>
       </div>
     </div>

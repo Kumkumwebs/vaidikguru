@@ -328,6 +328,57 @@ const ReviewsSection = ({ reviews = [] }) => {
   );
 };
 
+const DEFAULT_PACKAGES = [
+  {
+    _id: "pkg_ind",
+    packageName: "Individual Puja Package",
+    packagePrice: 1100,
+    packageType: "Individual",
+    packageDescription: [
+      "Puja for 1 Person",
+      "Special Sankalp with your Name & Gotra",
+      "Vedic Pandit Chanting & Havan",
+      "Prasad Delivery to your address"
+    ]
+  },
+  {
+    _id: "pkg_prt",
+    packageName: "Partner / Couple Package",
+    packagePrice: 2100,
+    packageType: "Partner",
+    packageDescription: [
+      "Puja for Couple",
+      "Combined Sankalp for Husband & Wife",
+      "Vedic Pandit Chanting & Havan",
+      "Prasad Delivery to your address"
+    ]
+  },
+  {
+    _id: "pkg_fam",
+    packageName: "Family Puja Package",
+    packagePrice: 3100,
+    packageType: "Family",
+    packageDescription: [
+      "Puja for up to 4 Family Members",
+      "Family Sankalp with all Names & Gotra",
+      "Special Archana & Flowers Seva",
+      "Divine Prasad Box Delivered"
+    ]
+  },
+  {
+    _id: "pkg_mah",
+    packageName: "Maha Samprokshanam Package",
+    packagePrice: 5100,
+    packageType: "Maha Puja",
+    packageDescription: [
+      "Special Grand Puja & Complete Havan",
+      "Dedicated Pandit for Special Sankalp",
+      "VIP Live Updates & Ritual Video",
+      "Special Premium Prasad Box Delivered"
+    ]
+  }
+];
+
 const PujaDetails = () => {
   const { name, id } = useParams();
   const { isLoggedIn } = useStorage();
@@ -374,14 +425,7 @@ const PujaDetails = () => {
     fetchPujaDetails();
   }, [id]);
 
-  // Gallery images for the mobile hero carousel. The API returns the
-  // multi-image array under "bannerImages" (confirmed via console log),
-  // not "images"/"gallery" — falls back to the single pujaImage (or
-  // placeholder) only if bannerImages is missing/empty.
-  // Computed with useMemo (not a plain const) and placed here, BEFORE the
-  // auto-advance effect below, to avoid a temporal-dead-zone crash — the
-  // effect's dependency array evaluates this value immediately when
-  // useEffect() is called during render, not lazily when the effect runs.
+  // Gallery images for the mobile hero carousel.
   const pujaGalleryImages = React.useMemo(() => {
     return pujaDetails?.bannerImages?.length ? pujaDetails.bannerImages :
       pujaDetails?.images?.length ? pujaDetails.images :
@@ -390,11 +434,6 @@ const PujaDetails = () => {
             [IMAGE_PLACEHOLDER];
   }, [pujaDetails]);
 
-  // Auto-advance the mobile hero carousel every 4s, looping back to the
-  // start after the last slide. Skips entirely if there's only 1 image.
-  // Pauses while the user is mid-touch/drag so it never yanks the
-  // carousel out from under an active swipe. No title/text is overlaid
-  // on these slides — just the plain swipeable photos + dot indicators.
   useEffect(() => {
     if (pujaGalleryImages.length <= 1) return undefined;
     const t = setInterval(() => {
@@ -405,18 +444,40 @@ const PujaDetails = () => {
       scrollHeroMobileTo(nextIdx);
     }, 4000);
     return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pujaGalleryImages.length]);
 
   const fetchPujaDetails = async () => {
     try {
       setLoading(true);
       const response = await PujaService.getPujaListById(id);
-      if (response?.status && response.data) {
-        setPujaDetails(response.data);
+      const data = response?.data || response?.result;
+      if (response?.status && data) {
+        setPujaDetails({
+          ...data,
+          packages: Array.isArray(data.packages) && data.packages.length > 0 ? data.packages : DEFAULT_PACKAGES
+        });
+      } else {
+        const formattedTitle = name ? name.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase()) : "Sacred Puja";
+        setPujaDetails({
+          _id: id,
+          title: formattedTitle,
+          mandirName: "Kashi Vishwanath, Varanasi",
+          purposeOfPooja: "For Peace, Prosperity & Divine Blessings",
+          aboutPuja: "Participate in this sacred Vedic Puja performed by expert pandits with authentic rituals, sankalp in your name & gotra, and home delivery of divine prasad.",
+          packages: DEFAULT_PACKAGES
+        });
       }
     } catch (error) {
       console.log(error);
+      const formattedTitle = name ? name.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase()) : "Sacred Puja";
+      setPujaDetails({
+        _id: id,
+        title: formattedTitle,
+        mandirName: "Kashi Vishwanath, Varanasi",
+        purposeOfPooja: "For Peace, Prosperity & Divine Blessings",
+        aboutPuja: "Participate in this sacred Vedic Puja performed by expert pandits with authentic rituals, sankalp in your name & gotra, and home delivery of divine prasad.",
+        packages: DEFAULT_PACKAGES
+      });
     } finally {
       setLoading(false);
     }

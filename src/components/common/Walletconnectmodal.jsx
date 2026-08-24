@@ -8,6 +8,10 @@ const initials = n => (n||'').trim().split(' ').slice(0,2).map(w=>w[0]||'').join
 const COLORS   = ['#7c3aed','#059669','#dc2626','#d97706','#2563eb'];
 const avColor  = n => COLORS[((n||'').charCodeAt(0)||65) % COLORS.length];
 
+// API still returns some image URLs hosted on the old domain — rewrite to the current one.
+const fixImgHost = (url) =>
+  typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
+
 /**
  * WalletConnectModal
  * Props:
@@ -60,7 +64,7 @@ const WalletConnectModal = ({
               <div className="wc-av-wrap">
                 <div className="wc-av-clip">
                   {astrologer.profile_img
-                    ? <img src={astrologer.profile_img} alt={astrologer.name}
+                    ? <img src={fixImgHost(astrologer.profile_img)} alt={astrologer.name}
                         onError={e => { e.target.style.display = 'none'; }} />
                     : <div className="wc-av-init"
                         style={{ background:`linear-gradient(135deg,${avColor(astrologer.name)},${avColor(astrologer.name)}99)` }}>

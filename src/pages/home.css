@@ -525,6 +525,80 @@
   color: var(--text-dark);
 }
 
+/* ---------------- HOMEPAGE CARD HOVER EFFECTS (PUJA & CHADHAVA) ---------------- */
+.dq-puja-link {
+  background: var(--white);
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 12px !important;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease;
+  height: 100%;
+}
+
+.dq-puja-link:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 32px rgba(109, 18, 48, 0.14) !important;
+  border-color: var(--gold) !important;
+}
+
+.dq-puja-link a {
+  text-decoration: none !important;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dq-puja-link img {
+  width: 100% !important;
+  height: 200px !important;
+  object-fit: cover !important;
+  object-position: center;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.dq-puja-link:hover img {
+  transform: scale(1.04);
+}
+
+.dq-puja-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.dq-puja-body h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  transition: color 0.2s ease;
+}
+
+.dq-puja-link:hover .dq-puja-body h4 {
+  color: var(--maroon);
+}
+
+.dq-puja-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.dq-puja-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dq-puja-link:hover .dq-btn {
+  background: var(--maroon-dark);
+  color: var(--white);
+  box-shadow: 0 4px 12px rgba(109, 18, 48, 0.25);
+  transform: translateY(-1px);
+}
+
 .dq-chadhava-wrap {
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -624,6 +698,7 @@
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   flex: 1;
@@ -812,6 +887,7 @@
   margin: 0 0 8px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 2.8em;

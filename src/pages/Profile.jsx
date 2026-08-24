@@ -15,14 +15,14 @@ const HERO_BANNER_IMAGE = "/assets/img/images/profile-hero-banner.jpeg";
 
 // NOTE: matches the real backend routes exactly —
 //   GET  /user_api/get_profile     (router.get("/get_profile", ...))
-//   PUT  /user_api/profile_update  (router.put("/profile_update", ...))
+//   PUT  /user_api/profile_update_img  (router.put("/profile_update", ...))
 // The backend ONLY persists name, email, gender, dob, tob, pob, rashi.
 // There is no marital_status / profession / profile_for / country / gotra
 // on the server, so those fields were dropped from this page.
 const GET_PROFILE_URL = "https://admin.vaidikguru.com/user_api/get_profile";
-const UPDATE_PROFILE_URL = "https://admin.vaidikguru.com/user_api/profile_update";
+const UPDATE_PROFILE_URL = "https://admin.vaidikguru.com/user_api/profile_update_img";
 
-// Read-only fields — not part of profile_update, just displayed.
+// Read-only fields — not part of profile_update_img, just displayed.
 const PHONE_FIELD = { key: "number", label: "Phone Number", icon: "phone" };
 const REFERRAL_FIELD = { key: "referral_code", label: "Referral Code", icon: "gift" };
 
@@ -62,6 +62,17 @@ const EMPTY_PROFILE = {
   number: "",
   country_code: "91",
   referral_code: "",
+  profile_img: "",
+};
+
+const fixImgHost = (url) => {
+  if (!url || typeof url !== "string") return url || "";
+  const unescaped = url.replace(/&#x2F;/g, "/");
+  let fixed = unescaped.replace("admin.astrogurujii.com", "admin.vaidikguru.com");
+  if (!fixed.startsWith("http://") && !fixed.startsWith("https://") && !fixed.startsWith("blob:")) {
+    fixed = `https://admin.vaidikguru.com/${fixed.replace(/^\/+/, "")}`;
+  }
+  return fixed;
 };
 
 const ICONS = {
@@ -174,6 +185,12 @@ const ICONS = {
       <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   ),
+  camera: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  ),
 };
 
 export default function ProfilePage() {
@@ -196,14 +213,14 @@ export default function ProfilePage() {
   const [showSearch, setShowSearch] = useState(false);
 
   // Maps a raw API payload (either response.results_web or the whole
-  // response, since profile_update sometimes echoes fields at the top
+  // response, since profile_update_img sometimes echoes fields at the top
   // level) into our flat `values` shape. Falls back to `prev` for any
   // field that's missing so we never blow away good local state with
   // undefined.
   const mapProfilePayload = (payload, prev) => {
     const web = payload || {};
     // tob may arrive as 24h "HH:MM:SS" at the top level (get_profile)
-    // or inside results_web (profile_update echo) — handle both.
+    // or inside results_web (profile_update_img echo) — handle both.
     const rawTob = payload?.tob ?? web.tob ?? prev.tob ?? "";
     return {
       name: web.name ?? prev.name,
@@ -216,6 +233,7 @@ export default function ProfilePage() {
       number: web.number ?? prev.number,
       country_code: web.country_code ?? prev.country_code,
       referral_code: web.referral_code ?? prev.referral_code,
+      profile_img: web.profile_img ?? prev.profile_img,
     };
   };
 
@@ -236,10 +254,19 @@ export default function ProfilePage() {
       });
 
       if (response?.status) {
-        const web = response.results_web || {};
-        setValues((prev) =>
-          mapProfilePayload({ ...web, tob: response.tob }, prev)
-        );
+        const web = response.results_web || response.results || {};
+        setValues((prev) => {
+          const next = mapProfilePayload({ ...web, tob: response.tob }, prev);
+          const formattedImg = fixImgHost(next.profile_img);
+
+          setUser((prevUser) => ({
+            ...prevUser,
+            name: next.name || prevUser?.name,
+            profile_img: formattedImg || prevUser?.profile_img,
+          }));
+
+          return { ...next, profile_img: formattedImg };
+        });
         return true;
       }
 
@@ -267,7 +294,64 @@ export default function ProfilePage() {
     };
   }, []);
 
-  // Shared save call — calls PUT /user_api/profile_update directly.
+  // ── Avatar upload ─────────────────────────────────────────────────
+  // Sends multipart directly to PUT /user_api/profile_update_img with a
+  // `profile_img` file field, alongside the current values for every
+  // other field the endpoint expects (so this doesn't blank them out).
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+
+  const handleAvatarSelect = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    // Instant local preview while the upload is in flight.
+    const localUrl = URL.createObjectURL(file);
+    setAvatarPreview(localUrl);
+
+    setIsUploadingAvatar(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const formData = new FormData();
+      formData.append("name", values.name || "");
+      formData.append("email", values.email || "");
+      formData.append("gender", values.gender || "");
+      formData.append("dob", values.dob || "");
+      formData.append("tob", values.tob || "");
+      formData.append("pob", values.pob || "");
+      formData.append("rashi", values.rashi || "");
+      formData.append("profile_img", file);
+
+      let response = await apiService.postMultipart(UPDATE_PROFILE_URL, formData);
+      if (!response?.status) {
+        response = await apiService.postMultipart("https://admin.vaidikguru.com/user_api/profile_update", formData);
+      }
+
+      if (response?.status) {
+        setSuccessMsg(response.message || "Profile photo updated!");
+        const newImg = response.profile_img || response.results?.profile_img || response.results_web?.profile_img || response.url || "";
+        if (newImg) {
+          const formattedImg = fixImgHost(newImg);
+          setValues((prev) => ({ ...prev, profile_img: formattedImg }));
+          setUser((prevUser) => ({ ...prevUser, profile_img: formattedImg }));
+        }
+        await loadProfile(); // pulls the real hosted URL back from the server
+      } else {
+        setErrorMsg(response?.message || "Failed to upload photo");
+      }
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      setErrorMsg("Failed to upload photo");
+    } finally {
+      setIsUploadingAvatar(false);
+      URL.revokeObjectURL(localUrl);
+      setAvatarPreview(null);
+    }
+  };
+
+  // Shared save call — calls PUT /user_api/profile_update_img directly.
   // The backend only accepts/persists: name, email, gender, dob, tob, pob, rashi.
   // tob is sent as the raw 24h "HH:MM" value from the time input — the
   // backend's convertTime12to24() passes 24h strings through unchanged
@@ -306,12 +390,9 @@ export default function ProfilePage() {
         // the server doesn't echo the updated row back in its response.
         setValues((prev) => ({ ...prev, ...body }));
 
-        // Keep the StorageContext user name in sync.
-        if (profileData.name && profileData.name !== user?.name) {
-          setUser({ ...user, name: profileData.name });
-        }
-
-        // Background re-sync with the server (cache-busted GET above).
+        // Background re-sync with the server (cache-busted GET above) —
+        // loadProfile() now also syncs StorageContext's user (name +
+        // profile_img), so no separate setUser call is needed here.
         // If it returns stale data for some reason, it will still contain
         // our just-saved fields since the PUT has already been awaited.
         await loadProfile();
@@ -541,7 +622,29 @@ export default function ProfilePage() {
               )}
 
               <div style={styles.profileHead}>
-                <div style={styles.avatarCircle}>{initial}</div>
+                <div style={{ position: "relative", width: "fit-content", margin: "0 auto" }}>
+                  <div style={styles.avatarCircle}>
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Profile" style={styles.avatarImg} />
+                    ) : values.profile_img ? (
+                      <img src={fixImgHost(values.profile_img)} alt="Profile" style={styles.avatarImg} />
+                    ) : (
+                      initial
+                    )}
+                    {isUploadingAvatar && <div style={styles.avatarUploadOverlay}>...</div>}
+                  </div>
+                  <label style={styles.avatarUploadBtn} htmlFor="pp-avatar-input">
+                    <span style={styles.iconXs}>{ICONS.camera}</span>
+                  </label>
+                  <input
+                    id="pp-avatar-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarSelect}
+                    disabled={isUploadingAvatar}
+                    style={{ display: "none" }}
+                  />
+                </div>
                 <div style={styles.profileName}>My Profile</div>
                 <div style={styles.profileSub}>Your personal details and account information</div>
                 <div style={styles.smallDivider} />
@@ -1018,6 +1121,39 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     boxShadow: "0 8px 20px rgba(194,24,91,0.25)",
+    overflow: "hidden",
+    position: "relative",
+  },
+  avatarImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+  avatarUploadOverlay: {
+    position: "absolute",
+    inset: 0,
+    background: "rgba(0,0,0,0.45)",
+    color: "#fff",
+    fontSize: 11,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarUploadBtn: {
+    position: "absolute",
+    bottom: 6,
+    right: -2,
+    width: 24,
+    height: 24,
+    borderRadius: "50%",
+    background: colors.pinkAccent,
+    color: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+    border: "2px solid #fff",
   },
   profileName: { fontSize: 20, fontWeight: 700, color: colors.ink },
   profileSub: { fontSize: 12.5, color: colors.muted, marginTop: 3 },

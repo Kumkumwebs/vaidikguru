@@ -137,10 +137,10 @@ const AstrologerRegistration = () => {
         const fetchMetadata = async () => {
             try {
                 const [catRes, langRes, skillRes, countryRes] = await Promise.all([
-                    apiService.post('https://admin.vaidikguru.com/astrologer_api/category_list', {}),
-                    apiService.post('https://admin.vaidikguru.com/astrologer_api/language_list', {}),
-                    apiService.post('https://admin.vaidikguru.com/astrologer_api/skill_list', {}),
-                    apiService.post('https://admin.vaidikguru.com/astrologer_api/location_list', {})
+                    apiService.post('/astrologer_api/category_list', {}),
+                    apiService.post('/astrologer_api/language_list', {}),
+                    apiService.post('/astrologer_api/skill_list', {}),
+                    apiService.post('/astrologer_api/location_list', {})
                 ]);
 
                 if (catRes.status) setCategories(catRes.results);
@@ -276,14 +276,30 @@ const AstrologerRegistration = () => {
         setLoading(true);
         const data = new FormData();
 
+        // Populate base form data
         Object.keys(formData).forEach(key => {
             if (formData[key] !== null && formData[key] !== undefined) {
                 data.append(key, formData[key]);
             }
         });
 
+        // Ensure aliases for admin control panel mapping compatibility
+        if (formData.bio && !formData.about) {
+            data.append('about', formData.bio);
+        }
+        if (formData.profile_img) {
+            data.append('image', formData.profile_img);
+            data.append('astro_img', formData.profile_img);
+        }
+        if (formData.aadhar_card_img) {
+            data.append('aadhar_img', formData.aadhar_card_img);
+        }
+        if (formData.pan_card_img) {
+            data.append('pan_img', formData.pan_card_img);
+        }
+
         try {
-            const res = await apiService.postMultipart('https://admin.vaidikguru.com/astrologer_api/astrologer_register', data);
+            const res = await apiService.postMultipart('/astrologer_api/astrologer_register', data);
             if (res.status) {
                 setModal({
                     open: true,

@@ -57,6 +57,15 @@ const SkeletonCard = () => (
   </div>
 );
 
+const fixImgHost = (url) => {
+  if (!url) return "";
+  let clean = typeof url === "string" ? url.replace("admin.astrogurujii.com", "admin.vaidikguru.com") : url;
+  if (typeof clean === "string" && clean.startsWith("/")) {
+    clean = `https://admin.vaidikguru.com${clean}`;
+  }
+  return clean;
+};
+
 /* ── Puja Card ── */
 const PujaCard = ({ item, index, onView }) => {
   const [liked, setLiked] = useState(false);
@@ -67,8 +76,11 @@ const PujaCard = ({ item, index, onView }) => {
     ? Math.min(...item.packages.map((p) => Number(p.packagePrice || 0)))
     : item.price || 0;
 
+  const title = item.title || item.name || "Sacred Pooja";
+  const image = fixImgHost(item.pujaImage || item.image || item.img || "");
+
   // Combine purpose + temple into a single condensed line to save vertical space
-  const metaLine = [item.purposeOfPooja, item.mandirName]
+  const metaLine = [item.purposeOfPooja || item.purpose, item.mandirName || item.mandir]
     .filter(Boolean)
     .join(" • ");
 
@@ -98,10 +110,10 @@ const PujaCard = ({ item, index, onView }) => {
       </button>
 
       <div className="pj-img-wrap">
-        {!imgErr && (item.pujaImage || item.image) ? (
+        {!imgErr && image ? (
           <img
-            src={item.pujaImage || item.image}
-            alt={item.title}
+            src={image}
+            alt={title}
             onError={() => setImgErr(true)}
           />
         ) : (
@@ -112,7 +124,7 @@ const PujaCard = ({ item, index, onView }) => {
       </div>
 
       <div className="pj-card-body">
-        <div className="pj-card-name">{item.title}</div>
+        <div className="pj-card-name">{title}</div>
         {metaLine && (
           <div className="pj-card-purpose">
             <i className="fas fa-map-marker-alt" />
@@ -237,33 +249,39 @@ const RecommendationModal = ({ isOpen, onClose }) => {
           <form onSubmit={handleSubmit}>
             <input
               type="text"
+              className="al-rec-input"
               placeholder="Your Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               style={{
                 width: "100%", padding: "11px 14px", marginBottom: 12,
-                border: "1.5px solid #e5e7eb", borderRadius: 9, fontSize: 13.5, outline: "none",
+                border: "1.5px solid #d1d5db", borderRadius: 9, fontSize: 13.5, outline: "none",
+                color: "#111827", backgroundColor: "#ffffff",
               }}
             />
             <input
               type="tel"
+              className="al-rec-input"
               placeholder="Phone Number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               style={{
                 width: "100%", padding: "11px 14px", marginBottom: 12,
-                border: "1.5px solid #e5e7eb", borderRadius: 9, fontSize: 13.5, outline: "none",
+                border: "1.5px solid #d1d5db", borderRadius: 9, fontSize: 13.5, outline: "none",
+                color: "#111827", backgroundColor: "#ffffff",
               }}
             />
             <textarea
+              className="al-rec-input"
               placeholder="What are you looking for? (optional)"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={3}
               style={{
                 width: "100%", padding: "11px 14px", marginBottom: 12,
-                border: "1.5px solid #e5e7eb", borderRadius: 9, fontSize: 13.5, outline: "none",
+                border: "1.5px solid #d1d5db", borderRadius: 9, fontSize: 13.5, outline: "none",
                 resize: "vertical", fontFamily: "inherit",
+                color: "#111827", backgroundColor: "#ffffff",
               }}
             />
             {result?.ok === false && (
@@ -316,12 +334,14 @@ const SidebarContent = ({
   onApply,
   searchVal,
   setSearchVal,
+  allItems = [],
 }) => {
   const set = (k, v) => setFilters((f) => ({ ...f, [k]: v }));
   const reset = () => {
     setFilters({
       category: "all",
       priceBucket: "",
+      maxPrice: 25000,
       duration: "all",
       sortBy: "popular",
       temple: "",
@@ -329,7 +349,43 @@ const SidebarContent = ({
     });
     setSearchVal("");
   };
-  const [rv, setRv] = useState(25000);
+
+  const handleApplyClick = () => {
+    setFilters((f) => ({ ...f, search: searchVal }));
+    onApply();
+  };
+
+  // Dynamic temple list from data
+  const templesFromData = Array.from(
+    new Set(allItems.map((i) => i.mandirName).filter(Boolean))
+  );
+  const templeOptions = templesFromData.length
+    ? templesFromData
+    : [
+        "Kashi Vishwanath",
+        "Tirupati Balaji",
+        "Mahalakshmi Temple",
+        "Gaya Ji, Bihar",
+        "Meenakshi Temple, Madurai",
+      ];
+
+  // Dynamic Category Counts
+  const getCatCount = (cat) => {
+    if (!allItems.length) return 0;
+    if (cat === "all") return allItems.length;
+    return allItems.filter((i) => {
+      const text = `${i.title || ""} ${i.purposeOfPooja || ""} ${i.category || ""}`.toLowerCase();
+      if (cat === "health") return /health|heal|rog|swasthya|cure|illness|bimar/i.test(text);
+      if (cat === "wealth") return /wealth|prosper|laxmi|lakshmi|kuber|dhan|money|business|samriddhi/i.test(text);
+      if (cat === "protection") return /protect|relief|shanti|dosha|dosh|rahu|ketu|shani|kavach|suraksha|nazar|bada/i.test(text);
+      if (cat === "marriage") return /marriag|love|vivah|relationship|patni|pati|manglik|var|vivaha|shadi/i.test(text);
+      if (cat === "pitru") return /pitru|pitar|tarpan|shradh|gaya|ancestor/i.test(text);
+      if (cat === "other") {
+        return !/health|heal|rog|swasthya|wealth|prosper|laxmi|lakshmi|kuber|dhan|protect|relief|shanti|dosha|dosh|marriag|love|vivah|pitru|pitar/i.test(text);
+      }
+      return text.includes(cat);
+    }).length;
+  };
 
   return (
     <>
@@ -346,10 +402,13 @@ const SidebarContent = ({
           className="pj-sb-search-input"
           placeholder="Search poojas..."
           value={searchVal}
-          onChange={(e) => setSearchVal(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && onApply()}
+          onChange={(e) => {
+            setSearchVal(e.target.value);
+            setFilters((f) => ({ ...f, search: e.target.value }));
+          }}
+          onKeyDown={(e) => e.key === "Enter" && handleApplyClick()}
         />
-        <button className="pj-sb-search-btn" onClick={onApply}>
+        <button className="pj-sb-search-btn" onClick={handleApplyClick}>
           <i className="fas fa-search" />
         </button>
       </div>
@@ -358,13 +417,13 @@ const SidebarContent = ({
 
       <div className="pj-fh">Category</div>
       {[
-        { v: "all", l: "All Poojas", c: 58 },
-        { v: "health", l: "Health & Healing", c: 12 },
-        { v: "wealth", l: "Wealth & Prosperity", c: 15 },
-        { v: "protection", l: "Protection & Relief", c: 11 },
-        { v: "marriage", l: "Marriage & Love", c: 8 },
-        { v: "pitru", l: "Pitru Dosha", c: 5 },
-        { v: "other", l: "Other Poojas", c: 7 },
+        { v: "all", l: "All Poojas", c: getCatCount("all") },
+        { v: "health", l: "Health & Healing", c: getCatCount("health") },
+        { v: "wealth", l: "Wealth & Prosperity", c: getCatCount("wealth") },
+        { v: "protection", l: "Protection & Relief", c: getCatCount("protection") },
+        { v: "marriage", l: "Marriage & Love", c: getCatCount("marriage") },
+        { v: "pitru", l: "Pitru Dosha", c: getCatCount("pitru") },
+        { v: "other", l: "Other Poojas", c: getCatCount("other") },
       ].map(({ v, l, c }) => (
         <RadioOpt
           key={v}
@@ -384,15 +443,15 @@ const SidebarContent = ({
         min={0}
         max={25000}
         step={100}
-        value={rv}
-        onChange={(e) => setRv(+e.target.value)}
+        value={filters.maxPrice || 25000}
+        onChange={(e) => set("maxPrice", +e.target.value)}
         style={{
-          background: `linear-gradient(to right,#c0392b ${rv / 250}%,#e5e7eb ${rv / 250}%)`,
+          background: `linear-gradient(to right,#c0392b ${(filters.maxPrice || 25000) / 250}%,#e5e7eb ${(filters.maxPrice || 25000) / 250}%)`,
         }}
       />
       <div className="pj-range-ends">
         <span>₹0</span>
-        <span>₹25,000+</span>
+        <span>₹{(filters.maxPrice || 25000).toLocaleString("en-IN")}{filters.maxPrice >= 25000 ? '+' : ''}</span>
       </div>
       <div className="pj-buckets">
         {[
@@ -440,14 +499,8 @@ const SidebarContent = ({
         onChange={(e) => set("temple", e.target.value)}
       >
         <option value="">All Temples</option>
-        {[
-          "Kashi Vishwanath",
-          "Tirupati Balaji",
-          "Mahalakshmi Temple",
-          "Gaya Ji, Bihar",
-          "Meenakshi Temple, Madurai",
-        ].map((t) => (
-          <option key={t}>{t}</option>
+        {templeOptions.map((t) => (
+          <option key={t} value={t}>{t}</option>
         ))}
       </select>
 
@@ -469,7 +522,7 @@ const SidebarContent = ({
         />
       ))}
 
-      <button className="pj-apply" onClick={onApply}>
+      <button className="pj-apply" onClick={handleApplyClick}>
         <i className="fas fa-filter" /> Apply Filters
       </button>
     </>
@@ -490,6 +543,7 @@ const PujaListing = () => {
   const [filters, setFilters] = useState({
     category: "all",
     priceBucket: "",
+    maxPrice: 25000,
     duration: "all",
     sortBy: "popular",
     temple: "",
@@ -503,26 +557,39 @@ const PujaListing = () => {
   const [showRecModal, setShowRecModal] = useState(false);
 
   /* ── Fetch ── */
- /* ── Fetch ── */
   const fetchItems = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
       const res = await PujaService.getPujaList(null);
-      if (res?.status && Array.isArray(res?.data) && res.data.length > 0) {
-        // API returns data as date-grouped array: [{_id: "2026-07-30", result: [...]}, ...]
-        // Flatten all result arrays across all date groups into one list
-        const flattened = res.data.flatMap((group) => group.result || []);
-        setAllItems(flattened);
-      } else if (res?.results) {
-        setAllItems(res.results);
+      let list = [];
+      if (res?.status) {
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          list = res.data.flatMap((group) => group.result || (group.title ? [group] : []));
+        }
+        if (list.length === 0 && Array.isArray(res.result) && res.result.length > 0) {
+          list = res.result;
+        }
+        if (list.length === 0 && Array.isArray(res.promotionalBanner) && res.promotionalBanner.length > 0) {
+          list = res.promotionalBanner;
+        }
+        if (list.length === 0 && Array.isArray(res.results) && res.results.length > 0) {
+          list = res.results;
+        }
+        if (list.length === 0 && Array.isArray(res.data) && res.data.length > 0) {
+          list = res.data;
+        }
       } else if (Array.isArray(res)) {
-        setAllItems(res);
+        list = res;
+      }
+
+      if (list && list.length > 0) {
+        setAllItems(list);
       } else {
         setError(true);
       }
     } catch (e) {
-      console.error(e);
+      console.error("fetchItems error:", e);
       setError(true);
     } finally {
       setLoading(false);
@@ -539,22 +606,43 @@ const PujaListing = () => {
 
     let list = [...allItems];
 
+    // 1. Search Filter
     if (filters.search) {
       const q = filters.search.toLowerCase();
       list = list.filter(
         (i) =>
           (i.title || "").toLowerCase().includes(q) ||
           (i.mandirName || "").toLowerCase().includes(q) ||
-          (i.purposeOfPooja || "").toLowerCase().includes(q)
+          (i.purposeOfPooja || "").toLowerCase().includes(q) ||
+          (i.description || "").toLowerCase().includes(q)
       );
     }
 
+    // 2. Category Filter
+    if (filters.category && filters.category !== "all") {
+      const cat = filters.category.toLowerCase();
+      list = list.filter((i) => {
+        const text = `${i.title || ""} ${i.purposeOfPooja || ""} ${i.category || ""}`.toLowerCase();
+        if (cat === "health") return /health|heal|rog|swasthya|cure|illness|bimar/i.test(text);
+        if (cat === "wealth") return /wealth|prosper|laxmi|lakshmi|kuber|dhan|money|business|samriddhi/i.test(text);
+        if (cat === "protection") return /protect|relief|shanti|dosha|dosh|rahu|ketu|shani|kavach|suraksha|nazar|bada/i.test(text);
+        if (cat === "marriage") return /marriag|love|vivah|relationship|patni|pati|manglik|var|vivaha|shadi/i.test(text);
+        if (cat === "pitru") return /pitru|pitar|tarpan|shradh|gaya|ancestor/i.test(text);
+        if (cat === "other") {
+          return !/health|heal|rog|swasthya|wealth|prosper|laxmi|lakshmi|kuber|dhan|protect|relief|shanti|dosha|dosh|marriag|love|vivah|pitru|pitar/i.test(text);
+        }
+        return text.includes(cat);
+      });
+    }
+
+    // 3. Temple Filter
     if (filters.temple) {
       list = list.filter((i) =>
-        (i.mandirName || "").includes(filters.temple)
+        (i.mandirName || "").toLowerCase().includes(filters.temple.toLowerCase())
       );
     }
 
+    // 4. Price Bucket Filter
     if (filters.priceBucket) {
       const [min, max] = filters.priceBucket.split("-").map(Number);
       list = list.filter((i) => {
@@ -566,6 +654,29 @@ const PujaListing = () => {
       });
     }
 
+    // 5. Price Range Slider Filter
+    if (filters.maxPrice && filters.maxPrice < 25000) {
+      list = list.filter((i) => {
+        const p = i.packages?.length
+          ? Math.min(...i.packages.map((pkg) => Number(pkg.packagePrice || 0)))
+          : Number(i.price || 0);
+        return p <= filters.maxPrice;
+      });
+    }
+
+    // 6. Duration Filter
+    if (filters.duration && filters.duration !== "all") {
+      list = list.filter((i) => {
+        const d = (i.duration || i.pujaDuration || "").toLowerCase();
+        if (filters.duration === "1-2") return d.includes("1") || d.includes("2") || d.includes("hour");
+        if (filters.duration === "2-4") return d.includes("2") || d.includes("3") || d.includes("4");
+        if (filters.duration === "4-8") return d.includes("4") || d.includes("5") || d.includes("6") || d.includes("7") || d.includes("8");
+        if (filters.duration === "1d") return d.includes("day") || d.includes("1d") || d.includes("24");
+        return true;
+      });
+    }
+
+    // 7. Sort By Filter
     if (filters.sortBy === "price_low") {
       list.sort((a, b) => {
         const pa = a.packages?.length
@@ -585,6 +696,12 @@ const PujaListing = () => {
           ? Math.min(...b.packages.map((p) => Number(p.packagePrice || 0)))
           : Number(b.price || 0);
         return pb - pa;
+      });
+    } else if (filters.sortBy === "recent") {
+      list.sort((a, b) => {
+        const da = new Date(a.createdAt || a.pujaDatetime || 0).getTime();
+        const db = new Date(b.createdAt || b.pujaDatetime || 0).getTime();
+        return db - da;
       });
     } else if (filters.sortBy === "az") {
       list.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
@@ -705,6 +822,7 @@ const PujaListing = () => {
                   onApply={handleApply}
                   searchVal={searchVal}
                   setSearchVal={setSearchVal}
+                  allItems={allItems}
                 />
               </div>
             </div>

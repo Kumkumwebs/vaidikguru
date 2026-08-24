@@ -357,18 +357,6 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 		}
 	};
 
-	const startPolling = (orderId) => {
-		stopPolling();
-		pollIntervalRef.current = setInterval(async () => {
-			try {
-				const res = await fetch(`https://admin.vaidikguru.com/puja/payment_status/${orderId}`, { method: "GET" });
-				const data = await res.json();
-				if (data.payment_status === "Success") { stopPolling(); setBookingStatus("success"); }
-				else if (data.payment_status === "Failed") { stopPolling(); setBookingStatus("failed"); }
-			} catch (err) { console.error("Poll error:", err); }
-		}, 3000);
-	};
-
 	const handleFinalSubmit = async (paymentMode) => {
 		setIsConfirmModalOpen(false);
 		setBookingStatus("pending");
@@ -379,7 +367,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 					const razorpayLoaded = await loadRazorpay();
 					if (!razorpayLoaded) { alert("Razorpay SDK failed to load. Please try again."); setBookingStatus(null); return; }
 					const options = {
-						key: "rzp_test_TJfZRU2xcY3vGX", amount: response.amount, currency: "INR", name: "DivinIQ",
+						key: "rzp_test_TJfZRU2xcY3vGX", amount: response.amount, currency: "INR", name: "Vaidik Guru",
 						description: "Puja Booking Payment", order_id: response.orderId,
 						handler: function () { startPolling(response.orderId); },
 						prefill: { name: formData.participantName, contact: formData.whatsapp },
@@ -388,7 +376,10 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 					};
 					const rzp = new window.Razorpay(options);
 					rzp.open();
-				} else { setBookingStatus("success"); }
+				} else {
+					setBookingStatus("success");
+					refreshProfile?.();
+				}
 			} else { setBookingStatus("failed"); }
 		} catch (e) { console.error("Booking Error:", e); setBookingStatus("failed"); }
 	};

@@ -28,7 +28,15 @@ input {
     }
 }
 
-
+@media screen and (max-width: 768px) {
+  select,
+  .form-control,
+  .form-select,
+  textarea,
+  input {
+    padding-right: 30px !important;
+  }
+}
 
 .form-select,
 select {

@@ -40,7 +40,7 @@ const WhyTrustSection = () => {
 					</div>
 
 					<div className="dq-why-content">
-						<h2>Why Millions VadikGuru</h2>
+						<h2>Why Millions Vaidik Guru</h2>
 						<div className="dq-why-list">
 							{FEATURES.map((f) => (
 								<div className="dq-why-item" key={f.title}>

@@ -38,6 +38,18 @@ const STATS = [
   { icon: '/assets/img/home/gifthome.png', value: '1L+', label: 'Pujas Performed' },
 ];
 
+// API still returns some image URLs hosted on legacy domains — rewrite to the current active backend.
+const fixImgHost = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  let clean = url
+    .replace('admin.astrogurujii.com', 'admin.vaidikguru.com')
+    .replace('admin.astropush.com', 'admin.vaidikguru.com');
+  if (clean.startsWith('/')) {
+    clean = `https://admin.vaidikguru.com${clean}`;
+  }
+  return clean;
+};
+
 // Vector SVG icons for Navadurga (9 Days Grid)
 const SVGIcons = {
   diya: (
@@ -144,13 +156,13 @@ const BlogDetail = () => {
       setError(false);
       try {
         const res = await AuthService.getHomeData();
-        if (res && res.blog) {
-          setBlogs(res.blog);
-          const found = res.blog.find(b => b._id === id);
+        const list = res?.blog || res?.blogs || res?.data || [];
+        if (list && list.length > 0) {
+          setBlogs(list);
+          const found = list.find(b => (b._id === id || b.id === id));
           if (found) {
             setCurrentBlog(found);
           } else {
-            // Check if title or something matches
             setError(true);
           }
         } else {
@@ -169,7 +181,7 @@ const BlogDetail = () => {
   // If blog ID changes, update current blog
   useEffect(() => {
     if (blogs.length > 0) {
-      const found = blogs.find(b => b._id === id);
+      const found = blogs.find(b => (b._id === id || b.id === id));
       if (found) {
         setCurrentBlog(found);
         window.scrollTo(0, 0);
@@ -181,7 +193,7 @@ const BlogDetail = () => {
   // Share handler
   const handleShare = (platform) => {
     const url = window.location.href;
-    const title = currentBlog ? currentBlog.title : 'DiviniQ Blog';
+    const title = currentBlog ? (currentBlog.title || currentBlog.name || 'DiviniQ Blog') : 'DiviniQ Blog';
     let shareUrl = '';
 
     if (platform === 'facebook') {
@@ -202,19 +214,21 @@ const BlogDetail = () => {
   };
 
   // Find index for pagination
-  const blogIndex = blogs.findIndex(b => b._id === id);
+  const blogIndex = blogs.findIndex(b => (b._id === id || b.id === id));
   const prevBlog = blogIndex > 0 ? blogs[blogIndex - 1] : null;
   const nextBlog = blogIndex < blogs.length - 1 && blogIndex !== -1 ? blogs[blogIndex + 1] : null;
 
   // Filter sidebar other blogs (excluding current, take up to 5)
-  const otherBlogs = blogs.filter(b => b._id !== id).slice(0, 5);
+  const otherBlogs = blogs.filter(b => (b._id !== id && b.id !== id)).slice(0, 5);
 
-  const cleanDescription = currentBlog ? stripHtml(currentBlog.description) : '';
+  const cleanDescription = currentBlog ? stripHtml(currentBlog.description || currentBlog.content || currentBlog.details) : '';
   const readTimeStr = estimateReadTime(cleanDescription);
-  const categoryName = currentBlog ? (CATEGORY_MAP[currentBlog.category_id] || 'Spirituality') : 'Spirituality';
+  const catId = currentBlog ? (currentBlog.category_id || currentBlog.category) : null;
+  const categoryName = currentBlog ? (CATEGORY_MAP[catId] || (typeof catId === 'string' && catId.length < 20 ? catId : 'Spirituality')) : 'Spirituality';
 
   // Check if this is the Navratri Blog to render custom beautiful Vedic structure
-  const isNavratriBlog = currentBlog && (currentBlog._id === '67dd49c94fadb43e651862ff' || currentBlog.title.toLowerCase().includes('navratri'));
+  const blogTitleStr = currentBlog ? (currentBlog.title || currentBlog.name || '').toLowerCase() : '';
+  const isNavratriBlog = currentBlog && (currentBlog._id === '67dd49c94fadb43e651862ff' || blogTitleStr.includes('navratri'));
 
   return (
     <div className="bd-page">
@@ -276,22 +290,22 @@ const BlogDetail = () => {
               <div className="bd-featured-image-wrapper">
                 <img
                   className="bd-featured-image"
-                  src={currentBlog.img}
-                  alt={currentBlog.title}
+                  src={fixImgHost(currentBlog.img || currentBlog.image || currentBlog.blog_image || currentBlog.webImage || currentBlog.mobileImage)}
+                  alt={currentBlog.title || currentBlog.name || 'Blog Post'}
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = 'https://images.unsplash.com/photo-1545128485-c400e7702796?auto=format&fit=crop&q=80&w=1200';
+                    e.target.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=1200';
                   }}
                 />
               </div>
 
               <span className="bd-tag-badge">{categoryName}</span>
-              <h1 className="bd-title">{currentBlog.title}</h1>
+              <h1 className="bd-title">{currentBlog.title || currentBlog.name || 'Sacred Insights'}</h1>
 
               {/* Meta & Share bar */}
               <div className="bd-meta-share-row">
                 <div className="bd-meta-info">
-                  <i className="far fa-calendar-alt"></i> {apiService.formatDate(currentBlog.Created_date)}
+                  <i className="far fa-calendar-alt"></i> {apiService.formatDate(currentBlog.Created_date || currentBlog.createdAt || currentBlog.created_at || currentBlog.date)}
                   <span className="divider">•</span>
                   <i className="far fa-clock"></i> {readTimeStr}
                 </div>
@@ -470,7 +484,7 @@ const BlogDetail = () => {
                   </>
                 ) : (
                   /* Standard Dynamic HTML Rendering for other blogs */
-                  <div dangerouslySetInnerHTML={{ __html: currentBlog.description }} />
+                  <div dangerouslySetInnerHTML={{ __html: currentBlog.description || currentBlog.content || currentBlog.details || "" }} />
                 )}
               </div>
 
@@ -527,12 +541,12 @@ const BlogDetail = () => {
                     {otherBlogs.map((b) => (
                       <Link to={`/blog/${b._id}`} className="bd-other-blog-item" key={b._id}>
                         <img
-                          src={b.img}
+                          src={fixImgHost(b.img || b.image)}
                           alt={b.title}
                           className="bd-other-blog-img"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = 'https://images.unsplash.com/photo-1545128485-c400e7702796?auto=format&fit=crop&q=80&w=150';
+                            e.target.src = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&q=80&w=300';
                           }}
                         />
                         <div className="bd-other-blog-content">

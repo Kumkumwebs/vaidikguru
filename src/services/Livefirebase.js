@@ -1,23 +1,26 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBTB6yFD8Nm3-6Lpcyt_5_7m3PC2hi1CUA",
-  authDomain: "diviniq-5c0d0.firebaseapp.com",
-  databaseURL: "https://diviniq-5c0d0-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "diviniq-5c0d0",
-  storageBucket: "diviniq-5c0d0.firebasestorage.app",
-  messagingSenderId: "23211911286",
-  appId: "1:23211911286:web:231a6f957fff4c72f51757",
-  measurementId: "G-SGSTHWBF4D",
+  apiKey: "AIzaSyCjcrKb6m-6Yn9Wx-qdkOEdgI4V0oJVQt4",
+  authDomain:"astrogurujii-production.firebaseapp.com",
+  databaseURL: "https://astrogurujii-production-default-rtdb.firebaseio.com",
+  projectId: "astrogurujii-production",
+  storageBucket: "astrogurujii-production.firebasestorage.app",
+  messagingSenderId:  "307653017355",
+  appId:"1:307653017355:web:5b9012107424480ec8ec0e",
+  measurementId: "G-77W4E12DBC"
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Vite HMR can re-execute this module without a full page reload — guard
+// against calling initializeApp() twice against the same [DEFAULT] app,
+// which throws app/duplicate-app.
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 // ── Realtime Database ──
 // This is the piece ChatContext.jsx / ChatConsultation.jsx actually need:

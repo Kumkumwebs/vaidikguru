@@ -364,7 +364,7 @@ const ChadhavaDetails = () => {
         const res = await ChadhavaService.getChadhavaListById(id);
         if (!isMounted) return;
         if (res?.status) {
-          const record = Array.isArray(res.data) ? res.data[0] : (res.data || res.chadhava || res);
+          const record = res.chadhava || (Array.isArray(res.data) ? res.data[0] : res.data) || res.result || res;
           setChadhava(record || null);
           if (!record) setError(true);
         } else {

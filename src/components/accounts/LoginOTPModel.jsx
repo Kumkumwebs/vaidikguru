@@ -362,16 +362,23 @@ function OTPScreen({ phone, otpMeta, onBack, onVerified, shieldSrc }) {
 							flex: 1, height: 52,
 							border: `2px solid ${error ? C.expireRed : focused === i ? C.otpFocus : (d ? C.otpBorder : C.borderLight)}`,
 							borderRadius: 10, textAlign: "center",
-							fontSize: 22, fontWeight: 700, color: C.titleBlack,
+							fontSize: 18, fontWeight: 700, color: C.titleBlack,
 							outline: "none", background: "#fff",
 							transition: "border-color 0.15s",
+							WebkitTextSecurity: "disc", // masks the typed digit as a dot, Chrome/Safari
+							MozTextSecurity: "disc",     // Firefox equivalent (older builds behind a flag)
+							// iOS/Safari renders the masked dot using -webkit-text-fill-color,
+							// NOT the regular `color` property — without this it defaults to
+							// white on mobile Safari, making the dot invisible on this white input.
+							WebkitTextFillColor: C.titleBlack,
+							caretColor: C.titleBlack, // keep the blinking cursor visible/dark too
 						}}
 					/>
 				))}
 			</div>
 
 			{error && (
-				<p style={{ fontSize: 12.5, color: C.expireRed, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 4 }}>
+				<p style={{ fontSize: 10.5, color: C.expireRed, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 4 }}>
 					<span>⚠️</span> {error}
 				</p>
 			)}

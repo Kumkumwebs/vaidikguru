@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import PujaService from '../../services/pujaServices';
 import '../../pages/home.css';
 
 const FALLBACK_PUJAS = [
@@ -23,6 +25,15 @@ const formatDate = (iso) => {
 	return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
+const fixImgHost = (url) => {
+	if (!url) return PLACEHOLDER;
+	let clean = typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
+	if (typeof clean === 'string' && clean.startsWith('/')) {
+		clean = `https://admin.vaidikguru.com${clean}`;
+	}
+	return clean;
+};
+
 const handleImgError = (e) => {
 	const img = e.currentTarget;
 	if (img.dataset.fallback === 'done') return; // already swapped once — stop the loop
@@ -31,16 +42,48 @@ const handleImgError = (e) => {
 };
 
 const PujaListSection = ({ puja }) => {
-	const rawItems = puja?.result?.length ? puja.result : null;
+	const [apiPujas, setApiPujas] = useState([]);
+
+	useEffect(() => {
+		const fetchRealPujas = async () => {
+			try {
+				const res = await PujaService.getPujaList();
+				let list = [];
+				if (res?.status) {
+					if (Array.isArray(res.promotionalBanner) && res.promotionalBanner.length > 0) {
+						list = res.promotionalBanner;
+					} else if (Array.isArray(res.results) && res.results.length > 0) {
+						list = res.results;
+					} else if (Array.isArray(res.result) && res.result.length > 0) {
+						list = res.result;
+					} else if (Array.isArray(res.product) && res.product.length > 0) {
+						list = res.product;
+					} else if (Array.isArray(res.data) && res.data.length > 0) {
+						list = res.data;
+					}
+				}
+				if (list.length > 0) {
+					setApiPujas(list);
+				}
+			} catch (err) {
+				console.error("PujaListSection fetch error:", err);
+			}
+		};
+		fetchRealPujas();
+	}, []);
+
+	const rawItems = (puja?.result && puja.result.length > 0)
+		? puja.result
+		: (apiPujas.length > 0 ? apiPujas : null);
 
 	const items = rawItems
-		? rawItems.map((p) => ({
-			id: p._id,
-			name: p.title,
-			image: p.pujaImage || PLACEHOLDER,
-			mandir: p.mandirName,
-			purpose: p.purposeOfPooja,
-			date: formatDate(p.pujaDatetime),
+		? rawItems.slice(0, 6).map((p) => ({
+			id: p._id || p.id,
+			name: p.title || p.name || 'Sacred Pooja',
+			image: fixImgHost(p.pujaImage || p.image || p.img),
+			mandir: p.mandirName || p.mandir || 'At Temple',
+			purpose: p.purposeOfPooja || p.purpose,
+			date: formatDate(p.pujaDatetime || p.date),
 		}))
 		: FALLBACK_PUJAS.map((p) => ({ ...p, image: p.image || PLACEHOLDER }));
 
@@ -52,26 +95,22 @@ const PujaListSection = ({ puja }) => {
 					<a href="/puja">View All Pujas</a>
 				</div>
 
-				{/* <div className="dq-cards-row dq-cards-scroll"> */}
 				<div className="row">
 					{items.map((item) => (
-						<div key={item.id} className="col-lg-4 col-md-6 col-12">
+						<div key={item.id || item.name} className="col-lg-4 col-md-6 col-12">
 							<div className="dq-puja-link overflow-hidden border rounded shadow-sm mb-4">
-								<a href={`/puja/${item.name}/${item.id}`}
+								<a href={`/puja/${encodeURIComponent(item.name)}/${item.id}`}
 								 key={item.id || item.name}>
 								<img
 									src={item.image}
 									alt={item.name}
 									loading="lazy"
 									onError={handleImgError}
-									style={{ width: "100%", }}
-									// style={{ width: "100%", minHeight: 230, maxHeight: 230, objectPosition: "center", }}
 								/>
 								<div className="dq-puja-body">
 									<h4>{item.name}</h4>
 									{item.date && <div className="dq-puja-meta">📅 {item.date}</div>}
 									<div className="dq-puja-sub">{item.mandir}</div>
-									{/* {item.purpose && <p className="dq-puja-purpose">{item.purpose}</p>} */}
 									<div className="dq-puja-footer">
 										<span className="dq-btn dq-btn-sm">Book Now</span>
 									</div>

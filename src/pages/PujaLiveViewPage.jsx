@@ -76,12 +76,10 @@ const PujaLiveViewPage = () => {
 
     const fetchBooking = async () => {
       try {
-        const res = await apiService.postBearer(
-          "https://admin.vaidikguru.com/puja/mypujabookings",
-          {}
-        );
+        const res = await apiService.postBearer("/puja/mypujabookings", {});
         if (res && res.status) {
-          const match = res.bookPooja.find((b) => b._id === id);
+          const list = res.results || res.bookPooja || res.data || res.result || [];
+          const match = list.find((b) => b._id === id);
           setBooking(match || null);
         }
       } catch (error) {

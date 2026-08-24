@@ -52,6 +52,10 @@ const avColor = (name = '') => {
 	return COLORS[Math.abs(hash) % COLORS.length];
 };
 
+// API still returns some image URLs hosted on the old domain — rewrite to the current one.
+const fixImgHost = (url) =>
+	typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
+
 const initials = (name = '') =>
 	name
 		.trim()
@@ -63,10 +67,18 @@ const initials = (name = '') =>
 const AstrologerCard = ({ astro, onChat }) => {
 	const [liked, setLiked] = useState(false);
 	const [imgErr, setImgErr] = useState(false);
-	const cats = astro.category?.slice(0, 3).map((c) => c.name) || ['Vedic'];
-	const online = astro.is_online == 1;
-	const busy = astro.is_busy == 1;
-	const dotCls = online ? 'dn' : busy ? 'db' : 'do';
+	const [notified, setNotified] = useState(false);
+	const cats = astro.category?.slice(0, 3).map((c) => c.name || c) || ['Vedic'];
+	const busy = astro.is_busy == 1 || astro.is_busy === '1' || astro.is_busy === true;
+	const isExplicitOffline = astro.is_online === 0 || astro.is_online === '0' || astro.is_offline == 1 || astro.is_offline === '1';
+	const online = !busy && !isExplicitOffline;
+	const dotCls = busy ? 'db' : online ? 'dn' : 'do';
+
+	const handleNotifyClick = (e) => {
+		e.stopPropagation();
+		setNotified(!notified);
+		console.log('[NotifyWhenAvailable] Toggled for TeamSection astro:', astro.name);
+	};
 
 	return (
 		<motion.div
@@ -91,7 +103,7 @@ const AstrologerCard = ({ astro, onChat }) => {
 			<div className="al-av-wrap">
 				<div className="al-av-clip">
 					{astro.profile_img && !imgErr ? (
-						<img src={astro.profile_img} alt={astro.name} onError={() => setImgErr(true)} />
+						<img src={fixImgHost(astro.profile_img)} alt={astro.name} onError={() => setImgErr(true)} />
 					) : (
 						<div
 							className="al-av-init"
@@ -120,12 +132,21 @@ const AstrologerCard = ({ astro, onChat }) => {
 				<div className="al-price">₹{astro.per_min_chat || '5'}/min</div>
 			</div>
 			<div className="al-actions">
-				<button className="al-chat" onClick={(e) => { e.stopPropagation(); onChat(astro, 'chat'); }}>
-					Chat Now
-				</button>
-				<button className="al-call" onClick={(e) => { e.stopPropagation(); onChat(astro, 'call'); }} title="Call">
-					<i className="fas fa-phone" />
-				</button>
+				{busy ? (
+					<button className={`al-notify-btn${notified ? ' active' : ''}`} onClick={handleNotifyClick}>
+						<i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
+						<span>{notified ? 'Notified' : 'Notify Me'}</span>
+					</button>
+				) : (
+					<>
+						<button className="al-chat" onClick={(e) => { e.stopPropagation(); onChat(astro, 'chat'); }}>
+							Chat Now
+						</button>
+						<button className="al-call" onClick={(e) => { e.stopPropagation(); onChat(astro, 'call'); }} title="Call">
+							<i className="fas fa-phone" />
+						</button>
+					</>
+				)}
 			</div>
 		</motion.div>
 	);

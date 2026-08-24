@@ -26,6 +26,10 @@ const handleImgError = (e) => {
 	img.src = PLACEHOLDER;
 };
 
+// API still returns some image URLs hosted on the old domain — rewrite to the current one.
+const fixImgHost = (url) =>
+	typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
+
 const ChadhavaSection = ({ chadhava }) => {
 	const rawItems = chadhava?.length ? chadhava : null;
 
@@ -68,12 +72,13 @@ const ChadhavaSection = ({ chadhava }) => {
 			// placeholder, so the listing image matches what the
 			// detail page shows for the same record.
 			image:
-				c.chadhavaImage ||
-				c.bannerImages?.[0] ||
-				c.galleryImages?.[0] ||
-				c.gallery?.[0] ||
-				c.images?.[0] ||
-				PLACEHOLDER,
+				fixImgHost(
+					c.chadhavaImage ||
+					c.bannerImages?.[0] ||
+					c.galleryImages?.[0] ||
+					c.gallery?.[0] ||
+					c.images?.[0]
+				) || PLACEHOLDER,
 			price: c.price,
 		}))
 		: FALLBACK_ITEMS.map((c) => ({ ...c, image: c.image || PLACEHOLDER }));
@@ -86,65 +91,32 @@ const ChadhavaSection = ({ chadhava }) => {
 					<a href="/chadhava">Explore Chadhava</a>
 				</div>
 
-				{/* <div className="dq-chadhava-grid row g-3"> */}
-				<div className="row g-md-5 g-3">
+				<div className="row">
 					{items.map((item) => (
-						<div key={item.id} className="col-12 col-md-6 col-lg-4 overflow-hidden">
-							<a
-								href={`/chadhava/${item.id}`}
-								className="dq-chadhava-item"
-								key={item.id || item.name}
-							>
-								<div className="dq-chadhava-img-wrap" style={{ position: "relative" }}>
+						<div key={item.id} className="col-lg-4 col-md-6 col-12">
+							<div className="dq-puja-link overflow-hidden border rounded shadow-sm mb-4">
+								<a
+									href={`/chadhava/${item.id}`}
+									key={item.id || item.name}
+								>
 									<img
 										src={item.image}
 										alt={item.name}
 										loading="lazy"
 										onError={handleImgError}
-										style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", objectPosition: "center", display: "block" }}
 									/>
-									{/* Title overlaid on the banner's blank space (right side of
-								    the artwork) — mirrors the empty area every banner image
-								    already leaves for this. */}
-									<div
-										style={{
-											position: "absolute",
-											inset: 0,
-											display: "flex",
-											alignItems: "center",
-											justifyContent: "flex-end",
-											padding: "10px 14px",
-											pointerEvents: "none",
-										}}
-									>
-										<span
-											style={{
-												maxWidth: "58%",
-												textAlign: "right",
-												fontSize: 13.5,
-												fontWeight: 700,
-												lineHeight: 1.3,
-												color: "#5e1730",
-												textShadow: "0 1px 3px rgba(255,255,255,0.55)",
-											}}
-										>
-											{item.name}
-										</span>
+									<div className="dq-puja-body">
+										<h4>{item.name}</h4>
+										{item.temple && <div className="dq-puja-sub">🛕 {item.temple}</div>}
+										<div className="dq-puja-footer">
+											<span className="dq-puja-price">
+												{item.price > 0 ? `₹${item.price.toLocaleString('en-IN')}` : 'Free Seva'}
+											</span>
+											<span className="dq-btn dq-btn-sm">Book Now</span>
+										</div>
 									</div>
-									<span className="dq-chadhava-price">
-										{item.price > 0 ? `₹${item.price}` : 'Free Seva'}
-									</span>
-								</div>
-								<div className="dq-chadhava-info">
-									<span className="dq-chadhava-name" title={item.name}>{item.name}</span>
-									{item.temple && (
-										<small className="dq-chadhava-temple">{item.temple}</small>
-									)}
-									<div className="dq-chadhava-footer">
-										<span className="dq-btn dq-btn-sm">Book Now</span>
-									</div>
-								</div>
-							</a>
+								</a>
+							</div>
 						</div>
 					))}
 				</div>

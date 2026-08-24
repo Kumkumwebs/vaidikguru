@@ -13,10 +13,13 @@ import apiService from './apiServices';
 import { API_BASE, ENDPOINTS, getToken, getUserId, getUserName } from './Liveconfig';
 
 // ── low-level helpers ─────────────────────────────────────────────────────────
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${getToken()}`,
-});
+const authHeaders = () => {
+  const token = getToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
 
 async function post(path, body) {
   const res = await fetch(`${API_BASE}${path}`, {

@@ -70,5 +70,87 @@ export default defineConfig({
   // ── Dev server config ────────────────────────────────────────────────────
   server: {
     port: 3000,
+    proxy: {
+      '/user_api': {
+        target: 'https://admin.vaidikguru.com',
+        changeOrigin: true,
+        secure: false,
+        bypass: (req) => {
+          if (req.headers.accept && req.headers.accept.includes('html')) {
+            return '/index.html';
+          }
+        },
+        headers: {
+          Origin: 'https://admin.vaidikguru.com',
+          Referer: 'https://admin.vaidikguru.com/',
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('origin', 'https://admin.vaidikguru.com');
+            proxyReq.setHeader('referer', 'https://admin.vaidikguru.com/');
+          });
+        },
+      },
+      '/web': {
+        target: 'https://admin.vaidikguru.com',
+        changeOrigin: true,
+        secure: false,
+        bypass: (req) => {
+          if (req.headers.accept && req.headers.accept.includes('html')) {
+            return '/index.html';
+          }
+        },
+        headers: {
+          Origin: 'https://admin.vaidikguru.com',
+          Referer: 'https://admin.vaidikguru.com/',
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('origin', 'https://admin.vaidikguru.com');
+            proxyReq.setHeader('referer', 'https://admin.vaidikguru.com/');
+          });
+        },
+      },
+      '/puja': {
+        target: 'https://admin.vaidikguru.com',
+        changeOrigin: true,
+        secure: false,
+        bypass: (req) => {
+          if (req.headers.accept && req.headers.accept.includes('html')) {
+            return '/index.html';
+          }
+        },
+        headers: {
+          Origin: 'https://admin.vaidikguru.com',
+          Referer: 'https://admin.vaidikguru.com/',
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('origin', 'https://admin.vaidikguru.com');
+            proxyReq.setHeader('referer', 'https://admin.vaidikguru.com/');
+          });
+        },
+      },
+      '/astrologer_api': {
+        target: 'https://admin.vaidikguru.com',
+        changeOrigin: true,
+        secure: false,
+        bypass: (req) => {
+          if (req.headers.accept && req.headers.accept.includes('html')) {
+            return '/index.html';
+          }
+        },
+        headers: {
+          Origin: 'https://admin.vaidikguru.com',
+          Referer: 'https://admin.vaidikguru.com/',
+        },
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('origin', 'https://admin.vaidikguru.com');
+            proxyReq.setHeader('referer', 'https://admin.vaidikguru.com/');
+          });
+        },
+      },
+    },
   },
 });

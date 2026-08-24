@@ -14,8 +14,29 @@ import { useState, useRef, useEffect } from "react";
    ───────────────────────────────────────────────────────────────────────── */
 
 /* ── CONFIGURATION & API ─────────────────────────────────────────────── */
-const API_BASE = "https://admin.vaidikguru.com/user_api/user_login_new";
+const PRIMARY_API_BASE = "/user_api/user_login_new";
+const FALLBACK_API_BASE = "https://admin.vaidikguru.com/user_api/user_login_new";
 const OTP_LEN = 4; // Single source of truth for dynamic OTP rendering
+
+async function postLoginRequest(body) {
+  try {
+    const res = await fetch(PRIMARY_API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) return await res.json();
+  } catch {
+    // try fallback
+  }
+
+  const resFallback = await fetch(FALLBACK_API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return await resFallback.json();
+}
 
 // Step 1: send OTP
 async function apiSendOTP(phone) {
@@ -30,17 +51,13 @@ async function apiSendOTP(phone) {
     deviceToken:  "gvh",
   };
   try {
-    const res  = await fetch(API_BASE, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(body),
-    });
-    const data = await res.json();
+    const data = await postLoginRequest(body);
     if (data?.status === true) {
       return { success: true, data: { expiresIn: 178, type: data.type, message: data.message } };
     }
     return { success: false, error: data?.message || "Failed to send OTP." };
-  } catch {
+  } catch (err) {
+    console.error("apiSendOTP error:", err);
     return { success: false, error: "Network error. Please try again." };
   }
 }
@@ -54,12 +71,7 @@ async function apiVerifyOTP(phone, otp) {
     country_code: "91",
   };
   try {
-    const res  = await fetch(API_BASE, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(body),
-    });
-    const data = await res.json();
+    const data = await postLoginRequest(body);
     if (data?.status === true && data.results) {
       return {
         success: true,
@@ -77,7 +89,8 @@ async function apiVerifyOTP(phone, otp) {
       };
     }
     return { success: false, error: data?.message || "OTP verification failed." };
-  } catch {
+  } catch (err) {
+    console.error("apiVerifyOTP error:", err);
     return { success: false, error: "Network error. Please try again." };
   }
 }

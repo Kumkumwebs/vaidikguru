@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/layout/Header';
@@ -12,7 +13,17 @@ import WalletConnectModal from '../components/common/WalletConnectModal';
 import UserDetailsModal from '../components/common/UserDetailsModal';
 import SendGiftModal from "./Sendgiftmodal";
 import apiService from '../services/apiServices';
+import { recordGiftTransaction } from '../services/giftService';
 import './AstrologerDetail.css';
+
+const FALLBACK_ASTROLOGERS = [
+  { id: 1, _id: '1', name: 'Acharya Alok', profile_img: '/assets/img/home/astrologer_1.jpg', experience: 15, category: [{ name: 'Vedic Astrology' }], avg_rate: 4.9, total_review: 1200, per_min_chat: 15, is_online: 1, is_busy: 0, bio: 'Expert in Vedic Astrology, Palmistry, and Kundli reading with 15+ years of experience guiding thousands of satisfied clients.' },
+  { id: 2, _id: '2', name: 'Dr. Neeraj Sharma', profile_img: '/assets/img/home/astrologer_2.jpg', experience: 20, category: [{ name: 'Vedic' }, { name: 'KP' }, { name: 'Nadi' }], avg_rate: 4.9, total_review: 980, per_min_chat: 20, is_online: 1, is_busy: 0, bio: 'PhD in Astrological Sciences with specialization in Nadi Astrology and KP System.' },
+  { id: 3, _id: '3', name: 'Acharya Ruchi', profile_img: '/assets/img/home/astrologer_3.jpg', experience: 10, category: [{ name: 'Vedic Astrology' }], avg_rate: 4.8, total_review: 850, per_min_chat: 12, is_online: 1, is_busy: 1, bio: 'Vedic Astrologer and Relationship counselor providing compassionate horoscope guidance.' },
+  { id: 4, _id: '4', name: 'Pandit Om Prakash', profile_img: '/assets/img/home/astrologer_4.jpg', experience: 25, category: [{ name: 'Vedic' }, { name: 'Lal Kitab' }], avg_rate: 4.9, total_review: 1100, per_min_chat: 18, is_online: 1, is_busy: 0, bio: 'Lal Kitab Specialist and Senior Vedic Scholar.' },
+  { id: 5, _id: '5', name: 'Jyotish Sunita Devi', profile_img: '', experience: 8, category: [{ name: 'Tarot' }, { name: 'Numerology' }], avg_rate: 4.7, total_review: 640, per_min_chat: 10, is_online: 1, is_busy: 1, bio: 'Intuitive Tarot Card reader and Numerologist.' },
+  { id: 6, _id: '6', name: 'Shri Rajesh Shastri', profile_img: '', experience: 18, category: [{ name: 'Vastu' }, { name: 'Kundli' }], avg_rate: 4.9, total_review: 1420, per_min_chat: 25, is_online: 0, is_busy: 0, bio: 'Vastu Shastra Consultant and Kundli Matching Expert.' },
+];
 
 /* helpers */
 const initials = n => (n || '').trim().split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
@@ -97,12 +108,12 @@ const ViewAllPopup = ({ title, onClose, children }) => (
 );
 
 // Used only when the API genuinely returns no similar_astrologers
-const FALLBACK_SIMILAR = [
-  { id: 'f1', name: 'Guru Dayal Ji', avg_rate: 4.8, total_review: 80, per_min_chat: 20, profile_img: '' },
-  { id: 'f2', name: 'Acharya Ajay', avg_rate: 4.9, total_review: 120, per_min_chat: 12, profile_img: '' },
-  { id: 'f3', name: 'Acharya Ruchi', avg_rate: 4.9, total_review: 95, per_min_chat: 15, profile_img: '' },
-  { id: 'f4', name: 'Acharya Vaidhik', avg_rate: 4.8, total_review: 60, per_min_chat: 18, profile_img: '' },
-];
+// const FALLBACK_SIMILAR = [
+//   { id: 'f1', name: 'Guru Dayal Ji', avg_rate: 4.8, total_review: 80, per_min_chat: 20, profile_img: '' },
+//   { id: 'f2', name: 'Acharya Ajay', avg_rate: 4.9, total_review: 120, per_min_chat: 12, profile_img: '' },
+//   { id: 'f3', name: 'Acharya Ruchi', avg_rate: 4.9, total_review: 95, per_min_chat: 15, profile_img: '' },
+//   { id: 'f4', name: 'Acharya Vaidhik', avg_rate: 4.8, total_review: 60, per_min_chat: 18, profile_img: '' },
+// ];
 
 // Used only when the API returns no rating/review entries
 const REVIEWS_FALLBACK = [
@@ -121,6 +132,7 @@ const AstrologerDetail = () => {
 
   const [astro, setAstro] = useState(null);
   const [similar, setSimilar] = useState([]);
+  const [fallbackSimilar, setFallbackSimilar] = useState([]); // populated from astrologer_list when API sends no similar_astrologers
   const [loading, setLoading] = useState(true);
   const [imgErr, setImgErr] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -141,31 +153,132 @@ const AstrologerDetail = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiService.postBearer(
-        'https://admin.vaidikguru.com/user_api/astrologer_profile',
-        { id: id }
-      );
-      if (res?.results?.length) {
-        // API returns astrologer objects keyed by "id" (not "_id")
-        const found = res.results.find(a => String(a.id) === String(id) || String(a._id) === String(id));
-        const target = found || res.results[0];
-        setAstro(target);
+      let target = null;
+      let similarList = [];
 
-        // The API already gives curated similar astrologers per-profile —
-        // no need to derive them by filtering the results list.
-        setSimilar(Array.isArray(target.similar_astrologers) ? target.similar_astrologers : []);
+      // 1. Try profile API first
+      try {
+        let res = null;
+        try {
+          res = await apiService.postBearer(
+            'https://admin.vaidikguru.com/user_api/astrologer_profile',
+            { id: id }
+          );
+        } catch (_) {
+          const raw = await axios.post('https://admin.vaidikguru.com/user_api/astrologer_profile', { id: id });
+          res = raw.data;
+        }
+
+        const arr = res?.results || res?.record || res?.data;
+        if (Array.isArray(arr) && arr.length > 0) {
+          const found = arr.find(a => String(a.id) === String(id) || String(a._id) === String(id));
+          target = found || arr[0];
+          similarList = Array.isArray(target.similar_astrologers) ? target.similar_astrologers : [];
+        }
+      } catch (err) {
+        console.warn('[AstrologerDetail] profile API failed:', err);
       }
-      // Wallet balance comes from get_profile → results.wallet (or results_web.wallet)
+
+      // 2. If profile API returned no target, try fetching from listing API
+      if (!target) {
+        try {
+          let listRes = null;
+          try {
+            listRes = await apiService.postBearer('https://admin.vaidikguru.com/user_api/astrologer_list', {
+              search: '', page: '1', is_chat: 'on', followAstro: '', is_voice_call: 'on', is_video_call: 'on',
+              cat_id: '', language_id: '', gender: '', sort_val: 'relevant', is_question: '', skill_id: '', country: '', report_id: '', expert_astro: ''
+            });
+          } catch (_) {
+            const raw = await axios.post('https://admin.vaidikguru.com/user_api/astrologer_list', { search: '', page: '1' });
+            listRes = raw.data;
+          }
+
+          const arr = listRes?.results || listRes?.record || listRes?.data || [];
+          if (Array.isArray(arr) && arr.length > 0) {
+            const found = arr.find(a => String(a.id) === String(id) || String(a._id) === String(id));
+            target = found || arr[0];
+          }
+        } catch (err) {
+          console.warn('[AstrologerDetail] list API fallback failed:', err);
+        }
+      }
+
+      // 3. Final fallback to FALLBACK_ASTROLOGERS array
+      if (!target) {
+        const foundFallback = FALLBACK_ASTROLOGERS.find(a => String(a.id) === String(id) || String(a._id) === String(id));
+        target = foundFallback || FALLBACK_ASTROLOGERS[0];
+      }
+
+      setAstro(target);
+      setSimilar(similarList);
+
+      // Wallet balance
       try {
         const w = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
         setWalletBalance(Number(w?.results?.wallet ?? w?.results_web?.wallet ?? w?.wallet ?? 0));
       } catch (_) { setWalletBalance(0); }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('[AstrologerDetail] Error loading detail:', e); }
     finally { setLoading(false); }
   }, [id]);
 
-  useEffect(() => { load(); }, [load]);
+  const pollProfileStatus = useCallback(async () => {
+    if (document.visibilityState === 'hidden' || !id) return;
+    try {
+      let res = null;
+      try {
+        res = await apiService.postBearer('https://admin.vaidikguru.com/user_api/astrologer_profile', { astrologer_id: String(id) });
+      } catch (_) {
+        const rawRes = await axios.post('https://admin.vaidikguru.com/user_api/astrologer_profile', { astrologer_id: String(id) });
+        res = rawRes.data;
+      }
+      const data = res?.results || res?.record || res?.data;
+      if (data) {
+        setAstro(prev => {
+          if (!prev) return data;
+          return {
+            ...prev,
+            is_busy: data.is_busy ?? prev.is_busy,
+            is_online: data.is_online ?? prev.is_online,
+            is_chat_online: data.is_chat_online ?? prev.is_chat_online,
+            is_call_online: data.is_call_online ?? prev.is_call_online,
+            is_video_online: data.is_video_online ?? prev.is_video_online,
+            is_chat: data.is_chat ?? prev.is_chat,
+            is_call: data.is_call ?? prev.is_call,
+            watting_time: data.watting_time ?? prev.watting_time
+          };
+        });
+      }
+    } catch (_) {}
+  }, [id]);
 
+  useEffect(() => {
+    load();
+    const interval = setInterval(pollProfileStatus, 10000);
+    return () => clearInterval(interval);
+  }, [load, pollProfileStatus]);
+
+  // If the profile API sends no similar_astrologers, pull a few real
+  // astrologers from the general listing endpoint instead of showing fake ones.
+  useEffect(() => {
+    if (similar.length > 0) return; // real similar list already available, skip
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiService.postBearer(
+          'https://admin.vaidikguru.com/user_api/astrologer_list',
+          { search: '', page: '1', is_chat: 'on', followAstro: '', is_voice_call: 'on', is_video_call: 'on', cat_id: '', language_id: '', gender: '', sort_val: 'relevant', is_question: '', skill_id: '', country: '', report_id: '', expert_astro: '' }
+        );
+        const list = (res?.results || []).filter(a => String(a.id ?? a._id) !== String(id)).slice(0, 4);
+        if (!cancelled) setFallbackSimilar(list);
+      } catch (_) {
+        if (!cancelled) setFallbackSimilar([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [similar, id]);
+// API still returns gift images hosted on the old domain — rewrite to the current one.
+const fixImgHost = (url) =>
+  typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
   // Load the blessings gifts from the API (falls back to STATIC_GIFTS)
   useEffect(() => {
     let cancelled = false;
@@ -175,15 +288,14 @@ const AstrologerDetail = () => {
         // Backend may return the list under `data`, `results`, or at the root.
         const arr = resp?.data ?? resp?.results ?? (Array.isArray(resp) ? resp : []);
         if (!cancelled && Array.isArray(arr) && arr.length > 0) {
-          setGiftList(arr.map(g => ({
-            _id: g._id,           // keep the REAL server id — this is what gift_transaction needs
-            title: g.title,
-            price: g.price,
-            image: g.image,
-            emoji: emojiFor(g.title),
-          })));
-        }
-      } catch (_) {
+  setGiftList(arr.map(g => ({
+    _id: g._id,           // keep the REAL server id — this is what gift_transaction needs
+    title: g.title,
+    price: g.price,
+    image: fixImgHost(g.image),
+    emoji: emojiFor(g.title),
+  })));
+}     } catch (_) {
         // keep STATIC_GIFTS
       }
     })();
@@ -208,6 +320,7 @@ const AstrologerDetail = () => {
         setGiftError(res?.message || 'Could not send the gift. Please try again.');
       } else {
         setSentGift(gift);
+        recordGiftTransaction({ gift, astroName: astro?.name, astroId, amount: gift.price });
       }
     } catch (err) {
       console.error('[QuickSendGift] error:', err);
@@ -215,6 +328,25 @@ const AstrologerDetail = () => {
     } finally {
       setSendingGiftId(null);
     }
+  };
+
+  const [notified, setNotified] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
+
+  const handleNotifyToggle = () => {
+    const next = !notified;
+    setNotified(next);
+    console.log('[NotifyWhenAvailable] Toggled for astro detail:', {
+      id: astro?.id || astro?._id,
+      name: astro?.name,
+      status: next ? 'subscribed' : 'unsubscribed'
+    });
+    if (next) {
+      setToastMsg(`🔔 We will notify you as soon as ${astro?.name || 'this astrologer'} is available!`);
+    } else {
+      setToastMsg(`Notification turned off for ${astro?.name}.`);
+    }
+    setTimeout(() => setToastMsg(null), 3500);
   };
 
   const scrollGallery = dir => {
@@ -255,8 +387,9 @@ const AstrologerDetail = () => {
     </div>
   );
 
-  // "Online" = any channel currently on, independent of is_busy (which just means occupied on a session)
-  const isOnline = astro.is_chat_online === 'on' || astro.is_voice_online === 'on' || astro.is_video_online === 'on';
+  const isBusy = astro.is_busy == 1 || astro.is_busy === '1' || astro.is_busy === true;
+  const isExplicitOffline = astro.is_online === 0 || astro.is_online === '0' || astro.is_offline == 1 || astro.is_offline === '1';
+  const isOnline = !isBusy && !isExplicitOffline;
   const cats = astro.category?.map(c => c.name) || [];
   const langs = astro.language?.map(l => l.name).join(', ') || 'Hindi, English';
   const price = astro.per_min_chat || 5;
@@ -288,16 +421,16 @@ const AstrologerDetail = () => {
   const galaryImages = galaryFiles.filter(f => /\.(jpe?g|png|webp|gif)$/i.test(f));
   const galaryVideos = galaryFiles.filter(f => /\.mp4$/i.test(f));
   const GALLERY_IMGS = galaryImages.length > 0
-    ? galaryImages
-    : [1, 2, 3, 4, 5, 6, 7, 8].map(() => astro.profile_img || '/assets/img/team/team_1_1.jpg');
+    ? galaryImages.map(fixImgHost)
+    : [1, 2, 3, 4, 5, 6, 7, 8].map(() => fixImgHost(astro.profile_img) || '/assets/img/team/team_1_1.jpg');
   const introVideo = galaryVideos[0] || null;
 
-  const simList = similar.length > 0 ? similar : FALLBACK_SIMILAR;
+  const simList = similar.length > 0 ? similar : fallbackSimilar;
 
   const reviewsSource = (astro.rating && astro.rating.length > 0)
     ? astro.rating.map(r => ({
       name: (r.name || '').trim() || 'Anonymous',
-      av: r.profile_img || '/assets/img/user/user1.jpg',
+      av: fixImgHost(r.profile_img) || '/assets/img/user/user1.jpg',
       time: timeAgo(r.Created_date),
       stars: r.rating || 5,
       text: r.review || r.astr_comment || 'No written feedback provided.',
@@ -337,16 +470,16 @@ const AstrologerDetail = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 'fit-content' }}>
                     <div className="ad-av-wrap">
                       <div className="ad-av-clip">
-                        {astro.profile_img && !imgErr
-                          ? <img src={astro.profile_img} alt={astro.name} onError={() => setImgErr(true)} />
+                      {astro.profile_img && !imgErr
+  ? <img src={fixImgHost(astro.profile_img)} alt={astro.name} onError={() => setImgErr(true)} />
                           : <div className="ad-av-init" style={{ background: `linear-gradient(135deg,${avColor(astro.name)},${avColor(astro.name)}99)` }}>{initials(astro.name)}</div>
                         }
                       </div>
                       {/* <span className={`ad-av-dot ${isOnline ? 'on' : 'off'}`} /> */}
                     </div>
-                    {/* Offline/Online status directly below avatar */}
-                    <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: '600', color: '#6b7280', marginTop: '8px', whiteSpace: 'nowrap' }}>
-                      {isOnline ? '● Online' : '● Offline'}
+                    {/* Offline/Online/Busy status directly below avatar */}
+                    <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: '600', color: isBusy ? '#d97706' : isOnline ? '#16a34a' : '#6b7280', marginTop: '8px', whiteSpace: 'nowrap' }}>
+                      {isBusy ? '● Busy' : isOnline ? '● Online' : '● Offline'}
                     </div>
                   </div>
 
@@ -448,7 +581,7 @@ const AstrologerDetail = () => {
                   <div className="ad-card" style={{ marginBottom: 0, height: '65%', display: 'flex', flexDirection: 'column' }}>
                     <div className="ad-card-title mb-2" style={{ fontSize: '13px', marginBottom: '8px' }}><i className="fas fa-play-circle" />Introduction Video</div>
                     <div className="ad-vid-wrap" style={{ flex: 1 }}>
-                      <img src={astro.profile_img || '/assets/img/team/team_1_1.jpg'} alt="intro" style={{ height: '100%' }}
+                      <img src={fixImgHost(astro.profile_img) || '/assets/img/team/team_1_1.jpg'} alt="intro" style={{ height: '100%' }}
                         onError={e => { e.target.src = '/assets/img/team/team_1_1.jpg' }} />
                       <button className="ad-vid-play"><i className="fas fa-play" /></button>
                     </div>
@@ -469,18 +602,27 @@ const AstrologerDetail = () => {
                     <span className="ad-fee-unit">/min</span>
                   </div>
                   <div className="ad-avail-row">
-                    <span className="ad-avail-dot" />
-                    <span className="ad-avail-txt">{astro.is_busy ? 'Busy' : 'Available Now'}</span>
+                    <span className={`ad-avail-dot ${isBusy ? 'busy' : ''}`} />
+                    <span className={`ad-avail-txt ${isBusy ? 'busy' : ''}`}>{isBusy ? 'Busy' : 'Available Now'}</span>
                   </div>
                   <div className="ad-resp-time">Avg. Response Time: &lt; 2 min</div>
-                  <button className="ad-btn-chat" onClick={() => setWalletModal('chat')}>
-                    <div className="ad-btn-chat-main"><i className="fas fa-comment-dots" style={{ fontSize: 16 }} />Chat Now</div>
-                    <div className="ad-btn-chat-sub">Get instant guidance</div>
-                  </button>
-                  <button className="ad-btn-call" onClick={() => setWalletModal('call')}>
-                    <div className="ad-btn-call-main"><i className="fas fa-phone" style={{ fontSize: 15 }} />Call Now</div>
-                    <div className="ad-btn-call-sub">Start a call session</div>
-                  </button>
+                  {isBusy ? (
+                    <button className={`ad-btn-notify ${notified ? 'active' : ''}`} onClick={handleNotifyToggle}>
+                      <i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
+                      <span>{notified ? "We'll Notify You When Available!" : "Notify When Available"}</span>
+                    </button>
+                  ) : (
+                    <>
+                      <button className="ad-btn-chat" onClick={() => setWalletModal('chat')}>
+                        <div className="ad-btn-chat-main"><i className="fas fa-comment-dots" style={{ fontSize: 16 }} />Chat Now</div>
+                        <div className="ad-btn-chat-sub">Get instant guidance</div>
+                      </button>
+                      <button className="ad-btn-call" onClick={() => setWalletModal('call')}>
+                        <div className="ad-btn-call-main"><i className="fas fa-phone" style={{ fontSize: 15 }} />Call Now</div>
+                        <div className="ad-btn-call-sub">Start a call session</div>
+                      </button>
+                    </>
+                  )}
                   <button className="ad-btn-gift" onClick={() => setShowGift(true)}>
                     <i className="ad-btn-gift-ico fas fa-gift" />
                     <div className="ad-btn-gift-body">
@@ -636,7 +778,7 @@ const AstrologerDetail = () => {
                         >
                           <div className="ad-sim-av-box">
                             {s.profile_img
-                              ? <img src={s.profile_img} alt={s.name} onError={e => { e.target.style.display = 'none' }} />
+                              ? <img src={fixImgHost(s.profile_img)} alt={s.name} onError={e => { e.target.style.display = 'none' }} />
                               : <div className="ad-sim-av-init" style={{ background: `linear-gradient(135deg,${avColor(s.name)},${avColor(s.name)}99)` }}>{initials(s.name)}</div>
                             }
                           </div>
@@ -845,17 +987,33 @@ const AstrologerDetail = () => {
           </div>
         </div>
       )}
-      {/* Mobile sticky Chat/Call bar */}
+      {/* Mobile sticky Chat/Call/Notify bar */}
       <div className="ad-mobile-cta-bar">
-        <button className="ad-mobile-chat-btn" onClick={() => setWalletModal('chat')}>
-          <i className="fas fa-comment-dots" />
-          Chat Now
-        </button>
-        <button className="ad-mobile-call-btn" onClick={() => setWalletModal('call')}>
-          <i className="fas fa-phone" />
-          Call Now
-        </button>
+        {isBusy ? (
+          <button className={`ad-btn-notify ${notified ? 'active' : ''}`} style={{ margin: 0 }} onClick={handleNotifyToggle}>
+            <i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
+            <span>{notified ? 'Notified' : 'Notify Me'}</span>
+          </button>
+        ) : (
+          <>
+            <button className="ad-mobile-chat-btn" onClick={() => setWalletModal('chat')}>
+              <i className="fas fa-comment-dots" />
+              Chat Now
+            </button>
+            <button className="ad-mobile-call-btn" onClick={() => setWalletModal('call')}>
+              <i className="fas fa-phone" />
+              Call Now
+            </button>
+          </>
+        )}
       </div>
+
+      {toastMsg && (
+        <div className="al-toast">
+          <i className="fas fa-bell" style={{ color: '#f59e0b' }} />
+          <span>{toastMsg}</span>
+        </div>
+      )}
 
       <NewAppDownloadModal
         isOpen={showModal}
@@ -870,7 +1028,7 @@ const AstrologerDetail = () => {
         onClose={() => setShowGift(false)}
         astrologerName={astro.name}
         astrologerId={astro.id || astro._id}
-        astrologerImage={astro.profile_img}
+        astrologerImage={fixImgHost(astro.profile_img)}
         gifts={giftList}
         walletBalance={walletBalance}
       />

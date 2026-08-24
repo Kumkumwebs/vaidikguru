@@ -75,7 +75,12 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 
 	const fixImageUrl = (url) => {
 		if (!url) return "";
-		return url.replace(/&#x2F;/g, "/");
+		const unescaped = url.replace(/&#x2F;/g, "/");
+		let fixed = unescaped.replace('admin.astrogurujii.com', 'admin.vaidikguru.com');
+		if (!fixed.startsWith('http://') && !fixed.startsWith('https://')) {
+			fixed = `https://admin.vaidikguru.com/${fixed.replace(/^\/+/, '')}`;
+		}
+		return fixed;
 	};
 
 	const handleLangSelect = (lang) => {
@@ -604,7 +609,7 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 																</div>
 															</Link>
 															<Link
-																to="https://diviniq.store"
+																to="https://vaidikguru.store.com"
 																className={styles.menuItem}
 																onClick={() => setIsDropdownOpen(false)}
 															>
@@ -657,7 +662,7 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 															<p className={styles.helpTitle}>Help & Support</p>
 															<div className={styles.supportBox}>
 																<div className={styles.supportRow}>
-																	<span>+91 7311104569</span>
+																	<span>+91 7615976021</span>
 																	<p className={styles.supportTime}>Available: 10:30 AM - 7:30 PM</p>
 																</div>
 																<i className="fas fa-headset" style={{ color: '#f37335', fontSize: '1.2rem' }}></i>

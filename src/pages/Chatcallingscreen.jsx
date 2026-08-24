@@ -32,6 +32,10 @@ import {
 
 const RING_TIMEOUT = 60; // seconds to wait before auto-cancel
 
+// API still returns some image URLs hosted on the old domain — rewrite to the current one.
+const fixImgHost = (url) =>
+  typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
+
 // Literal Firebase path — see ChatContext.jsx / ChatConsultation.jsx for why
 // this bypasses the Liveconfig helper and matches the known-working reference.
 const sessionPath = (channelId) => `CallSession/${channelId}`;
@@ -62,7 +66,7 @@ const ChatCallingScreen = () => {
   const callType = s.callType === 'call' ? 'audio' : s.callType || 'chat'; // 'chat' | 'audio'
   const astrologerId = String(s.astrologer_id || id || '');
   const astroName = s.name || s.astroName || 'Astrologer';
-  const astrologerImage = s.profile_img || s.astrologerImage || '';
+  const astrologerImage = fixImgHost(s.profile_img || s.astrologerImage || '');
   const rate = String(s.rate || '5');
   const wallet = String(s.wallet || '0');
   const intake = s.intake || {}; // { name, gender, dob, tob, place }

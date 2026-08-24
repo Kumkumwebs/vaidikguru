@@ -7,6 +7,7 @@ import SideMenu from '../components/layout/SideMenu';
 import PopupSearch from '../components/layout/PopupSearch';
 import MobileMenu from '../components/layout/MobileMenu';
 import apiService from '../services/apiServices';
+import { mergeGiftTransactions } from '../services/giftService';
 import './Orders.css';
 
 // ---------- date helpers (unchanged) ----------
@@ -26,16 +27,11 @@ const formatTimeString = (date) => {
 
 // Map one row from the /user_api/transaction response into the shape the
 // page renders (id, name, duration, type, date/time, status, price, category).
-// Real payload covers: "audio" / "video" / "chat" call debits, and
-// "Admin" / "bank" wallet credits — mapped below, no mock fallback.
 const mapApiTransaction = (t) => {
-    // API sends "YYYY-MM-DD HH:mm:ss" (sometimes with single-digit hour/min/sec) —
-    // pad it so `new Date(...)` parses reliably cross-browser.
     const rawDate = (t.transaction_date || t.created_at || '').trim();
     const isoish = rawDate.replace(' ', 'T');
     let dateObj = new Date(isoish);
     if (isNaN(dateObj.getTime())) {
-        // fallback: pad "H:m:s" pieces manually, e.g. "2026-06-29 16:37:0" / "2025-11-18 11:8:10"
         const m = rawDate.match(/^(\d{4})-(\d{1,2})-(\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})$/);
         if (m) {
             const [, y, mo, d, h, mi, s] = m;
@@ -47,31 +43,63 @@ const mapApiTransaction = (t) => {
     const minutes = parseInt(t.time, 10);
     const duration = !isNaN(minutes) && minutes > 0 ? `${minutes} min` : '-';
 
-    const rawType = (t.type || '').toLowerCase();
+    const rawType = (t.type || t.category || t.transaction_type || '').toLowerCase();
+    const desc = (t.description || t.title || t.message || '').toLowerCase();
     const amountType = (t.amount_type || '').toLowerCase();
+    const astroName = (t.astro_name || t.astrologer_name || t.name || '').trim();
+    const giftName = (t.gift_title || t.gift_name || t.gift || '').trim();
 
     let category;
-    if (rawType === 'video') category = 'Video';
-    else if (rawType === 'chat') category = 'Chat';
-    else if (rawType === 'audio') category = 'Call';
-    else category = 'Wallet'; // e.g. "Admin", "bank" — recharges/credits/adjustments
+    if (rawType === 'video') {
+        category = 'Video';
+    } else if (rawType === 'chat') {
+        category = 'Chat';
+    } else if (rawType === 'audio' || rawType === 'call') {
+        category = 'Call';
+    } else if (
+        rawType === 'gift' || 
+        rawType.includes('gift') || 
+        desc.includes('gift') || 
+        t.gift_id || t.giftId || giftName ||
+        (rawType === 'normal' && (astroName || t.to || t.astrologer_id || desc.includes('gift')))
+    ) {
+        category = 'Gift';
+    } else if (
+        rawType === 'puja' || 
+        rawType === 'pooja' || 
+        rawType === 'chadhava' || 
+        desc.includes('puja') || 
+        desc.includes('pooja') || 
+        desc.includes('chadhava') || 
+        desc.includes('sankalp')
+    ) {
+        category = 'Other';
+    } else {
+        category = 'Wallet';
+    }
 
     let typeLabel;
     if (category === 'Video') typeLabel = 'Video Call';
     else if (category === 'Chat') typeLabel = 'Chat Consultation';
     else if (category === 'Call') typeLabel = 'Audio Call';
+    else if (category === 'Gift') typeLabel = giftName ? `Gift: ${giftName}` : (t.description || 'Gift Sent to Astrologer');
+    else if (category === 'Other') typeLabel = t.puja_name || t.description || 'Puja / Sacred Offering';
     else typeLabel = t.description || t.type || 'Wallet Transaction';
 
     const amount = Number(t.amount) || 0;
-    // Debit = money spent by the user -> shown as negative. Credit -> positive.
     const price = amountType === 'credit' ? amount : -amount;
 
     const daysAgo = Math.floor((Date.now() - validDate.getTime()) / (1000 * 60 * 60 * 24));
 
+    const titleName = (astroName || t.puja_name || '').trim() || 
+        (category === 'Wallet' ? (t.description || 'Wallet Recharge') : 
+         category === 'Gift' ? (giftName ? `Gift: ${giftName}` : (astroName ? `Gift to ${astroName}` : 'Gift to Astrologer')) : 
+         category === 'Other' ? (t.description || 'Puja Offering') : 'VaidikGuru Service');
+
     return {
-        uid: t.id,
+        uid: t.id || t.order_id || Math.random().toString(),
         id: t.order_id || t.id,
-        name: (t.astro_name || '').trim() || (category === 'Wallet' ? (t.description || 'Wallet') : 'Astrologer'),
+        name: titleName,
         verified: category !== 'Wallet',
         duration,
         type: typeLabel,
@@ -110,40 +138,41 @@ const OrdersPage = () => {
     const dropdownRef = useRef(null);
     const itemsPerPage = 4;
 
-    // Fetch real transactions from the API
-    useEffect(() => {
-        let isMounted = true;
+    // Fetch real transactions from the API and merge with local gift logs
+    const fetchTransactions = async () => {
+        setIsLoading(true);
+        setLoadError(null);
+        try {
+            const json = await apiService.postBearer('https://admin.vaidikguru.com/user_api/transaction').catch(() => null);
 
-        const fetchTransactions = async () => {
-            setIsLoading(true);
-            setLoadError(null);
-            try {
-                // Requesting /user_api/transaction via apiService automatically appends Bearer Token
-                const json = await apiService.postBearer('https://admin.vaidikguru.com/user_api/transaction');
-
-                console.log('Response:', json);
-                if (!isMounted) return;
-
-                if (json && json.result && json.transactions && Array.isArray(json.transactions.data)) {
-                    setApiTransactions(json.transactions.data.map(mapApiTransaction));
-                } else {
-                    setApiTransactions([]);
-                }
-            } catch (err) {
-                if (isMounted) {
-                    console.error('Failed to load transactions:', err);
-                    setLoadError('Unable to load your transactions right now. Please try again later.');
-                    setApiTransactions([]);
-                }
-            } finally {
-                if (isMounted) setIsLoading(false);
+            let apiList = [];
+            if (json && json.result && json.transactions && Array.isArray(json.transactions.data)) {
+                apiList = json.transactions.data;
+            } else if (json && Array.isArray(json.data)) {
+                apiList = json.data;
             }
-        };
 
+            const merged = mergeGiftTransactions(apiList);
+            setApiTransactions(merged.map(mapApiTransaction));
+        } catch (err) {
+            console.error('Failed to load transactions:', err);
+            const localOnly = mergeGiftTransactions([]);
+            setApiTransactions(localOnly.map(mapApiTransaction));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchTransactions();
 
+        const handleGiftAdded = () => {
+            fetchTransactions();
+        };
+
+        window.addEventListener('giftTransactionAdded', handleGiftAdded);
         return () => {
-            isMounted = false;
+            window.removeEventListener('giftTransactionAdded', handleGiftAdded);
         };
     }, []);
 

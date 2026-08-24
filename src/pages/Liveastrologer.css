@@ -209,10 +209,27 @@
   overflow: hidden;
 }
 .la-card-img-wrap img {
-  width: 100%;
-  height: 100%;
+  width: 100%!important;
+  height: 100%!important;
   object-fit: cover;
   display: block;
+}
+
+.la-card-name-avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+.la-card-avatar-text {
+  font-family: var(--la-font-heading);
+  font-size: 52px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 2px;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 .la-badge {
@@ -247,20 +264,27 @@
   padding: 10px 12px 12px;
   color: #fff;
 }
-.la-card-name {
-  font-family: var(--la-font-heading);
-  font-size: 14.5px;
-  font-weight: 700;
-  margin: 0;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.la-card-name,
+.la-card-name a,
+.la-card-name span {
+    color: #fff !important;
+    font-family: var(--la-font-heading);
+    font-size: 14.5px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .la-card-meta {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.78);
-  margin-top: 3px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.88);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.2px;
 }
 
 @keyframes laPulse {
@@ -506,6 +530,7 @@
   max-width: 220px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -779,6 +804,7 @@
   border-radius: 999px;
   padding: 10px 16px;
   min-width: 0;
+  height: 45px;
 }
 .lw-input-el { flex: 1 1 auto; min-width: 0; background: transparent; border: none; outline: none; font-size: 13.5px; color: var(--la-ink); }
 .lw-input-el::placeholder { color: #b0aaa2; }
@@ -809,6 +835,21 @@
 }
 .lw-join-call-btn:hover { opacity: 0.92; }
 .lw-join-call-btn:active { transform: scale(0.96); }
+
+.lw-strip-avatar-fallback {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--la-font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--la-gold);
+  flex-shrink: 0;
+}
 
 /* Side action buttons */
 .lw-side-btn {
@@ -942,4 +983,112 @@
   .lw-video-wrap { margin: 12px 12px 0; border-radius: 16px; }
   .lw-info-strip { margin: 10px 12px 0; padding: 14px 16px; }
   .lw-live-strip-wrap { margin: 10px 12px 10px; }
+}
+
+/* ── Offline Astrologer Modal ── */
+.la-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 10, 10, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: laFadeIn 0.2s ease-out;
+}
+
+.la-modal-card {
+  background: #FFFBF5;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 20px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 24px 48px rgba(74, 15, 30, 0.25);
+  animation: laScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.la-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(122, 30, 30, 0.08);
+  color: #7A1E1E;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.la-modal-close:hover {
+  background: rgba(122, 30, 30, 0.16);
+  transform: scale(1.05);
+}
+
+.la-modal-header-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7A1E1E 0%, #4A0F1E 100%);
+  color: #F5A623;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin: 0 auto 18px;
+  box-shadow: 0 8px 20px rgba(122, 30, 30, 0.3);
+}
+
+.la-modal-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2B2020;
+  margin-bottom: 10px;
+}
+
+.la-modal-body {
+  font-size: 14px;
+  color: #665a5a;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.la-modal-confirm-btn {
+  width: 100%;
+  padding: 13px 24px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #7A1E1E 0%, #9E2A2A 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(122, 30, 30, 0.3);
+  transition: all 0.2s ease;
+}
+
+.la-modal-confirm-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+@keyframes laFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes laScaleUp {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }

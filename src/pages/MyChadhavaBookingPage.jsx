@@ -26,14 +26,11 @@ const ChadhavaBookingListPage = () => {
   useEffect(() => {
     const fetchChadhava = async () => {
       try {
-        const res = await apiService.postBearer('https://admin.vaidikguru.com/puja/mychdhavabookings', {});
+        const res = await apiService.postBearer('/puja/mychdhavabookings', {});
         if (res && res.status) {
-          const list = Array.isArray(res.bookPooja) ? res.bookPooja : [];
-          // API does not guarantee ordering — sort newest first so today's
-          // bookings always surface at the top instead of wherever the
-          // backend happened to place them.
+          const list = res.results || res.bookPooja || res.data || res.result || res.chadhavaBookings || [];
           const sorted = [...list].sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            (a, b) => new Date(b.createdAt || b.puja_date) - new Date(a.createdAt || a.puja_date)
           );
           setBookings(sorted);
         }

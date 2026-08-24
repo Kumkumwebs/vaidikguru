@@ -216,7 +216,7 @@
 }
 .al-dot { width: 13px; height: 13px; border-radius: 50%; position: absolute; bottom: 2px; right: 3px; border: 2px solid #fff; }
 .al-dot.dn { background: #10b981; }
-.al-dot.db { background: #f59e0b; }
+.al-dot.db { background: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.3); }
 .al-dot.do { background: #9ca3af; }
 
 .al-cname { font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 2px; }
@@ -242,19 +242,79 @@
   background: linear-gradient(135deg,#B8493C,#521721);
   color: #fff; font-size: 13px; font-weight: 700;
   border: none; border-radius: 9px; cursor: pointer;
-  transform: none !important; box-shadow: none !important; transition: opacity .18s;
+  transform: none !important; box-shadow: none !important; transition: background .2s, opacity .18s;
 }
 .al-chat:hover { opacity: .88; }
+.al-chat.busy {
+  background: linear-gradient(135deg,#f59e0b,#d97706) !important;
+  color: #fff !important;
+}
+.al-chat.busy:hover {
+  background: linear-gradient(135deg,#d97706,#b45309) !important;
+}
 .al-call {
   width: 38px; height: 38px; flex-shrink: 0;
   background: #f3f0ff; color: #521721; border: 1px solid #e9d5ff;
   border-radius: 9px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; font-size: 13px;
-  transform: none !important; box-shadow: none !important; transition: background .18s, color .18s;
+  transform: none !important; box-shadow: none !important; transition: background .18s, color .18s, border-color .18s;
 }
 .al-call:hover { background: #521721; color: #fff; }
+.al-call.busy {
+  background: #fff7ed !important;
+  color: #c2410c !important;
+  border-color: #fdba74 !important;
+}
+.al-notify-btn {
+  flex: 1;
+  padding: 9px 12px;
+  background: #fff7ed;
+  color: #d97706;
+  border: 1.5px solid #fde68a;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.al-notify-btn:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #b45309;
+}
+.al-notify-btn.active {
+  background: #f0fdf4 !important;
+  color: #16a34a !important;
+  border-color: #86efac !important;
+}
+.al-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1e293b;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 9999;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-left: 4px solid #f59e0b;
+}
+.al-call.busy:hover {
+  background: #ffedd5 !important;
+  border-color: #ea580c !important;
+  color: #ea580c !important;
+}
 
-/* ── RECOMMEND CARD ─────────────────────── */
+/* ── RECOMMEND CARD & MODAL ─────────────────────── */
 .al-rec {
   background: linear-gradient(135deg,#f5f3ff,#ede9fe);
   border-radius: 14px; border: 1px solid #e9d5ff; padding: 28px 18px;
@@ -278,6 +338,22 @@
   font-size: 9px; font-weight: 700; color: #fff; margin-left: -7px;
 }
 .al-rec-av:first-child { margin-left: 0; }
+
+.al-rec-input {
+  width: 100%;
+  padding: 11px 14px;
+  margin-bottom: 12px;
+  border: 1.5px solid #d1d5db !important;
+  border-radius: 9px;
+  font-size: 13.5px;
+  outline: none;
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+.al-rec-input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
 
 /* ── SKELETON ───────────────────────────── */
 .al-sk { background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 37%,#f0f0f0 63%); background-size: 400% 100%; animation: alsk 1.4s ease infinite; border-radius: 6px; }

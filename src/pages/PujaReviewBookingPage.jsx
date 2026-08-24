@@ -579,7 +579,7 @@ const PujaReviewBookingPage = () => {
 
               {/* WHY DIVINIQ */}
               <div className="prb-why-card mx-0">
-                <div className="prb-why-title"><i className="fa-solid fa-user-circle" /> Why Choose DivinIQ?</div>
+                <div className="prb-why-title"><i className="fa-solid fa-user-circle" /> Why Choose Vaidik Guru?</div>
                 <ul className="prb-why-list">
                   {WHY.map((w) => <li key={w}><i className="fa-solid fa-circle-check prb-why-check" /> {w}</li>)}
                 </ul>
