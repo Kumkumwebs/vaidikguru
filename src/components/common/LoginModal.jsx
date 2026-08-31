@@ -1,41 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-
-/* ─────────────────────────────────────────────────────────────────────────
-   LoginOTPModal
-   Usage in Header.jsx (zero changes to Header logic needed):
-
-     import LoginOTPModal from '../accounts/LoginOTPModal';
-
-     <LoginOTPModal
-       isOpen={isModalOpen}
-       onClose={() => setIsModalOpen(false)}
-       onSuccess={(data) => saveStorage(data)}
-     />
-   ───────────────────────────────────────────────────────────────────────── */
+import apiService from "../../services/apiServices";
 
 /* ── CONFIGURATION & API ─────────────────────────────────────────────── */
-const PRIMARY_API_BASE = "/user_api/user_login_new";
-const FALLBACK_API_BASE = "https://admin.vaidikguru.com/user_api/user_login_new";
 const OTP_LEN = 4; // Single source of truth for dynamic OTP rendering
 
 async function postLoginRequest(body) {
   try {
-    const res = await fetch(PRIMARY_API_BASE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) return await res.json();
-  } catch {
-    // try fallback
+    const res = await apiService.post("/user_api/user_login_new", body);
+    return res;
+  } catch (err) {
+    console.error("postLoginRequest error:", err);
+    throw err;
   }
-
-  const resFallback = await fetch(FALLBACK_API_BASE, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  return await resFallback.json();
 }
 
 // Step 1: send OTP

@@ -18,7 +18,7 @@ import MobileBottomNav from "../components/layout/MobileNavbar";
 // the same pattern as every other endpoint in this codebase
 // (https://admin.vaidikguru.com/user_api/..., /puja/..., etc). Adjust the
 // prefix below if your backend mounts it differently.
-const CONSULTATION_API = "https://admin.vaidikguru.com/user_api/new_consultation_add";
+const CONSULTATION_API = "/user_api/new_consultation_add";
 
 /* ── helpers ── */
 const BADGE_MAP = [

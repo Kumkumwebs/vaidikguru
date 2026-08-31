@@ -1,10 +1,6 @@
 import '../../pages/home.css';
 
-const FALLBACK_BLOGS = [
-	{ id: 1, title: 'Significance of Maha Shivratri and How to Celebrate', image: '/assets/img/home/blog_1.jpg', tag: 'Puja Guide', date: 'May 12, 2025' },
-	{ id: 2, title: 'Benefits of Navagraha Shanti Puja in Your Life', image: '/assets/img/home/blog_2.jpg', tag: 'Astrology', date: 'May 10, 2025' },
-	{ id: 3, title: 'How Astrology Can Guide You Towards a Better Future', image: '/assets/img/home/blog_3.jpg', tag: 'Lifestyle', date: 'May 8, 2025' },
-];
+
 
 const STATS = [
 	{ icon: '/assets/img/home/men.png', value: '50K+', label: 'Happy Devotees' },
@@ -33,7 +29,11 @@ const handleImgError = (e) => {
 };
 
 const BlogSection = ({ blog }) => {
-	const items = blog && blog.length ? blog : FALLBACK_BLOGS;
+	const items = blog && blog.length ? blog : null;
+
+	if (!items || items.length === 0) {
+		return null;
+	}
 
 	return (
 		<section className="dq-section dq-section-cream">

@@ -16,7 +16,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import axios from "axios";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { createPortal } from "react-dom";
 
@@ -635,9 +634,9 @@ export default function LiveWatchScreen() {
   // /user_api/get_gifts instead. That 404 was unrelated to the CORS issue
   // fixed above; switching to the real endpoint.
   useEffect(() => {
-    axios.get(`${API}/user_api/get_gifts`, { headers: { Authorization: `Bearer ${tok()}` } })
+    apiService.getBearer('/user_api/get_gifts')
       .then(res => {
-        const list = res.data?.data || res.data?.results || res.data?.gifts || [];
+        const list = res?.data || res?.results || res?.gifts || (Array.isArray(res) ? res : []);
         if (Array.isArray(list) && list.length > 0) setGifts(list);
       })
       .catch(() => { });
@@ -646,8 +645,8 @@ export default function LiveWatchScreen() {
   // ── Join live API ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!liveId) return;
-    const ep = liveType === "pooja" ? `${API}/user_api/join_live_pooja` : `${API}/user_api/join_live`;
-    axios.post(ep, { live_id: liveId }, { headers: { Authorization: `Bearer ${tok()}` } })
+    const ep = liveType === "pooja" ? "/user_api/join_live_pooja" : "/user_api/join_live";
+    apiService.postBearer(ep, { live_id: liveId })
       .catch(() => { });
   }, [liveId, liveType]);
 
@@ -818,13 +817,13 @@ export default function LiveWatchScreen() {
 
     try {
       const [liveRes, astroRes] = await Promise.all([
-        axios.get(`${API}/user_api/listing_of_live_astrlogers`, { headers: { Authorization: `Bearer ${tok()}` } }).catch(() => null),
-        axios.post(`${API}/user_api/astrologer_list`, { search: "", page: "1" }, { headers: { Authorization: `Bearer ${tok()}` } }).catch(() => null),
+        apiService.getBearer('/user_api/listing_of_live_astrlogers').catch(() => null),
+        apiService.postBearer('/user_api/astrologer_list', { search: "", page: "1" }).catch(() => null),
       ]);
 
       let rawLive = [];
-      if (liveRes?.data) {
-        rawLive = liveRes.data.results || liveRes.data.data || (Array.isArray(liveRes.data) ? liveRes.data : []);
+      if (liveRes) {
+        rawLive = liveRes.results || liveRes.data || (Array.isArray(liveRes) ? liveRes : []);
       }
 
       const seenAstro = new Set();
@@ -861,8 +860,8 @@ export default function LiveWatchScreen() {
       } else {
         // Fallback: build other live streams from active online astrologers (excluding current)
         let onlineList = [];
-        if (astroRes?.data) {
-          const all = astroRes.data.results || astroRes.data.data || (Array.isArray(astroRes.data) ? astroRes.data : []);
+        if (astroRes) {
+          const all = astroRes.results || astroRes.data || (Array.isArray(astroRes) ? astroRes : []);
           onlineList = all.filter((a) => (a.is_online == 1 || a.is_online === "1" || a.is_live == 1) && String(a._id || a.id) !== String(astroId));
         }
 

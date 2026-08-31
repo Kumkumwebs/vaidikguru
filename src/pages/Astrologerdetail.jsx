@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/layout/Header';
@@ -14,16 +13,8 @@ import UserDetailsModal from '../components/common/UserDetailsModal';
 import SendGiftModal from "./Sendgiftmodal";
 import apiService from '../services/apiServices';
 import { recordGiftTransaction } from '../services/giftService';
+import { getAstroPrice, getAstroRating, getAstroReviewCount } from '../services/astroHelpers';
 import './AstrologerDetail.css';
-
-const FALLBACK_ASTROLOGERS = [
-  { id: 1, _id: '1', name: 'Acharya Alok', profile_img: '/assets/img/home/astrologer_1.jpg', experience: 15, category: [{ name: 'Vedic Astrology' }], avg_rate: 4.9, total_review: 1200, per_min_chat: 15, is_online: 1, is_busy: 0, bio: 'Expert in Vedic Astrology, Palmistry, and Kundli reading with 15+ years of experience guiding thousands of satisfied clients.' },
-  { id: 2, _id: '2', name: 'Dr. Neeraj Sharma', profile_img: '/assets/img/home/astrologer_2.jpg', experience: 20, category: [{ name: 'Vedic' }, { name: 'KP' }, { name: 'Nadi' }], avg_rate: 4.9, total_review: 980, per_min_chat: 20, is_online: 1, is_busy: 0, bio: 'PhD in Astrological Sciences with specialization in Nadi Astrology and KP System.' },
-  { id: 3, _id: '3', name: 'Acharya Ruchi', profile_img: '/assets/img/home/astrologer_3.jpg', experience: 10, category: [{ name: 'Vedic Astrology' }], avg_rate: 4.8, total_review: 850, per_min_chat: 12, is_online: 1, is_busy: 1, bio: 'Vedic Astrologer and Relationship counselor providing compassionate horoscope guidance.' },
-  { id: 4, _id: '4', name: 'Pandit Om Prakash', profile_img: '/assets/img/home/astrologer_4.jpg', experience: 25, category: [{ name: 'Vedic' }, { name: 'Lal Kitab' }], avg_rate: 4.9, total_review: 1100, per_min_chat: 18, is_online: 1, is_busy: 0, bio: 'Lal Kitab Specialist and Senior Vedic Scholar.' },
-  { id: 5, _id: '5', name: 'Jyotish Sunita Devi', profile_img: '', experience: 8, category: [{ name: 'Tarot' }, { name: 'Numerology' }], avg_rate: 4.7, total_review: 640, per_min_chat: 10, is_online: 1, is_busy: 1, bio: 'Intuitive Tarot Card reader and Numerologist.' },
-  { id: 6, _id: '6', name: 'Shri Rajesh Shastri', profile_img: '', experience: 18, category: [{ name: 'Vastu' }, { name: 'Kundli' }], avg_rate: 4.9, total_review: 1420, per_min_chat: 25, is_online: 0, is_busy: 0, bio: 'Vastu Shastra Consultant and Kundli Matching Expert.' },
-];
 
 /* helpers */
 const initials = n => (n || '').trim().split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
@@ -158,17 +149,7 @@ const AstrologerDetail = () => {
 
       // 1. Try profile API first
       try {
-        let res = null;
-        try {
-          res = await apiService.postBearer(
-            'https://admin.vaidikguru.com/user_api/astrologer_profile',
-            { id: id }
-          );
-        } catch (_) {
-          const raw = await axios.post('https://admin.vaidikguru.com/user_api/astrologer_profile', { id: id });
-          res = raw.data;
-        }
-
+        const res = await apiService.postBearer('/user_api/astrologer_profile', { id: id });
         const arr = res?.results || res?.record || res?.data;
         if (Array.isArray(arr) && arr.length > 0) {
           const found = arr.find(a => String(a.id) === String(id) || String(a._id) === String(id));
@@ -182,16 +163,10 @@ const AstrologerDetail = () => {
       // 2. If profile API returned no target, try fetching from listing API
       if (!target) {
         try {
-          let listRes = null;
-          try {
-            listRes = await apiService.postBearer('https://admin.vaidikguru.com/user_api/astrologer_list', {
-              search: '', page: '1', is_chat: 'on', followAstro: '', is_voice_call: 'on', is_video_call: 'on',
-              cat_id: '', language_id: '', gender: '', sort_val: 'relevant', is_question: '', skill_id: '', country: '', report_id: '', expert_astro: ''
-            });
-          } catch (_) {
-            const raw = await axios.post('https://admin.vaidikguru.com/user_api/astrologer_list', { search: '', page: '1' });
-            listRes = raw.data;
-          }
+          const listRes = await apiService.postBearer('/user_api/astrologer_list', {
+            search: '', page: '1', is_chat: 'on', followAstro: '', is_voice_call: 'on', is_video_call: 'on',
+            cat_id: '', language_id: '', gender: '', sort_val: 'relevant', is_question: '', skill_id: '', country: '', report_id: '', expert_astro: ''
+          });
 
           const arr = listRes?.results || listRes?.record || listRes?.data || [];
           if (Array.isArray(arr) && arr.length > 0) {
@@ -203,18 +178,12 @@ const AstrologerDetail = () => {
         }
       }
 
-      // 3. Final fallback to FALLBACK_ASTROLOGERS array
-      if (!target) {
-        const foundFallback = FALLBACK_ASTROLOGERS.find(a => String(a.id) === String(id) || String(a._id) === String(id));
-        target = foundFallback || FALLBACK_ASTROLOGERS[0];
-      }
-
-      setAstro(target);
+      setAstro(target || null);
       setSimilar(similarList);
 
       // Wallet balance
       try {
-        const w = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
+        const w = await apiService.getBearer('/user_api/get_profile');
         setWalletBalance(Number(w?.results?.wallet ?? w?.results_web?.wallet ?? w?.wallet ?? 0));
       } catch (_) { setWalletBalance(0); }
     } catch (e) { console.error('[AstrologerDetail] Error loading detail:', e); }
@@ -224,13 +193,7 @@ const AstrologerDetail = () => {
   const pollProfileStatus = useCallback(async () => {
     if (document.visibilityState === 'hidden' || !id) return;
     try {
-      let res = null;
-      try {
-        res = await apiService.postBearer('https://admin.vaidikguru.com/user_api/astrologer_profile', { astrologer_id: String(id) });
-      } catch (_) {
-        const rawRes = await axios.post('https://admin.vaidikguru.com/user_api/astrologer_profile', { astrologer_id: String(id) });
-        res = rawRes.data;
-      }
+      const res = await apiService.postBearer('/user_api/astrologer_profile', { astrologer_id: String(id) });
       const data = res?.results || res?.record || res?.data;
       if (data) {
         setAstro(prev => {
@@ -265,7 +228,7 @@ const AstrologerDetail = () => {
     (async () => {
       try {
         const res = await apiService.postBearer(
-          'https://admin.vaidikguru.com/user_api/astrologer_list',
+          '/user_api/astrologer_list',
           { search: '', page: '1', is_chat: 'on', followAstro: '', is_voice_call: 'on', is_video_call: 'on', cat_id: '', language_id: '', gender: '', sort_val: 'relevant', is_question: '', skill_id: '', country: '', report_id: '', expert_astro: '' }
         );
         const list = (res?.results || []).filter(a => String(a.id ?? a._id) !== String(id)).slice(0, 4);
@@ -284,7 +247,7 @@ const fixImgHost = (url) =>
     let cancelled = false;
     (async () => {
       try {
-        const resp = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts');
+        const resp = await apiService.getBearer('/user_api/get_gifts');
         // Backend may return the list under `data`, `results`, or at the root.
         const arr = resp?.data ?? resp?.results ?? (Array.isArray(resp) ? resp : []);
         if (!cancelled && Array.isArray(arr) && arr.length > 0) {
@@ -313,7 +276,7 @@ const fixImgHost = (url) =>
     console.log('[QuickSendGift] payload:', { to: astroId, giftId: gift._id, amount: gift.price, isStaticFallbackId: typeof gift._id === 'string' && !/^[a-f0-9]{24}$/i.test(gift._id) });
     try {
       const res = await apiService.postBearer(
-        'https://admin.vaidikguru.com/user_api/gift_transaction',
+        '/user_api/gift_transaction',
         { to: String(astroId), giftId: String(gift._id), amount: Number(gift.price), type: 'normal' }
       );
       if (res?.status === false) {
@@ -392,9 +355,9 @@ const fixImgHost = (url) =>
   const isOnline = !isBusy && !isExplicitOffline;
   const cats = astro.category?.map(c => c.name) || [];
   const langs = astro.language?.map(l => l.name).join(', ') || 'Hindi, English';
-  const price = astro.per_min_chat || 5;
-  const rating = parseFloat(astro.avg_rate || 4.9);
-  const totalReviewCount = astro.total_rating ?? astro.rating_total_person ?? 0;
+  const price = getAstroPrice(astro);
+  const rating = parseFloat(getAstroRating(astro));
+  const totalReviewCount = getAstroReviewCount(astro);
   const totalConsultations = astro.consult || astro.total_orders || '25,000';
 
   const SKILLS = (astro.skill && astro.skill.length > 0)
@@ -785,10 +748,12 @@ const fixImgHost = (url) =>
                           <div className="ad-sim-name">{s.name}</div>
                           <div className="ad-sim-rating">
                             <i className="fas fa-star" />
-                            <span>{parseFloat(s.avg_rate || 4.0).toFixed(1)}</span>
-                            <span style={{ color: '#9ca3af', fontSize: 11 }}>({s.rating ?? s.total_review ?? 0})</span>
+                            <span>{getAstroRating(s) ? parseFloat(getAstroRating(s)).toFixed(1) : '4.8'}</span>
+                            <span style={{ color: '#9ca3af', fontSize: 11 }}>({getAstroReviewCount(s) ?? 0})</span>
                           </div>
-                          <div className="ad-sim-price">₹{s.per_min_chat || s.per_min_voice_call || 5}/min</div>
+                          {getAstroPrice(s) ? (
+                            <div className="ad-sim-price">₹{getAstroPrice(s)}/min</div>
+                          ) : null}
                           <button
                             className="ad-sim-btn"
                             onClick={e => { e.stopPropagation(); }}

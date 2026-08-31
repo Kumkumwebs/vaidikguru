@@ -63,9 +63,9 @@ const PujaReviewBookingPage = () => {
   }, []);
 
   /* ── Addons fetched fresh from pujabyinstaid API ── */
-  const [addons, setAddons] = useState([]);
-  const [homeDeliveryAddons, setHomeDeliveryAddons] = useState([]);
-  const [addonsLoading, setAddonsLoading] = useState(true);
+  const [addons, setAddons] = useState(puja?.addons || []);
+  const [homeDeliveryAddons, setHomeDeliveryAddons] = useState(puja?.homeDeliveryAddons || []);
+  const [addonsLoading, setAddonsLoading] = useState(!puja?.addons);
 
   const [cartData, setCartData] = useState(null);
   const [templeAddonsQty, setTempleAddonsQty] = useState({});
@@ -79,39 +79,39 @@ const PujaReviewBookingPage = () => {
   /* ── Fetch addons directly from pujabyinstaid using puja._id ── */
   useEffect(() => {
     const fetchPujaAddons = async () => {
-      /* puja._id must be a non-empty string */
-      const pujaId = puja?._id;
+      const pujaId = puja?._id || puja?.id || puja?.instaId;
       if (!pujaId) {
-        console.warn("[ReviewPage] puja._id is missing — cannot fetch addons");
+        if (puja?.addons) setAddons(puja.addons);
+        if (puja?.homeDeliveryAddons) setHomeDeliveryAddons(puja.homeDeliveryAddons);
         setAddonsLoading(false);
         return;
       }
-      setAddonsLoading(true);
       try {
-        console.log("[ReviewPage] fetching addons for puja id:", pujaId);
         const res = await apiService.postBearer(
           "https://admin.vaidikguru.com/puja/pujabyinstaid",
           { instaId: pujaId }
         );
-        console.log("[ReviewPage] pujabyinstaid response:", res);
         if (res?.status && res?.data) {
-          const fetchedAddons = res.data.addons || [];
-          const fetchedHomeAddons = res.data.homeDeliveryAddons || [];
-          console.log("[ReviewPage] addons fetched:", fetchedAddons.length);
-          console.log("[ReviewPage] homeDeliveryAddons fetched:", fetchedHomeAddons.length);
+          const fetchedAddons = res.data.addons?.length ? res.data.addons : (puja?.addons || []);
+          const fetchedHomeAddons = res.data.homeDeliveryAddons?.length ? res.data.homeDeliveryAddons : (puja?.homeDeliveryAddons || []);
           setAddons(fetchedAddons);
           setHomeDeliveryAddons(fetchedHomeAddons);
-        } else {
-          console.warn("[ReviewPage] pujabyinstaid returned no data:", res);
+        } else if (puja?.addons || puja?.homeDeliveryAddons) {
+          setAddons(puja.addons || []);
+          setHomeDeliveryAddons(puja.homeDeliveryAddons || []);
         }
       } catch (err) {
         console.error("[ReviewPage] Failed to fetch puja addons:", err);
+        if (puja?.addons || puja?.homeDeliveryAddons) {
+          setAddons(puja.addons || []);
+          setHomeDeliveryAddons(puja.homeDeliveryAddons || []);
+        }
       } finally {
         setAddonsLoading(false);
       }
     };
     fetchPujaAddons();
-  }, [puja?._id]);
+  }, [puja?._id, puja?.id, puja?.instaId]);
 
   /* ── Fetch cart ── */
   const fetchCartFromServer = useCallback(async () => {
@@ -132,7 +132,13 @@ const PujaReviewBookingPage = () => {
     }
   }, []);
 
-  useEffect(() => { fetchCartFromServer(); }, [fetchCartFromServer]);
+  useEffect(() => {
+    if (puja?._id && selectedPackage?._id) {
+      updateServerCart(templeAddonsQty, homeAddonsQty);
+    } else {
+      fetchCartFromServer();
+    }
+  }, [puja?._id, selectedPackage?._id, fetchCartFromServer]);
 
   /* ── Update cart ── */
   const updateServerCart = async (newTempleQty, newHomeQty) => {
@@ -170,10 +176,23 @@ const PujaReviewBookingPage = () => {
   };
 
   const handleContinueToForm = () => {
-    navigate("/puja_fill_form", { state: { pujaData: puja, selectedPackage } });
+    navigate("/puja_fill_form", {
+      state: {
+        pujaData: puja,
+        selectedPackage,
+        templeAddonsQty,
+        homeAddonsQty,
+      },
+    });
   };
 
-  const grandTotal = isSyncing ? "..." : cartData?.grand_total ?? selectedPackage?.packagePrice ?? 0;
+  const pkgPrice = Number(selectedPackage?.packagePrice ?? cartData?.package?.packagePrice ?? cartData?.base_total ?? 0);
+  const sacredAddonsTotal = addons.filter((a) => templeAddonsQty[a._id]).reduce((s, a) => s + Number(a.pamount || 0) * (templeAddonsQty[a._id] || 0), 0);
+  const homeDeliveryTotal = homeDeliveryAddons.filter((a) => homeAddonsQty[a._id]).reduce((s, a) => s + Number(a.pamount || 0) * (homeAddonsQty[a._id] || 0), 0);
+  const discountAmount = Number(cartData?.discount || 0);
+  const taxAmount = Number(cartData?.tax_amount || 0);
+  const calculatedTotal = pkgPrice + sacredAddonsTotal + homeDeliveryTotal - discountAmount + taxAmount;
+  const grandTotal = isSyncing ? "..." : calculatedTotal;
 
   if (!puja) {
     return (
@@ -522,8 +541,8 @@ const PujaReviewBookingPage = () => {
                 <div className="prb-order-body">
                   <div className="prb-order-sublabel">Selected Package</div>
                   <div className="prb-order-line">
-                    <span className="prb-order-pkg">{selectedPackage?.packageName || "Individual"}</span>
-                    <span className="prb-order-val">₹{selectedPackage?.packagePrice ?? 0}</span>
+                    <span className="prb-order-pkg">{selectedPackage?.packageName || cartData?.package?.packageName || "Individual"}</span>
+                    <span className="prb-order-val">₹{pkgPrice}</span>
                   </div>
                   <div className="prb-order-divider" />
                   <div className="prb-order-line">
@@ -531,7 +550,7 @@ const PujaReviewBookingPage = () => {
                     <span className="prb-order-val">
                       {Object.keys(templeAddonsQty).length === 0
                         ? <span className="prb-not-added">Not Added Yet</span>
-                        : `₹${addons.filter((a) => templeAddonsQty[a._id]).reduce((s, a) => s + a.pamount * templeAddonsQty[a._id], 0)}`}
+                        : `₹${sacredAddonsTotal}`}
                     </span>
                   </div>
                   <div className="prb-order-line" style={{ marginTop: 8 }}>
@@ -539,18 +558,18 @@ const PujaReviewBookingPage = () => {
                     <span className="prb-order-val">
                       {Object.keys(homeAddonsQty).length === 0
                         ? <span className="prb-not-added">Not Added Yet</span>
-                        : `₹${homeDeliveryAddons.filter((a) => homeAddonsQty[a._id]).reduce((s, a) => s + a.pamount * homeAddonsQty[a._id], 0)}`}
+                        : `₹${homeDeliveryTotal}`}
                     </span>
                   </div>
                   <div className="prb-order-divider" />
                   <div className="prb-order-line">
                     <span className="prb-order-label">Coupon Discount</span>
-                    <span className="prb-order-val prb-discount">{cartData?.discount ? `-₹${cartData.discount}` : "-₹0"}</span>
+                    <span className="prb-order-val prb-discount">{discountAmount ? `-₹${discountAmount}` : "-₹0"}</span>
                   </div>
                   {!couponApplied && <div className="prb-apply-coupon">Apply Coupon</div>}
                   <div className="prb-order-line">
                     <span className="prb-order-label">Taxes & Charges <i className="fa-solid fa-circle-info" style={{ fontSize: 10, opacity: 0.5 }} /></span>
-                    <span className="prb-order-val">₹{cartData?.tax_amount ?? 0}</span>
+                    <span className="prb-order-val">₹{taxAmount}</span>
                   </div>
                   <div className="prb-order-divider" />
                   <div className="prb-total-row">

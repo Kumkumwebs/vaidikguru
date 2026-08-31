@@ -3,7 +3,7 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import ScrollTop from '../components/common/ScrollTop';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import apiService from '../services/apiServices';
 
 const CancellationAndRefund = () => {
     const [content, setContent] = useState("");
@@ -50,8 +50,8 @@ const CancellationAndRefund = () => {
     useEffect(() => {
         const fetchPolicy = async () => {
             try {
-                const res = await axios.get('https://admin.vaidikguru.com/links/cancleandrefund');
-                let html = res.data.content || res.data.data || res.data;
+                const res = await apiService.get('/links/cancleandrefund');
+                let html = typeof res === 'string' ? res : (res?.content || res?.data || '');
                 // Backend content still references the old brand name — swap
                 // it for display only (case-insensitive, keeps punctuation/spacing intact).
                 html = html.replace(/Astrogurujii/gi, "VaidikGuru");

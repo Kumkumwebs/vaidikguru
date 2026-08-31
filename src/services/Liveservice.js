@@ -13,33 +13,13 @@ import apiService from './apiServices';
 import { API_BASE, ENDPOINTS, getToken, getUserId, getUserName } from './Liveconfig';
 
 // ── low-level helpers ─────────────────────────────────────────────────────────
-const authHeaders = () => {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
-
+// ── low-level helpers ─────────────────────────────────────────────────────────
 async function post(path, body) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: authHeaders(),
-    // FIX: fetch's `body` must be a string/Blob/FormData — passing a raw
-    // object here (as this used to do with `body: body || {}`) gets
-    // silently coerced to the literal string "[object Object]" instead of
-    // real JSON. This was the entire cause of the [object Object] payload.
-    body: JSON.stringify(body || {}),
-  });
-  return res.json();
+  return apiService.postBearer(path, body || {});
 }
 
 async function get(path) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'GET',
-    headers: authHeaders(),
-  });
-  return res.json();
+  return apiService.getBearer(path);
 }
 
 // ── channel id + kundli helpers ───────────────────────────────────────────────
@@ -169,16 +149,10 @@ export async function lastCallList() {
  * mp3 uses the mp3 endpoint first (server expects the .mp3 extension there).
  */
 export async function uploadChatFile(file, { isAudio = false } = {}) {
-  const token = getToken();
   const tryEndpoint = async (path) => {
     const fd = new FormData();
     fd.append('image', file);
-    const res = await fetch(`${API_BASE}${path}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` }, // no Content-Type: browser sets multipart boundary
-      body: fd,
-    });
-    return res.json();
+    return apiService.postMultipart(path, fd);
   };
 
   try {
@@ -212,13 +186,7 @@ function extractToken(data) {
 export async function fetchAgoraToken(channelId) {
   for (const endpoint of ENDPOINTS.agora_token) {
     try {
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ channel_id: channelId }),
-      });
-      if (!res.ok) continue;
-      const data = await res.json();
+      const data = await apiService.postBearer(endpoint, { channel_id: channelId });
       const token = extractToken(data);
       if (token) return token;
     } catch {

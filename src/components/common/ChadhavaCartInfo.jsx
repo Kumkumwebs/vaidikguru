@@ -68,7 +68,7 @@ const ChadhavaCartPage = () => {
 
 	const fetchCartFromServer = useCallback(async () => {
 		try {
-			const response = await apiService.postBearer('https://admin.vaidikguru.com/puja/getChadhavaCart', {});
+			const response = await apiService.postBearer('/puja/getChadhavaCart', {});
 			if (response && response.status === true && response.data.length > 0) {
 				const rawData = response.data[0];
 				setCartResponse(rawData);
@@ -109,7 +109,7 @@ const ChadhavaCartPage = () => {
 	}, []);
 	const fetchWalletBalance = useCallback(async () => {
 		try {
-			const res = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
+			const res = await apiService.getBearer('/user_api/get_profile');
 			if (res?.status && res?.results) {
 				setWalletBalance(Number(res.results.wallet || 0));
 			}
@@ -158,7 +158,7 @@ const ChadhavaCartPage = () => {
 					.map(i => ({ prasad_id: i.prasad_id, qty: i.qty })),
 			};
 			const res = await apiService.postBearer(
-				'https://admin.vaidikguru.com/puja/ChadhavaaddToCart',
+				'/puja/ChadhavaaddToCart',
 				payload
 			);
 			if (res && res.status) fetchCartFromServer();
@@ -183,7 +183,7 @@ const ChadhavaCartPage = () => {
 				userDetails: { name: userDetails.name, whatsapp: userDetails.whatsapp },
 			};
 			const res = await apiService.postBearer(
-				'https://admin.vaidikguru.com/puja/createChadhavaBooking',
+				'/puja/createChadhavaBooking',
 				payload
 			);
 			if (res && res.status === true) {
@@ -233,19 +233,16 @@ const ChadhavaCartPage = () => {
 	};
 	const verifyPayment = async (paymentResponse) => {
 		try {
-			const res = await fetch(`https://admin.vaidikguru.com/puja/chadhava_payment_status/${paymentResponse}`, {
-				method: 'GET',
-			});
-			const data = await res.json();
+			const data = await apiService.getBearer(`/puja/chadhava_payment_status/${paymentResponse}`);
 
-			if (data.payment_status === "Success") {
+			if (data?.payment_status === "Success") {
 				setBookingStatus('success');
 			}
 
-			if (data.payment_status === "Failed") {
+			if (data?.payment_status === "Failed") {
 				setBookingStatus('failed');
 			}
-			return data.payment_status;
+			return data?.payment_status;
 		} catch (e) {
 			return null;
 		}

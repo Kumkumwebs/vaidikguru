@@ -509,30 +509,33 @@ const PujaDetails = () => {
     return () => observer.disconnect();
   }, [pujaDetails]);
 
-  const handleSelectPackage = (type) => {
+  const handleSelectPackage = (pkgOrType) => {
     if (!isLoggedIn) {
-      setPendingPackageType(type);
+      setPendingPackageType(pkgOrType);
       setShowLoginModal(true);
       return;
     }
-    proceedSelectPackage(type);
+    proceedSelectPackage(pkgOrType);
   };
 
-  const proceedSelectPackage = (type) => {
-    const isFamily = type === "family";
+  const proceedSelectPackage = (pkgOrType) => {
+    let chosenPkg = (typeof pkgOrType === "object" && pkgOrType) ? pkgOrType : null;
 
-    const chosenPkg = isFamily
-      ? pujaDetails?.packages?.find(p =>
-        p.packageType?.toLowerCase() === "family"
-      ) || pujaDetails?.packages?.[pujaDetails.packages.length - 1]
-      : pujaDetails?.packages?.find(p =>
-        p.packageType?.toLowerCase() === "individual"
-      ) || pujaDetails?.packages?.[0];
+    if (!chosenPkg) {
+      const isFamily = pkgOrType === "family";
+      chosenPkg = isFamily
+        ? pujaDetails?.packages?.find(p =>
+          p.packageType?.toLowerCase() === "family"
+        ) || pujaDetails?.packages?.[pujaDetails.packages.length - 1]
+        : pujaDetails?.packages?.find(p =>
+          p.packageType?.toLowerCase() === "individual"
+        ) || pujaDetails?.packages?.[0];
+    }
 
     const selectedPackage = {
       _id: chosenPkg?._id || "",
       packageName: chosenPkg?.packageName || "",
-      packagePrice: chosenPkg?.packagePrice || 0,
+      packagePrice: Number(chosenPkg?.packagePrice || 0),
       packageType: chosenPkg?.packageType || "",
       packageDescription: chosenPkg?.packageDescription || [],
     };
@@ -1196,11 +1199,7 @@ const PujaDetails = () => {
                 className={`pd-pkg-card-inner${isActive ? " pd-pkg-active" : ""}`}
                 onClick={() => {
                   setSelectedPkgId(pkg._id);
-                  handleSelectPackage(
-                    pkg.packageType?.toLowerCase() === "individual"
-                      ? "individual"
-                      : "family"
-                  );
+                  handleSelectPackage(pkg);
                 }}
                 style={{
                   background: "#fff",
@@ -1321,7 +1320,7 @@ const PujaDetails = () => {
                     className="pd-pkg-select-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSelectPackage(pkg.packageType?.toLowerCase() === "individual" ? "individual" : "family");
+                      handleSelectPackage(pkg);
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-2px)";

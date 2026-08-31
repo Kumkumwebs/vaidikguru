@@ -1,11 +1,9 @@
 import apiService from './apiServices';
 
-const BASE = 'https://admin.vaidikguru.com';
-
 const ChatCallService = {
   initiateChat: async ({ astrologerId, callType, intake }) => {
     try {
-      const res = await apiService.postBearer(`${BASE}/user_api/call_initiate`, {
+      const res = await apiService.postBearer('/user_api/call_initiate', {
         astrologer_id: astrologerId,
         call_type: callType, // 'chat' | 'audio'
         name: intake?.name || '',
@@ -23,7 +21,7 @@ const ChatCallService = {
 
   checkStatus: async (channelId) => {
     try {
-      const res = await apiService.postBearer(`${BASE}/user_api/call_initiate_status`, {
+      const res = await apiService.postBearer('/user_api/call_initiate_status', {
         channel_id: channelId,
       });
       return res; // expect { status, results: { status: 'accept_astro' | 'reject_astro', user_id, ... } }
@@ -35,7 +33,7 @@ const ChatCallService = {
 
   endChat: async (channelId, status = 'disconnect_user') => {
     try {
-      await apiService.postBearer(`${BASE}/api/call/status-update`, {
+      await apiService.postBearer('/api/call/status-update', {
         channel_id: channelId,
         status,
       });

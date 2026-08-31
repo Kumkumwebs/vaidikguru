@@ -93,8 +93,7 @@ const AuthService = {
 	},
 	getProfile: async () => {
 		try {
-			const response = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
-			debugger;
+			const response = await apiService.getBearer('/user_api/get_profile');
 
 			if (response?.status === true) {
 				const results = response.results || {};
@@ -157,7 +156,7 @@ const AuthService = {
 
 		try {
 			const response = await apiService.putBearer(
-				'https://admin.vaidikguru.com/user_api/profile_update',
+				'/user_api/profile_update',
 				body
 			);
 

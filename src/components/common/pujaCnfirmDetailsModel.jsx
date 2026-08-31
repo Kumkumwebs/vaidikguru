@@ -11,12 +11,15 @@ const formatWhatsApp = (num) => {
   return num;
 };
 
-const OrderConfirmationModal = ({ isOpen, onClose, formData, cart, onConfirm, walletBalance = 0 }) => {
+const OrderConfirmationModal = ({ isOpen, onClose, formData, cart, onConfirm, walletBalance = 0, selectedPackage }) => {
   const [paymentMode, setPaymentMode] = useState("razorpay");
 
   if (!isOpen) return null;
 
-  const totalAmount = (cart?.grand_total || 0) + 10;
+  const pkgPrice = Number(selectedPackage?.packagePrice ?? cart?.base_total ?? cart?.package?.packagePrice ?? 0);
+  const addonsTotal = Number(cart?.addons_total || 0);
+  const homeAddonsTotal = Number(cart?.home_addons_total || 0);
+  const totalAmount = pkgPrice + addonsTotal + homeAddonsTotal + 10 - Number(cart?.discount || 0);
 
   return (
     <AnimatePresence>

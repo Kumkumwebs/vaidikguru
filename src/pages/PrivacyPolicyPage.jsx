@@ -6,9 +6,7 @@ import PopupSearch from "../components/layout/PopupSearch";
 import SideMenu from "../components/layout/SideMenu";
 import ScrollTop from "../components/common/ScrollTop";
 import { motion } from "framer-motion";
-import axios from "axios";
-
-const API_BASE_URL = "https://admin.vaidikguru.com";
+import apiService from "../services/apiServices";
 
 // ── Static fallback content (mirrors the content used in the v2 page) ──
 const STATIC_SECTIONS = [
@@ -142,9 +140,10 @@ const PrivacyPolicy = () => {
         // content (silently) if the request fails or the field is missing.
         const fetchSettings = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/user_api/setting`);
-                if (res.data?.status && res.data?.results?.privacy_policy) {
-                    setSections(parseSectionsFromHtml(res.data.results.privacy_policy));
+                const res = await apiService.get('/user_api/setting');
+                const policyContent = res?.results?.privacy_policy || res?.privacy_policy;
+                if (policyContent) {
+                    setSections(parseSectionsFromHtml(policyContent));
                 } else {
                     setSections(STATIC_SECTIONS);
                 }

@@ -2,11 +2,7 @@ import { useState, useEffect } from 'react';
 import PujaService from '../../services/pujaServices';
 import '../../pages/home.css';
 
-const FALLBACK_PUJAS = [
-	{ id: 1, name: 'Maha Rudrabhishek', image: '', mandir: 'At Temple', purpose: 'For peace and prosperity', date: '' },
-	{ id: 2, name: 'Satyanarayan Puja', image: '', mandir: 'At Temple', purpose: 'For wellbeing', date: '' },
-	{ id: 3, name: 'Navagraha Shanti', image: '', mandir: 'At Temple', purpose: 'Planetary balance', date: '' },
-];
+
 
 // Inline SVG placeholder with an Om symbol — never triggers a network request, so it can't fail/loop.
 const PLACEHOLDER =
@@ -76,16 +72,18 @@ const PujaListSection = ({ puja }) => {
 		? puja.result
 		: (apiPujas.length > 0 ? apiPujas : null);
 
-	const items = rawItems
-		? rawItems.slice(0, 6).map((p) => ({
-			id: p._id || p.id,
-			name: p.title || p.name || 'Sacred Pooja',
-			image: fixImgHost(p.pujaImage || p.image || p.img),
-			mandir: p.mandirName || p.mandir || 'At Temple',
-			purpose: p.purposeOfPooja || p.purpose,
-			date: formatDate(p.pujaDatetime || p.date),
-		}))
-		: FALLBACK_PUJAS.map((p) => ({ ...p, image: p.image || PLACEHOLDER }));
+	if (!rawItems || rawItems.length === 0) {
+		return null;
+	}
+
+	const items = rawItems.slice(0, 6).map((p) => ({
+		id: p._id || p.id,
+		name: p.title || p.name || 'Sacred Pooja',
+		image: fixImgHost(p.pujaImage || p.image || p.img),
+		mandir: p.mandirName || p.mandir || 'At Temple',
+		purpose: p.purposeOfPooja || p.purpose,
+		date: formatDate(p.pujaDatetime || p.date),
+	}));
 
 	return (
 		<section className="dq-section">

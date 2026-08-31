@@ -1,17 +1,39 @@
-import '../../pages/home.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-// import AstrologerCard from './AstrologerCard';
-
-const FALLBACK_ASTROLOGERS = [
-	{ id: 1, name: 'Acharya Alok', profile_img: '/assets/img/home/astrologer_1.jpg', experience: 15, category: [{ name: 'Vedic Astrology' }], avg_rate: 4.9, total_review: 1200, per_min_chat: 15, is_online: 1 },
-	{ id: 2, name: 'Dr. Neeraj Sharma', profile_img: '/assets/img/home/astrologer_2.jpg', experience: 20, category: [{ name: 'Vedic' }, { name: 'KP' }, { name: 'Nadi' }], avg_rate: 4.9, total_review: 980, per_min_chat: 20, is_online: 1 },
-	{ id: 3, name: 'Acharya Ruchi', profile_img: '/assets/img/home/astrologer_3.jpg', experience: 10, category: [{ name: 'Vedic Astrology' }], avg_rate: 4.8, total_review: 850, per_min_chat: 12, is_busy: 1 },
-	{ id: 4, name: 'Pandit Om Prakash', profile_img: '/assets/img/home/astrologer_4.jpg', experience: 25, category: [{ name: 'Vedic' }, { name: 'Lal Kitab' }], avg_rate: 4.9, total_review: 1100, per_min_chat: 18, is_online: 1 },
-];
+import apiService from '../../services/apiServices';
+import { getAstroPrice, getAstroRating, getAstroReviewCount } from '../../services/astroHelpers';
 
 const TeamSection = ({ astrologer }) => {
-	const items = astrologer && astrologer.length ? astrologer : FALLBACK_ASTROLOGERS;
+	const [list, setList] = useState(() => (Array.isArray(astrologer) && astrologer.length ? astrologer : []));
+
+	useEffect(() => {
+		if (Array.isArray(astrologer) && astrologer.length > 0) {
+			setList(astrologer);
+			return;
+		}
+		let active = true;
+		const loadAstrologers = async () => {
+			try {
+				const payload = { page: "1" };
+				const res = await apiService.postBearer('/user_api/astrologer_list', payload);
+				const data = Array.isArray(res?.results) ? res.results : Array.isArray(res?.record) ? res.record : Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : null;
+				if (active) {
+					if (data && data.length > 0) {
+						setList(data.slice(0, 6));
+					} else {
+						setList([]);
+					}
+				}
+			} catch (_) {
+				if (active) setList([]);
+			}
+		};
+		loadAstrologers();
+		return () => { active = false; };
+	}, [astrologer]);
+
+	const items = list && list.length ? list : [];
+	if (!items || items.length === 0) return null;
 
 	const handleAction = (astro, type) => {
 		if (type === 'chat') {
@@ -126,10 +148,12 @@ const AstrologerCard = ({ astro, onChat }) => {
 			<div className="al-stats">
 				<div className="al-rat">
 					<i className="fas fa-star" />
-					<span>{parseFloat(astro.avg_rate || 4.8).toFixed(1)}</span>
-					<span className="al-rev">({astro.total_review || 80})</span>
+					<span>{getAstroRating(astro) ? parseFloat(getAstroRating(astro)).toFixed(1) : '4.8'}</span>
+					<span className="al-rev">({getAstroReviewCount(astro) ?? 80})</span>
 				</div>
-				<div className="al-price">₹{astro.per_min_chat || '5'}/min</div>
+				{getAstroPrice(astro) ? (
+					<div className="al-price">₹{getAstroPrice(astro)}/min</div>
+				) : null}
 			</div>
 			<div className="al-actions">
 				{busy ? (

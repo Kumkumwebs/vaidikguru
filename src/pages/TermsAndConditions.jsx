@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import axios from "axios";
+import apiService from "../services/apiServices";
 
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
@@ -8,8 +8,6 @@ import MobileMenu from "../components/layout/MobileMenu";
 import PopupSearch from "../components/layout/PopupSearch";
 import SideMenu from "../components/layout/SideMenu";
 import ScrollTop from "../components/common/ScrollTop";
-
-const API_BASE_URL = "https://admin.vaidikguru.com";
 
 // ── Static fallback content (mirrors the content used in the v2 page) ──
 const STATIC_SECTIONS = [
@@ -162,9 +160,10 @@ function TermsAndConditions() {
         // static content (silently) if the request fails or the field is missing.
         const fetchSettings = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/user_api/setting`);
-                if (res.data?.status && res.data?.results?.terms_and_conditions) {
-                    setSections(parseSectionsFromHtml(res.data.results.terms_and_conditions));
+                const res = await apiService.get('/user_api/setting');
+                const termsContent = res?.results?.terms_and_conditions || res?.terms_and_conditions;
+                if (termsContent) {
+                    setSections(parseSectionsFromHtml(termsContent));
                 } else {
                     setSections(STATIC_SECTIONS);
                 }

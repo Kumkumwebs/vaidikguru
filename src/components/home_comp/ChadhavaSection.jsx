@@ -1,13 +1,6 @@
+import { useState, useEffect } from 'react';
+import ChadhavaService from '../../services/chadhavaServices';
 import '../../pages/home.css';
-
-const FALLBACK_ITEMS = [
-	{ id: 1, name: 'Mahakal Chadhava', temple: '', image: '', price: 751 },
-	{ id: 2, name: 'Kashi Vishwanath Chadhava', temple: '', image: '', price: 651 },
-	{ id: 3, name: 'Ayodhya Ram Mandir Chadhava', temple: '', image: '', price: 551 },
-	{ id: 4, name: 'Khatu Shyam Chadhava', temple: '', image: '', price: 499 },
-	{ id: 5, name: 'Vaishno Devi Chadhava', temple: '', image: '', price: 651 },
-	{ id: 6, name: 'Tirupati Balaji Chadhava', temple: '', image: '', price: 601 },
-];
 
 // Inline SVG Om placeholder — no network request, so it can't fail/loop.
 const PLACEHOLDER =
@@ -31,7 +24,34 @@ const fixImgHost = (url) =>
 	typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
 
 const ChadhavaSection = ({ chadhava }) => {
-	const rawItems = chadhava?.length ? chadhava : null;
+	const [apiChadhava, setApiChadhava] = useState([]);
+
+	useEffect(() => {
+		if (chadhava && chadhava.length > 0) return;
+		const fetchChadhava = async () => {
+			try {
+				const res = await ChadhavaService.getChadhavaList();
+				let list = [];
+				if (res?.status) {
+					list = res.results || res.data || res.chadhava || [];
+				}
+				if (Array.isArray(list) && list.length > 0) {
+					setApiChadhava(list);
+				}
+			} catch (err) {
+				console.error("ChadhavaSection fetch error:", err);
+			}
+		};
+		fetchChadhava();
+	}, [chadhava]);
+
+	const rawItems = (chadhava && chadhava.length > 0)
+		? chadhava
+		: (apiChadhava.length > 0 ? apiChadhava : null);
+
+	if (!rawItems || rawItems.length === 0) {
+		return null;
+	}
 
 	// Helper: does this record actually have a real image, or would it
 	// fall back to the placeholder? Checked across every possible field.
@@ -47,41 +67,31 @@ const ChadhavaSection = ({ chadhava }) => {
 	// Items with a real image show first; items without one (which would
 	// otherwise render the placeholder) sink to the bottom. Within each
 	// group, most recently added Chadhava comes first.
-	const sortedItems = rawItems
-		? [...rawItems].sort((a, b) => {
-			const aHasImg = hasRealImage(a);
-			const bHasImg = hasRealImage(b);
-			if (aHasImg !== bHasImg) return aHasImg ? -1 : 1;
+	const sortedItems = [...rawItems].sort((a, b) => {
+		const aHasImg = hasRealImage(a);
+		const bHasImg = hasRealImage(b);
+		if (aHasImg !== bHasImg) return aHasImg ? -1 : 1;
 
-			const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
-			const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
-			if (dateB !== dateA) return dateB - dateA;
-			return (b._id || '').localeCompare(a._id || '');
-		})
-		: null;
+		const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
+		const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
+		if (dateB !== dateA) return dateB - dateA;
+		return (b._id || '').localeCompare(a._id || '');
+	});
 
-	const items = sortedItems
-		? sortedItems.map((c) => ({
-			id: c._id,
-			name: c.title,
-			temple: c.templeName,
-			// Same fallback chain as the Chadhava detail page: some
-			// records only have chadhavaImage populated, others only
-			// have bannerImages (or galleryImages/gallery/images).
-			// Check every possible field before falling back to the
-			// placeholder, so the listing image matches what the
-			// detail page shows for the same record.
-			image:
-				fixImgHost(
-					c.chadhavaImage ||
-					c.bannerImages?.[0] ||
-					c.galleryImages?.[0] ||
-					c.gallery?.[0] ||
-					c.images?.[0]
-				) || PLACEHOLDER,
-			price: c.price,
-		}))
-		: FALLBACK_ITEMS.map((c) => ({ ...c, image: c.image || PLACEHOLDER }));
+	const items = sortedItems.map((c) => ({
+		id: c._id || c.id,
+		name: c.title || c.name || 'Sacred Chadhava',
+		temple: c.templeName || c.temple || '',
+		image:
+			fixImgHost(
+				c.chadhavaImage ||
+				c.bannerImages?.[0] ||
+				c.galleryImages?.[0] ||
+				c.gallery?.[0] ||
+				c.images?.[0]
+			) || PLACEHOLDER,
+		price: c.price,
+	}));
 
 	return (
 		<section className="dq-section dq-section-cream">

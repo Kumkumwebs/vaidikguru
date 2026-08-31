@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { getAstroPrice, getAstroRating } from '../../services/astroHelpers';
 import './WalletConnectModal.css';
 
 /* helpers */
@@ -29,7 +30,7 @@ const WalletConnectModal = ({
 }) => {
   const navigate = useNavigate();
 
-  const perMin = Number(astrologer.per_min_chat || 5);
+  const perMin = Number(getAstroPrice(astrologer));
   // Max minutes user can afford with current balance
   const maxMinutes = useMemo(
     () => (perMin > 0 ? Math.floor(walletBalance / perMin) : 0),
@@ -78,7 +79,7 @@ const WalletConnectModal = ({
                 <div className="wc-name">{astrologer.name || 'Astrologer'}</div>
                 <div className="wc-rating">
                   <i className="fas fa-star" />
-                  <span>{parseFloat(astrologer.avg_rate || 4.9).toFixed(1)}</span>
+                  <span>{parseFloat(getAstroRating(astrologer)).toFixed(1)}</span>
                   <span className="wc-cats">{cats.slice(0, 2).join(' • ') || 'Vedic Astrology'}</span>
                 </div>
                 <div className="wc-rate">

@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import LiveCard from "../sections/Livecard";
-
-const API = "https://admin.vaidikguru.com";
-const tok = () => {
-  try { return localStorage.getItem("token") || ""; } catch { return ""; }
-};
+import apiService from "../../services/apiServices";
 
 const truthy = (v) => v === true || v === 1 || v === "1" || v === "true";
 
@@ -61,15 +56,15 @@ export default function LiveAstrologerSection() {
         setLoading(true);
         // Fetch both live listings and astrologer list as fallback
         const [liveRes, astroRes] = await Promise.all([
-          axios.get(`${API}/user_api/listing_of_live_astrlogers`, { headers: { Authorization: `Bearer ${tok()}` } }).catch(() => null),
-          axios.post(`${API}/user_api/astrologer_list`, { search: "", page: "1" }, { headers: { Authorization: `Bearer ${tok()}` } }).catch(() => null),
+          apiService.getBearer('/user_api/listing_of_live_astrlogers').catch(() => null),
+          apiService.postBearer('/user_api/astrologer_list', { search: "", page: "1" }).catch(() => null),
         ]);
 
         if (cancelled) return;
 
         let rawLive = [];
-        if (liveRes?.data) {
-          rawLive = liveRes.data.results || liveRes.data.data || (Array.isArray(liveRes.data) ? liveRes.data : []);
+        if (liveRes) {
+          rawLive = liveRes.results || liveRes.data || (Array.isArray(liveRes) ? liveRes : []);
         }
 
         const seenAstro = new Set();
@@ -88,8 +83,8 @@ export default function LiveAstrologerSection() {
         } else {
           // If no active live session returned, format online astrologers as live streams
           let onlineList = [];
-          if (astroRes?.data) {
-            const all = astroRes.data.results || astroRes.data.data || (Array.isArray(astroRes.data) ? astroRes.data : []);
+          if (astroRes) {
+            const all = astroRes.results || astroRes.data || (Array.isArray(astroRes) ? astroRes : []);
             onlineList = all.filter((a) => truthy(a.is_online) || truthy(a.is_live));
           }
           setLiveList(getFallbackLiveAstrologers(onlineList));

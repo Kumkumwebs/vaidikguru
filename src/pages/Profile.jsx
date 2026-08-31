@@ -19,8 +19,8 @@ const HERO_BANNER_IMAGE = "/assets/img/images/profile-hero-banner.jpeg";
 // The backend ONLY persists name, email, gender, dob, tob, pob, rashi.
 // There is no marital_status / profession / profile_for / country / gotra
 // on the server, so those fields were dropped from this page.
-const GET_PROFILE_URL = "https://admin.vaidikguru.com/user_api/get_profile";
-const UPDATE_PROFILE_URL = "https://admin.vaidikguru.com/user_api/profile_update_img";
+const GET_PROFILE_URL = "/user_api/get_profile";
+const UPDATE_PROFILE_URL = "/user_api/profile_update_img";
 
 // Read-only fields — not part of profile_update_img, just displayed.
 const PHONE_FIELD = { key: "number", label: "Phone Number", icon: "phone" };
@@ -326,7 +326,7 @@ export default function ProfilePage() {
 
       let response = await apiService.postMultipart(UPDATE_PROFILE_URL, formData);
       if (!response?.status) {
-        response = await apiService.postMultipart("https://admin.vaidikguru.com/user_api/profile_update", formData);
+        response = await apiService.postMultipart("/user_api/profile_update", formData);
       }
 
       if (response?.status) {

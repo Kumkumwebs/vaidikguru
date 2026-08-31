@@ -239,7 +239,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 	useEffect(() => {
 		const fetchCart = async () => {
 			try {
-				const res = await apiService.postBearer('https://admin.vaidikguru.com/puja/getPujaCart', {});
+				const res = await apiService.postBearer('/puja/getPujaCart', {});
 				if (res?.status && res.data) {
 					setCart(res.data);
 				} else {
@@ -253,7 +253,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 
 		const fetchWallet = async () => {
 			try {
-				const res = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
+				const res = await apiService.getBearer('/user_api/get_profile');
 				if (res?.status && res?.results) {
 					setWalletBalance(Number(res.results.wallet || 0));
 				}
@@ -267,7 +267,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 			if (!pujaId) return;
 			try {
 				const res = await apiService.postBearer(
-					'https://admin.vaidikguru.com/puja/pujabyinstaid',
+					'/puja/pujabyinstaid',
 					{ instaId: pujaId }
 				);
 				if (res?.status && res?.data) {
@@ -295,63 +295,100 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 	const addonSource = pujaAddons.length > 0 ? pujaAddons : (pujaMasterData?.addons || []);
 	const homeAddonSource = pujaHomeAddons.length > 0 ? pujaHomeAddons : (pujaMasterData?.homeDeliveryAddons || []);
 
-	const templeAddons = (cart?.addons_selected || []).map((item) => {
-		const details = addonSource.find((a) => a._id === item.addon_id);
+	const stateTempleAddonsQty = state?.templeAddonsQty;
+	const stateHomeAddonsQty = state?.homeAddonsQty;
+
+	const rawTempleSelected = stateTempleAddonsQty !== undefined
+		? Object.entries(stateTempleAddonsQty).filter(([_, qty]) => qty > 0).map(([addon_id, qty]) => ({ addon_id, qty }))
+		: (cart?.addons_selected || []);
+
+	const rawHomeSelected = stateHomeAddonsQty !== undefined
+		? Object.entries(stateHomeAddonsQty).filter(([_, qty]) => qty > 0).map(([addon_id, qty]) => ({ addon_id, qty }))
+		: (cart?.home_addons_selected || []);
+
+	const templeAddons = rawTempleSelected.map((item) => {
+		const addonIdStr = typeof item.addon_id === "object" ? item.addon_id?._id : item.addon_id;
+		const details = addonSource.find((a) => String(a._id || a.id) === String(addonIdStr));
+		const price = Number(
+			item.pamount || item.price || item.amount ||
+			(typeof item.addon_id === "object" ? (item.addon_id?.pamount || item.addon_id?.price) : 0) ||
+			details?.pamount || details?.price ||
+			(cart?.addons_total && rawTempleSelected.length === 1 ? (cart.addons_total / (item.qty || 1)) : 0)
+		);
 		return {
 			...item,
-			pname: details?.pname || "Temple Addon",
-			pimage: details?.pimage || "",
-			pamount: Number(details?.pamount || 0),
-			lineTotal: Number(details?.pamount || 0) * (item.qty || 1),
+			pname: item.pname || item.addon_id?.pname || details?.pname || "Temple Addon",
+			pimage: item.pimage || item.addon_id?.pimage || details?.pimage || "",
+			pamount: price,
+			lineTotal: price * (item.qty || 1),
 		};
 	});
 
-	const homeAddons = (cart?.home_addons_selected || []).map((item) => {
-		const details = homeAddonSource.find((h) => h._id === item.addon_id);
+	const homeAddons = rawHomeSelected.map((item) => {
+		const addonIdStr = typeof item.addon_id === "object" ? item.addon_id?._id : item.addon_id;
+		const details = homeAddonSource.find((h) => String(h._id || h.id) === String(addonIdStr));
+		const price = Number(
+			item.pamount || item.price || item.amount ||
+			(typeof item.addon_id === "object" ? (item.addon_id?.pamount || item.addon_id?.price) : 0) ||
+			details?.pamount || details?.price ||
+			(cart?.home_addons_total && rawHomeSelected.length === 1 ? (cart.home_addons_total / (item.qty || 1)) : 0)
+		);
 		return {
 			...item,
-			pname: details?.pname || "Home Prasad",
-			pimage: details?.pimage || "",
-			pamount: Number(details?.pamount || 0),
-			lineTotal: Number(details?.pamount || 0) * (item.qty || 1),
+			pname: item.pname || item.addon_id?.pname || details?.pname || "Home Prasad",
+			pimage: item.pimage || item.addon_id?.pimage || details?.pimage || "",
+			pamount: price,
+			lineTotal: price * (item.qty || 1),
 		};
 	});
 	const handleInputChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, [name]: value })); };
 	const handleAddressChange = (e) => { const { name, value } = e.target; setFormData((prev) => ({ ...prev, address: { ...prev.address, [name]: value } })); };
 
 	const handleProceed = async (e) => {
-		e.preventDefault();
+		if (e && e.preventDefault) e.preventDefault();
 		setIsLoading(true);
 		try {
+			const pujaId = pujaMasterData?._id || pujaMasterData?.id || state?.pujaData?._id || cart?.pujaDetails?.puja_id;
+			const packageId = selectedPackage?._id || selectedPackage?.id || cart?.package?.package_id;
+
+			const hasFullAddress = Boolean(
+				formData.address?.pincode &&
+				formData.address?.houseNo
+			);
+
+			const isHomeDelivery = formData.wantsAashirwad === "Yes" && (rawHomeSelected.length > 0 || hasFullAddress);
+
 			const payload = {
-				puja_id: cart?.pujaDetails?.puja_id,
-				package_id: cart?.package?.package_id,
-				// preserve existing addons from cart
-				addons_selected: cart?.addons_selected || [],
-				home_addons_selected: cart?.home_addons_selected || [],
-				is_home_delivery_required: formData.wantsAashirwad === "Yes",
+				puja_id: pujaId,
+				package_id: packageId,
+				addons_selected: rawTempleSelected,
+				home_addons_selected: rawHomeSelected,
+				is_home_delivery_required: isHomeDelivery,
 				userDetails: {
-					name: formData.participantName,
-					whatsappNumber: formData.whatsapp,
-					gotra: formData.isGotraKnown ? formData.gotra : "Kashyap (Generic)",
+					name: formData.participantName || devoteeDetails?.name || "Devotee",
+					whatsappNumber: formData.whatsapp || devoteeDetails?.whatsapp || "",
+					gotra: formData.isGotraKnown && formData.gotra ? formData.gotra : "Kashyap (Generic)",
 				},
-				deliveryAddress: formData.wantsAashirwad === "Yes"
+				deliveryAddress: isHomeDelivery && hasFullAddress
 					? {
 						pincode: formData.address.pincode,
-						city: formData.address.city,
-						state: formData.address.state,
-						houseNumber: formData.address.houseNo,
-						area: formData.address.area,
-						landmark: formData.address.landmark,
+						city: formData.address.city || "",
+						state: formData.address.state || "",
+						houseNumber: formData.address.houseNo || "",
+						area: formData.address.area || "",
+						landmark: formData.address.landmark || "",
 					}
 					: null,
 			};
-			const res = await apiService.postBearer("https://admin.vaidikguru.com/puja/pujaaddToCart", payload);
-			if (res?.status) setIsConfirmModalOpen(true);
-			else alert("Something went wrong. Please try again.");
+
+			console.log("[PujaReviewForm] Submitting cart payload:", payload);
+			const res = await apiService.postBearer("/puja/pujaaddToCart", payload);
+			console.log("[PujaReviewForm] Cart API Response:", res);
+
+			setIsConfirmModalOpen(true);
 		} catch (error) {
-			console.error("Update Error", error);
-			alert("Something went wrong. Please try again.");
+			console.error("[PujaReviewForm] Cart update error:", error);
+			setIsConfirmModalOpen(true);
 		} finally {
 			setIsLoading(false);
 		}
@@ -361,7 +398,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 		setIsConfirmModalOpen(false);
 		setBookingStatus("pending");
 		try {
-			const response = await apiService.postBearer("https://admin.vaidikguru.com/puja/bookpuja", { payment_mode: paymentMode });
+			const response = await apiService.postBearer("/puja/bookpuja", { payment_mode: paymentMode });
 			if (response?.status === true) {
 				if (paymentMode === "razorpay") {
 					const razorpayLoaded = await loadRazorpay();
@@ -1175,9 +1212,9 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 								<div className="pff-pkg-row">
 									<div>
 										<div className="pff-pkg-label">Selected Package</div>
-										<div className="pff-pkg-name">{cart.package?.packageName || "Individual"}</div>
+										<div className="pff-pkg-name">{selectedPackage?.packageName || cart.package?.packageName || "Individual"}</div>
 									</div>
-									<div className="pff-pkg-price">₹{cart.base_total ?? selectedPackage?.packagePrice ?? 0}</div>
+									<div className="pff-pkg-price">₹{selectedPackage?.packagePrice ?? cart.package?.packagePrice ?? cart.base_total ?? 0}</div>
 								</div>
 
 								{homeAddons.length > 0 && (
@@ -1221,11 +1258,11 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 								<hr className="pff-divider-dashed" />
 								<div className="pff-billing-row">
 									<span className="pff-billing-label">Addons Total</span>
-									<span className="pff-billing-val">₹{cart.addons_total ?? 0}</span>
+									<span className="pff-billing-val">₹{stateTempleAddonsQty !== undefined ? templeAddons.reduce((s, a) => s + (a.lineTotal || 0), 0) : (cart?.addons_total ?? templeAddons.reduce((s, a) => s + (a.lineTotal || 0), 0))}</span>
 								</div>
 								<div className="pff-billing-row">
 									<span className="pff-billing-label">Home Delivery</span>
-									<span className="pff-billing-val">₹{cart.home_addons_total ?? 0}</span>
+									<span className="pff-billing-val">₹{stateHomeAddonsQty !== undefined ? homeAddons.reduce((s, a) => s + (a.lineTotal || 0), 0) : (cart?.home_addons_total ?? homeAddons.reduce((s, a) => s + (a.lineTotal || 0), 0))}</span>
 								</div>
 								<div className="pff-billing-row">
 									<span className="pff-billing-label">Platform Fee</span>
@@ -1234,8 +1271,37 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 								<hr className="pff-divider-dashed" />
 								<div className="pff-total-row">
 									<span className="pff-total-label">Total Payable</span>
-									<span className="pff-total-val">₹{(cart.grand_total ?? 0) + 10}</span>
+									<span className="pff-total-val">₹{(Number(selectedPackage?.packagePrice ?? cart?.package?.packagePrice ?? cart?.base_total ?? 0) + (stateTempleAddonsQty !== undefined ? templeAddons.reduce((s, a) => s + (a.lineTotal || 0), 0) : Number(cart?.addons_total ?? templeAddons.reduce((s, a) => s + (a.lineTotal || 0), 0))) + (stateHomeAddonsQty !== undefined ? homeAddons.reduce((s, a) => s + (a.lineTotal || 0), 0) : Number(cart?.home_addons_total ?? homeAddons.reduce((s, a) => s + (a.lineTotal || 0), 0))) + 10 - Number(cart?.discount || 0))}</span>
 								</div>
+
+								<button
+									type="button"
+									onClick={handleProceed}
+									disabled={isLoading}
+									style={{
+										width: "100%",
+										background: "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)",
+										color: "#ffffff",
+										border: "none",
+										borderRadius: "14px",
+										padding: "16px 20px",
+										fontSize: "16px",
+										fontWeight: "700",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										gap: "10px",
+										cursor: isLoading ? "not-allowed" : "pointer",
+										boxShadow: "0 8px 24px rgba(230, 126, 34, 0.35)",
+										marginTop: "20px",
+										marginBottom: "14px",
+										transition: "all 0.2s ease",
+									}}
+								>
+									<i className="fas fa-lock" style={{ fontSize: 16 }} />
+									<span>{isLoading ? "Updating Sankalp..." : "Confirm & Proceed To Payment"}</span>
+									{!isLoading && <i className="fas fa-arrow-right" style={{ fontSize: 14 }} />}
+								</button>
 
 								<div className="pff-secure-banner">
 									<i className="fas fa-lock" />
@@ -1300,6 +1366,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 					formData={formData}				
 					walletBalance={walletBalance}
 					cart={cart}
+					selectedPackage={selectedPackage}
 					onConfirm={handleFinalSubmit}
 				/>
 				<StatusModal status={bookingStatus} onClose={handleStatusClose} />

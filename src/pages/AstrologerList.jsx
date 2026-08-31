@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
@@ -10,24 +9,11 @@ import PopupSearch from '../components/layout/PopupSearch';
 import ScrollTop from '../components/common/ScrollTop';
 import apiService from '../services/apiServices';
 import NewAppDownloadModal from '../components/common/NewAppDownloadModel';
-
-const FALLBACK_ASTROLOGERS = [
-  { id: 1, name: 'Acharya Alok', profile_img: '/assets/img/home/astrologer_1.jpg', experience: 15, category: [{ name: 'Vedic Astrology' }], avg_rate: 4.9, total_review: 1200, per_min_chat: 15, is_online: 1, is_busy: 0 },
-  { id: 2, name: 'Dr. Neeraj Sharma', profile_img: '/assets/img/home/astrologer_2.jpg', experience: 20, category: [{ name: 'Vedic' }, { name: 'KP' }, { name: 'Nadi' }], avg_rate: 4.9, total_review: 980, per_min_chat: 20, is_online: 1, is_busy: 0 },
-  { id: 3, name: 'Acharya Ruchi', profile_img: '/assets/img/home/astrologer_3.jpg', experience: 10, category: [{ name: 'Vedic Astrology' }], avg_rate: 4.8, total_review: 850, per_min_chat: 12, is_online: 1, is_busy: 1 },
-  { id: 4, name: 'Pandit Om Prakash', profile_img: '/assets/img/home/astrologer_4.jpg', experience: 25, category: [{ name: 'Vedic' }, { name: 'Lal Kitab' }], avg_rate: 4.9, total_review: 1100, per_min_chat: 18, is_online: 1, is_busy: 0 },
-  { id: 5, name: 'Jyotish Sunita Devi', profile_img: '', experience: 8, category: [{ name: 'Tarot' }, { name: 'Numerology' }], avg_rate: 4.7, total_review: 640, per_min_chat: 10, is_online: 1, is_busy: 1 },
-  { id: 6, name: 'Shri Rajesh Shastri', profile_img: '', experience: 18, category: [{ name: 'Vastu' }, { name: 'Kundli' }], avg_rate: 4.9, total_review: 1420, per_min_chat: 25, is_online: 0, is_busy: 0 },
-];
+import { getAstroPrice, getAstroRating, getAstroReviewCount } from '../services/astroHelpers';
 import './AstrologerList.css';
 import MobileBottomNav from '../components/layout/MobileNavbar';
 
-// NOTE: verify this exact path against your backend router mount point —
-// the handler is `router.post("/new_consultation_add", ...)`, normally
-// mounted under a prefix. Follows the same pattern as other endpoints in
-// this codebase (https://admin.vaidikguru.com/user_api/..., /puja/..., etc).
-// Adjust the prefix below if your backend mounts it differently.
-const CONSULTATION_API = "https://admin.vaidikguru.com/user_api/new_consultation_add";
+const CONSULTATION_API = "/user_api/new_consultation_add";
 
 /* helpers */
 const COLORS = ['#7c3aed','#059669','#dc2626','#d97706','#2563eb','#db2777'];
@@ -154,10 +140,12 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
       <div className="al-stats">
         <div className="al-rat">
           <i className="fas fa-star" />
-          <span>{parseFloat(astro.avg_rate||4.8).toFixed(1)}</span>
-          <span className="al-rev">({astro.total_review||80})</span>
+          <span>{getAstroRating(astro) ? parseFloat(getAstroRating(astro)).toFixed(1) : '4.8'}</span>
+          <span className="al-rev">({getAstroReviewCount(astro) ?? 80})</span>
         </div>
-        <div className="al-price">₹{astro.per_min_chat||'5'}/min</div>
+        {getAstroPrice(astro) ? (
+          <div className="al-price">₹{getAstroPrice(astro)}/min</div>
+        ) : null}
       </div>
       <div className="al-actions">
         {busy ? (
@@ -481,31 +469,15 @@ const AstrologerList = () => {
   const fetchAstrologers = useCallback(async (p=1) => {
     setLoading(true); setError(false);
     try {
-      const payload = {
-        search: filters.search || '',
-        page: String(p),
-        is_chat: 'on',
-        followAstro: '',
-        is_voice_call: 'on',
-        is_video_call: 'on',
-        cat_id: filters.specs.join(','),
-        language_id: filters.language || '',
-        gender: '',
-        sort_val: filters.sortBy,
-        is_question: '',
-        skill_id: '',
-        country: '',
-        report_id: '',
-        expert_astro: ''
-      };
+      const payload = { page: String(p) };
+      if (filters.search) payload.search = filters.search;
+      if (filters.specs && filters.specs.length > 0) payload.cat_id = filters.specs.join(',');
+      if (filters.language) payload.language_id = filters.language;
+      if (filters.sortBy) payload.sort_val = filters.sortBy;
 
-      let res = null;
-      try {
-        res = await apiService.postBearer('https://admin.vaidikguru.com/user_api/astrologer_list', payload);
-      } catch (err) {
-        console.warn('[AstrologerList] postBearer failed, trying direct axios.post', err);
-        const rawRes = await axios.post('https://admin.vaidikguru.com/user_api/astrologer_list', payload);
-        res = rawRes.data;
+      let res = await apiService.postBearer('/user_api/astrologer_list', payload).catch(() => null);
+      if (!res || (!res.results && !res.record && !res.data && !Array.isArray(res))) {
+        res = await apiService.getBearer('/user_api/astrologer_list', payload).catch(() => null);
       }
 
       const list = Array.isArray(res?.results)
@@ -535,13 +507,12 @@ const AstrologerList = () => {
           setHasNextPage(full);
         }
       } else {
-        console.warn('[AstrologerList] API returned empty or invalid structure, using fallback list');
-        setAstrologers(FALLBACK_ASTROLOGERS);
+        setAstrologers([]);
         setHasNextPage(false);
       }
     } catch (err) {
       console.error('[AstrologerList] Error fetching astrologers:', err);
-      setAstrologers(FALLBACK_ASTROLOGERS);
+      setAstrologers([]);
       setHasNextPage(false);
     }
     finally { setLoading(false); }
@@ -561,13 +532,7 @@ const AstrologerList = () => {
         language_id: filters.language || '',
         sort_val: filters.sortBy,
       };
-      let res = null;
-      try {
-        res = await apiService.postBearer('https://admin.vaidikguru.com/user_api/astrologer_list', payload);
-      } catch (_) {
-        const rawRes = await axios.post('https://admin.vaidikguru.com/user_api/astrologer_list', payload);
-        res = rawRes.data;
-      }
+      let res = await apiService.postBearer('/user_api/astrologer_list', payload);
       const list = Array.isArray(res?.results) ? res.results : Array.isArray(res?.record) ? res.record : Array.isArray(res?.data) ? res.data : null;
       if (list && list.length > 0) {
         setAstrologers(prev => {
@@ -659,7 +624,7 @@ const AstrologerList = () => {
     // 3. Payment Bucket filter
     if (filters.payBucket) {
       list = list.filter((item) => {
-        const p = Number(item.per_min_chat || item.per_min_voice_call || 0);
+        const p = getAstroPrice(item);
         if (filters.payBucket === '0-10') return p >= 0 && p <= 10;
         if (filters.payBucket === '10-20') return p > 10 && p <= 20;
         if (filters.payBucket === '20+') return p > 20;
@@ -670,7 +635,7 @@ const AstrologerList = () => {
     // 4. Max price slider filter
     if (filters.maxPrice !== undefined && filters.maxPrice < 50) {
       list = list.filter((item) => {
-        const p = Number(item.per_min_chat || item.per_min_voice_call || 0);
+        const p = getAstroPrice(item);
         return p <= filters.maxPrice;
       });
     }
@@ -699,11 +664,11 @@ const AstrologerList = () => {
     } else if (filters.sortBy === 'exp_low') {
       list.sort((a, b) => (Number(a.experience) || 0) - (Number(b.experience) || 0));
     } else if (filters.sortBy === 'price_low') {
-      list.sort((a, b) => (Number(a.per_min_chat || 0)) - (Number(b.per_min_chat || 0)));
+      list.sort((a, b) => getAstroPrice(a) - getAstroPrice(b));
     } else if (filters.sortBy === 'price_high') {
-      list.sort((a, b) => (Number(b.per_min_chat || 0)) - (Number(a.per_min_chat || 0)));
+      list.sort((a, b) => getAstroPrice(b) - getAstroPrice(a));
     } else if (filters.sortBy === 'highest_rated') {
-      list.sort((a, b) => (Number(b.avg_rate || 0)) - (Number(a.avg_rate || 0)));
+      list.sort((a, b) => getAstroRating(b) - getAstroRating(a));
     }
 
     return list;

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 
 import Header from "../components/layout/Header";
@@ -11,22 +10,13 @@ import ScrollToTop from "../components/common/ScrollToTop";
 import ScrollTop from "../components/common/ScrollTop";
 import MobileBottomNav from "../components/layout/MobileNavbar";
 import LiveCard from "../components/sections/Livecard";
+import apiService from "../services/apiServices";
 
 import "./LiveAstrologer.css";
 
 // Served from the public folder — not bundled via import.
 // Actual file lives at: public/assets/img/live_astrologer/live astro.webp
 const BANNER_IMAGE = "/assets/img/live_astrologer/liveastro.webp";
-
-// ── Backend / data-fetching logic ────────────────────────────────────────
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-const tok = () => {
-  try {
-    return localStorage.getItem("token") || "";
-  } catch {
-    return "";
-  }
-};
 
 // ── Field accessors ──────────────────────────────────────────────────────
 const getAstrologer = (item) => {
@@ -100,21 +90,21 @@ export default function LiveAstrologersPage() {
     setError(false);
     try {
       const [res, astroRes] = await Promise.all([
-        axios.get(`https://admin.vaidikguru.com/user_api/listing_of_live_astrlogers`, { headers: { Authorization: `Bearer ${tok()}` } }).catch(() => null),
-        axios.post(`https://admin.vaidikguru.com/user_api/astrologer_list`, { search: "", page: "1" }, { headers: { Authorization: `Bearer ${tok()}` } }).catch(() => null),
+        apiService.getBearer('/user_api/listing_of_live_astrlogers').catch(() => null),
+        apiService.postBearer('/user_api/astrologer_list', { search: "", page: "1" }).catch(() => null),
       ]);
 
       let list = [];
-      if (res?.data) {
-        list = res.data.results || res.data.data || (Array.isArray(res.data) ? res.data : []);
+      if (res) {
+        list = res.results || res.data || (Array.isArray(res) ? res : []);
       }
 
       if (Array.isArray(list) && list.length > 0) {
         setLiveList(list);
       } else {
         let onlineAstros = [];
-        if (astroRes?.data) {
-          const all = astroRes.data.results || astroRes.data.data || (Array.isArray(astroRes.data) ? astroRes.data : []);
+        if (astroRes) {
+          const all = astroRes.results || astroRes.data || (Array.isArray(astroRes) ? astroRes : []);
           onlineAstros = all.filter((a) => truthy(a.is_online) || truthy(a.is_live));
         }
         if (onlineAstros.length === 0) {
