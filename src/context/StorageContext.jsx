@@ -272,13 +272,65 @@ export const StorageProvider = ({ children }) => {
 
   // --- Clear all storage ---
   const clearStorage = useCallback(() => {
+    // 1. Reset React context state
     setTokenState(null);
     setUserState(null);
     setDevoteeDetailsState({ name: '', whatsapp: '' });
     setActiveChadhavaIdState(null);
     setActiveCartState(null);
-    localStorage.clear();
-    sessionStorage.clear();
+
+    // 2. Clear localStorage & sessionStorage
+    try {
+      localStorage.clear();
+    } catch (e) {
+      console.error('StorageContext: localStorage clear error', e);
+    }
+    try {
+      sessionStorage.clear();
+    } catch (e) {
+      console.error('StorageContext: sessionStorage clear error', e);
+    }
+
+    // 3. Clear all dual cookies explicitly so getItemDual does not revive token/user
+    const keysToClear = [
+      STORAGE_KEYS.TOKEN,
+      STORAGE_KEYS.USER,
+      STORAGE_KEYS.DEVOTEE_DETAILS,
+      STORAGE_KEYS.ACTIVE_CHADHAVA_ID,
+      STORAGE_KEYS.ACTIVE_CART,
+      'token',
+      'token_expiry',
+      'user',
+      'user_expiry',
+      'id',
+      'id_expiry',
+      'name',
+      'name_expiry',
+      'devoteeDetails',
+      'activeChadhavaId',
+      'activeCart',
+    ];
+
+    keysToClear.forEach((k) => {
+      setCookie(k, null);
+      removeItemDual(k);
+    });
+
+    // 4. Force wipe all document cookies across root path
+    try {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf('=');
+        const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+        if (name) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+        }
+      }
+    } catch (e) {
+      console.error('StorageContext: cookie wipe error', e);
+    }
   }, []);
 
   // --- Context Value ---

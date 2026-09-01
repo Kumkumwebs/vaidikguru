@@ -473,7 +473,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    window.location.href = "/";
   };
 
   const initial = values.name ? values.name.trim().charAt(0).toUpperCase() : "U";

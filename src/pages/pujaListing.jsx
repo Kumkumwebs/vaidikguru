@@ -9,6 +9,8 @@ import PopupSearch from "../components/layout/PopupSearch";
 import ScrollTop from "../components/common/ScrollTop";
 import PujaService from "../services/pujaServices";
 import apiService from "../services/apiServices";
+import storageService from "../services/storageServices";
+import LoginOTPModal from "../components/accounts/LoginOTPModel";
 import "./PujaListing.css";
 import MobileBottomNav from "../components/layout/MobileNavbar";
 
@@ -163,6 +165,20 @@ const RecommendationModal = ({ isOpen, onClose }) => {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null); // { ok: true|false, msg }
+
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const u = storageService.getUser() || JSON.parse(localStorage.getItem('user') || 'null');
+        if (u) {
+          if (u.name) setName(u.name);
+          if (u.number || u.phone) setPhone(u.number || u.phone);
+        }
+      } catch (err) {
+        console.error("Failed to load user for recommendation modal:", err);
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -555,6 +571,18 @@ const PujaListing = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showRecModal, setShowRecModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+
+  const handleOpenRecommendation = useCallback(() => {
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setPendingAction('recommendation');
+      setShowLoginModal(true);
+    } else {
+      setShowRecModal(true);
+    }
+  }, []);
 
   /* ── Fetch ── */
   const fetchItems = useCallback(async () => {
@@ -903,7 +931,7 @@ const PujaListing = () => {
                           />
                         </div>
                       ))}
-                  {!loading && <div className="col-12 col-md-4"><RecommendCard onOpen={() => setShowRecModal(true)} /></div>}
+                  {!loading && <div className="col-12 col-md-4"><RecommendCard onOpen={handleOpenRecommendation} /></div>}
                 </div>
               )}
 
@@ -956,6 +984,23 @@ const PujaListing = () => {
       <Footer />
       <ScrollTop />
       <MobileBottomNav/>
+
+      <LoginOTPModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false);
+          setPendingAction(null);
+        }}
+        onSuccess={() => {
+          setShowLoginModal(false);
+          if (pendingAction === 'recommendation') {
+            setPendingAction(null);
+            setShowRecModal(true);
+          } else {
+            window.location.reload();
+          }
+        }}
+      />
 
       <RecommendationModal isOpen={showRecModal} onClose={() => setShowRecModal(false)} />
 

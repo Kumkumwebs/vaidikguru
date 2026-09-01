@@ -9,6 +9,8 @@ import PopupSearch from '../components/layout/PopupSearch';
 import ScrollTop from '../components/common/ScrollTop';
 import ChadhavaService from '../services/chadhavaServices';
 import apiService from '../services/apiServices';
+import storageService from '../services/storageServices';
+import LoginOTPModal from '../components/accounts/LoginOTPModel';
 import './ChadhavaListing.css';
 import MobileBottomNav from '../components/layout/MobileNavbar';
 
@@ -135,6 +137,20 @@ const RecommendationModal = ({ isOpen, onClose }) => {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null); // { ok: true|false, msg }
+
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const u = storageService.getUser() || JSON.parse(localStorage.getItem('user') || 'null');
+        if (u) {
+          if (u.name) setName(u.name);
+          if (u.number || u.phone) setPhone(u.number || u.phone);
+        }
+      } catch (err) {
+        console.error("Failed to load user for recommendation modal:", err);
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -414,10 +430,20 @@ const ChadhavaListing = () => {
   const [searchVal,     setSearchVal]     = useState('');
   const [filters, setFilters] = useState({category:'all',priceBucket:'',maxPrice:10000,sortBy:'popular',temple:'',occasion:'',search:''});
 
-  const [showSideMenu,   setShowSideMenu]   = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch,     setShowSearch]     = useState(false);
   const [showRecModal,   setShowRecModal]   = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingAction,  setPendingAction]  = useState(null);
+
+  const handleOpenRecommendation = useCallback(() => {
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setPendingAction('recommendation');
+      setShowLoginModal(true);
+    } else {
+      setShowRecModal(true);
+    }
+  }, []);
 
   const PAGE_SIZE = 9;
   const [allItems, setAllItems] = useState([]); // full list from the API, unsliced
@@ -653,7 +679,7 @@ const ChadhavaListing = () => {
                             <ChadhavaCard item={item} index={i} onView={handleView} />
                           </div>
                         ))}
-                        <div className="col-12 col-md-4"><RecommendCard onOpen={() => setShowRecModal(true)} /></div>
+                        <div className="col-12 col-md-4"><RecommendCard onOpen={handleOpenRecommendation} /></div>
                       </>
                   }
                 </div>
@@ -683,6 +709,23 @@ const ChadhavaListing = () => {
       <Footer />
       <ScrollTop />
       <MobileBottomNav/>
+
+      <LoginOTPModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false);
+          setPendingAction(null);
+        }}
+        onSuccess={() => {
+          setShowLoginModal(false);
+          if (pendingAction === 'recommendation') {
+            setPendingAction(null);
+            setShowRecModal(true);
+          } else {
+            window.location.reload();
+          }
+        }}
+      />
 
       <RecommendationModal isOpen={showRecModal} onClose={() => setShowRecModal(false)} />
     </div>

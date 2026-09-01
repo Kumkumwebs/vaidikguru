@@ -182,6 +182,20 @@ const RecommendationModal = ({ isOpen, onClose }) => {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null); // { ok: true|false, msg }
 
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const u = storageService.getUser() || JSON.parse(localStorage.getItem('user') || 'null');
+        if (u) {
+          if (u.name) setName(u.name);
+          if (u.number || u.phone) setPhone(u.number || u.phone);
+        }
+      } catch (err) {
+        console.error("Failed to load user for recommendation modal:", err);
+      }
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const reset = () => {
@@ -457,7 +471,18 @@ const AstrologerList = () => {
   const [showSearch,     setShowSearch]     = useState(false);
   const [showRecModal,   setShowRecModal]   = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingAction,  setPendingAction]  = useState(null);
   const [toastMsg,       setToastMsg]       = useState(null);
+
+  const handleOpenRecommendation = useCallback(() => {
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setPendingAction('recommendation');
+      setShowLoginModal(true);
+    } else {
+      setShowRecModal(true);
+    }
+  }, []);
 
   const handleNotify = useCallback(async (astro, isNotified) => {
     const astroId = String(astro?.id || astro?._id || '');
@@ -842,7 +867,7 @@ const AstrologerList = () => {
                             </div>
                           ))}
                           <div className="col-6 col-md-4">
-                            <RecommendCard onOpen={() => setShowRecModal(true)} />
+                            <RecommendCard onOpen={handleOpenRecommendation} />
                           </div>
                         </>
                     }
@@ -890,10 +915,18 @@ const AstrologerList = () => {
 
       <LoginOTPModal
         isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
+        onClose={() => {
+          setShowLoginModal(false);
+          setPendingAction(null);
+        }}
         onSuccess={() => {
           setShowLoginModal(false);
-          window.location.reload();
+          if (pendingAction === 'recommendation') {
+            setPendingAction(null);
+            setShowRecModal(true);
+          } else {
+            window.location.reload();
+          }
         }}
       />
 
