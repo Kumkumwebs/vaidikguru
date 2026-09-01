@@ -579,7 +579,18 @@
 .prb-icon-red    { background: #fde8e8; color: #e53e3e; }
 .prb-del-info { flex: 1; }
 .prb-del-name { font-size: 12px; font-weight: 600; color: #1a1a2e; }
-.prb-del-sub  { font-size: 11px; color: #888; }
+.prb-del-sub  {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .prb-del-price { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-top: 4px; }
 .prb-del-btn {
   background: #7c2d8e;

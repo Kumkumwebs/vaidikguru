@@ -8,6 +8,15 @@ import { recordGiftTransaction } from '../services/giftService';
 // Bound to the DivinIQ backend (reference used admin.vaidikguru.com)
 const API = "https://admin.vaidikguru.com";
 
+const fixImgHost = (url) => {
+  if (!url) return '';
+  let clean = String(url).trim().replace('admin.astrogurujii.com', 'admin.vaidikguru.com');
+  if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
+    return clean;
+  }
+  return `https://admin.vaidikguru.com/${clean.replace(/^\/+/, '')}`;
+};
+
 // Fallback list — used until get_gifts loads, or if it fails / returns empty.
 // API gifts arrive with an `image` URL; static ones use an emoji glyph.
 // Accepts either the API shape ({_id,title,price,image}) or the sidebar shape
@@ -16,8 +25,8 @@ const normGift = (g) => ({
   _id: g._id ?? g.id,
   title: g.title ?? g.name,
   price: g.price,
-  image: g.image ?? g.img,
-  emoji: g.emoji,
+  image: fixImgHost(g.image ?? g.img),
+  emoji: g.emoji || "🎁",
 });
 
 const STATIC_GIFTS = [
@@ -191,17 +200,24 @@ export function SendGiftModal({
     }
 
     console.log('[SendGiftModal] no giftsProp — fetching get_gifts directly');
-    apiService.getBearer('/user_api/get_gifts')
-      .then((res) => {
+    const fetchGifts = async () => {
+      try {
+        let res = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts').catch(() => null);
+        if (!res || (!res.data && !res.results && !res.record && !Array.isArray(res))) {
+          res = await apiService.getBearer('/user_api/get_gifts').catch(() => null);
+        }
         console.log('[SendGiftModal] get_gifts response:', res);
-        const raw = res?.data ?? res?.results ?? [];
+        const raw = res?.data ?? res?.results ?? res?.record ?? (Array.isArray(res) ? res : []);
         if (Array.isArray(raw) && raw.length > 0) {
           setGifts(raw.map(normGift));
         } else {
-          console.warn('[SendGiftModal] get_gifts returned empty/unrecognized shape, using STATIC_GIFTS fallback');
+          console.warn('[SendGiftModal] get_gifts returned empty shape, using STATIC_GIFTS fallback');
         }
-      })
-      .catch((err) => console.warn("[GetGifts] failed, static fallback:", err.message));
+      } catch (err) {
+        console.warn("[GetGifts] failed, using static fallback:", err.message);
+      }
+    };
+    fetchGifts();
   }, [open, giftsProp]);
 
   const onKey = useCallback((e) => { if (e.key === "Escape") close(); }, [close]);

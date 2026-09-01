@@ -12,36 +12,7 @@ const getIsLive = (item) => {
   const astro = item.astrologer_id ?? item.astrologerId ?? {};
   if (astro?.is_live !== undefined) return truthy(astro.is_live);
   if (astro?.is_online !== undefined) return truthy(astro.is_online);
-  return true;
-};
-
-// Generate live stream sessions from available online astrologers if live stream API returns empty
-const getFallbackLiveAstrologers = (onlineAstros = []) => {
-  const sourceList = (onlineAstros && onlineAstros.length > 0) ? onlineAstros : [
-    { id: '1', _id: '1', name: 'Acharya Alok', profile_img: '', avg_rate: 4.9, per_min_chat: 15, is_online: 1 },
-    { id: '2', _id: '2', name: 'Dr. Neeraj Sharma', profile_img: '', avg_rate: 4.9, per_min_chat: 20, is_online: 1 },
-    { id: '3', _id: '3', name: 'Acharya Ruchi', profile_img: '', avg_rate: 4.8, per_min_chat: 12, is_online: 1 },
-    { id: '4', _id: '4', name: 'Pandit Om Prakash', profile_img: '', avg_rate: 4.9, per_min_chat: 18, is_online: 1 },
-  ];
-
-  return sourceList.slice(0, 8).map((astro, idx) => ({
-    _id: `live_stream_${astro._id || astro.id || idx}`,
-    channel_id: `live_channel_${astro._id || astro.id || idx}`,
-    is_live: "1",
-    title: `Live Astrology & Guidance with ${astro.name || astro.displayname || 'Astrologer'}`,
-    live_type: "home",
-    users: 24 + idx * 9,
-    astrologer_id: {
-      _id: astro._id || astro.id,
-      name: astro.name || astro.displayname || 'Astrologer',
-      displayname: astro.displayname || astro.name || 'Astrologer',
-      profile_img: astro.profile_img || astro.profileImg || '',
-      avg_rate: astro.avg_rate || astro.per_min_chat || 15,
-      per_min_chat: astro.per_min_chat || 15,
-      is_online: 1,
-      is_live: 1,
-    }
-  }));
+  return false;
 };
 
 export default function LiveAstrologerSection() {
@@ -54,11 +25,7 @@ export default function LiveAstrologerSection() {
     (async () => {
       try {
         setLoading(true);
-        // Fetch both live listings and astrologer list as fallback
-        const [liveRes, astroRes] = await Promise.all([
-          apiService.getBearer('/user_api/listing_of_live_astrlogers').catch(() => null),
-          apiService.postBearer('/user_api/astrologer_list', { search: "", page: "1" }).catch(() => null),
-        ]);
+        const liveRes = await apiService.getBearer('/user_api/listing_of_live_astrlogers').catch(() => null);
 
         if (cancelled) return;
 
@@ -78,22 +45,10 @@ export default function LiveAstrologerSection() {
           deduped.push(item);
         }
 
-        if (deduped.length > 0) {
-          setLiveList(deduped);
-        } else {
-          // If no active live session returned, format online astrologers as live streams
-          let onlineList = [];
-          if (astroRes) {
-            const all = astroRes.results || astroRes.data || (Array.isArray(astroRes) ? astroRes : []);
-            onlineList = all.filter((a) => truthy(a.is_online) || truthy(a.is_live));
-          }
-          setLiveList(getFallbackLiveAstrologers(onlineList));
-        }
+        setLiveList(deduped);
       } catch (err) {
         console.error("[LiveAstrologerSection] fetch failed:", err);
-        if (!cancelled) {
-          setLiveList(getFallbackLiveAstrologers([]));
-        }
+        if (!cancelled) setLiveList([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -101,6 +56,10 @@ export default function LiveAstrologerSection() {
 
     return () => { cancelled = true; };
   }, []);
+
+  if (!loading && liveList.length === 0) {
+    return null;
+  }
 
   return (
     <section className="dq-live-astro-section" style={{ padding: "40px 0" }}>

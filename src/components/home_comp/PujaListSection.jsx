@@ -37,6 +37,34 @@ const handleImgError = (e) => {
 	img.src = PLACEHOLDER;
 };
 
+const extractPujaItems = (source) => {
+	if (!source) return [];
+	let rawList = [];
+
+	if (Array.isArray(source)) {
+		rawList = source;
+	} else if (Array.isArray(source.data)) {
+		rawList = source.data;
+	} else if (Array.isArray(source.results)) {
+		rawList = source.results;
+	} else if (Array.isArray(source.result)) {
+		rawList = source.result;
+	} else if (Array.isArray(source.puja)) {
+		rawList = source.puja;
+	}
+
+	const flattened = [];
+	rawList.forEach((item) => {
+		if (item && Array.isArray(item.result)) {
+			flattened.push(...item.result);
+		} else if (item && (item.pujaImage || item.aboutPuja || item.mandirName || item.purposeOfPooja || item.pujaDatetime)) {
+			flattened.push(item);
+		}
+	});
+
+	return flattened;
+};
+
 const PujaListSection = ({ puja }) => {
 	const [apiPujas, setApiPujas] = useState([]);
 
@@ -44,20 +72,7 @@ const PujaListSection = ({ puja }) => {
 		const fetchRealPujas = async () => {
 			try {
 				const res = await PujaService.getPujaList();
-				let list = [];
-				if (res?.status) {
-					if (Array.isArray(res.promotionalBanner) && res.promotionalBanner.length > 0) {
-						list = res.promotionalBanner;
-					} else if (Array.isArray(res.results) && res.results.length > 0) {
-						list = res.results;
-					} else if (Array.isArray(res.result) && res.result.length > 0) {
-						list = res.result;
-					} else if (Array.isArray(res.product) && res.product.length > 0) {
-						list = res.product;
-					} else if (Array.isArray(res.data) && res.data.length > 0) {
-						list = res.data;
-					}
-				}
+				const list = extractPujaItems(res);
 				if (list.length > 0) {
 					setApiPujas(list);
 				}
@@ -68,9 +83,8 @@ const PujaListSection = ({ puja }) => {
 		fetchRealPujas();
 	}, []);
 
-	const rawItems = (puja?.result && puja.result.length > 0)
-		? puja.result
-		: (apiPujas.length > 0 ? apiPujas : null);
+	const passedItems = extractPujaItems(puja);
+	const rawItems = passedItems.length > 0 ? passedItems : (apiPujas.length > 0 ? apiPujas : null);
 
 	if (!rawItems || rawItems.length === 0) {
 		return null;

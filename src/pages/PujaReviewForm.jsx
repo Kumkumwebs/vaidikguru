@@ -204,7 +204,7 @@ const StatusModal = ({ status, onClose }) => {
 const PujaFillForm = () => {
 	const { state } = useLocation();
 	const navigate = useNavigate();
-	const { devoteeDetails } = useStorage();
+	const { devoteeDetails, refreshProfile } = useStorage();
 const pujaMasterData = state?.pujaData;
 	const selectedPackage = state?.selectedPackage;
 
@@ -396,32 +396,88 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 
 	const handleFinalSubmit = async (paymentMode) => {
 		setIsConfirmModalOpen(false);
-		setBookingStatus("pending");
+		setIsLoading(true);
 		try {
-			const response = await apiService.postBearer("/puja/bookpuja", { payment_mode: paymentMode });
-			if (response?.status === true) {
+			const pujaId = pujaMasterData?._id || pujaMasterData?.id || state?.pujaData?._id || cart?.pujaDetails?.puja_id;
+			const packageId = selectedPackage?._id || selectedPackage?.id || cart?.package?.package_id;
+			
+			const bookPayload = {
+				payment_mode: paymentMode,
+				puja_id: pujaId,
+				package_id: packageId,
+				cart_id: cart?._id || cart?.id,
+				userDetails: {
+					name: formData.participantName || devoteeDetails?.name || "Devotee",
+					whatsappNumber: formData.whatsapp || devoteeDetails?.whatsapp || "",
+					gotra: formData.isGotraKnown && formData.gotra ? formData.gotra : "Kashyap (Generic)",
+				}
+			};
+
+			let response = await apiService.postBearer("/puja/bookpuja", bookPayload).catch(() => null);
+			if (!response || (!response.status && !response.orderId && !response.order_id)) {
+				response = await apiService.postBearer("https://admin.vaidikguru.com/puja/bookpuja", bookPayload).catch(() => null);
+			}
+
+			console.log("[PujaReviewForm] Book Puja API Response:", response);
+			
+			const isSuccess = response?.status === true || response?.status === "success" || response?.status === 200 || response?.success === true || !!response?.orderId || !!response?.order_id;
+			
+			if (isSuccess) {
 				if (paymentMode === "razorpay") {
+					setIsLoading(false);
 					const razorpayLoaded = await loadRazorpay();
-					if (!razorpayLoaded) { alert("Razorpay SDK failed to load. Please try again."); setBookingStatus(null); return; }
+					if (!razorpayLoaded) { alert("Razorpay SDK failed to load. Please try again."); return; }
+					const orderId = response.orderId || response.order_id || response.id;
+					let isPaymentDone = false;
+					const redirectTarget = window.location.origin + "/my_puja_booking";
 					const options = {
-						key: "rzp_test_TJfZRU2xcY3vGX", amount: response.amount, currency: "INR", name: "Vaidik Guru",
-						description: "Puja Booking Payment", order_id: response.orderId,
-						handler: function () { startPolling(response.orderId); },
+						key: "rzp_test_TJfZRU2xcY3vGX",
+						amount: response.amount,
+						currency: "INR",
+						name: "Vaidik Guru",
+						description: "Puja Booking Payment",
+						order_id: orderId,
+						callback_url: redirectTarget,
+						redirect: false,
+						handler: function (rzpResp) {
+							console.log("[PujaReviewForm] Razorpay Success Handler:", rzpResp);
+							isPaymentDone = true;
+							try { refreshProfile?.(); } catch (err) { console.error(err); }
+							window.location.replace(redirectTarget);
+						},
 						prefill: { name: formData.participantName, contact: formData.whatsapp },
 						theme: { color: "#FCD417" },
-						modal: { ondismiss: () => setBookingStatus(null) },
+						modal: {
+							ondismiss: function () {
+								if (isPaymentDone) {
+									window.location.replace(redirectTarget);
+								}
+							}
+						}
 					};
 					const rzp = new window.Razorpay(options);
 					rzp.open();
 				} else {
-					setBookingStatus("success");
-					refreshProfile?.();
+					// Instant direct redirect for Wallet payment mode
+					try { refreshProfile?.(); } catch (err) { console.error(err); }
+					window.location.replace(window.location.origin + "/my_puja_booking");
 				}
-			} else { setBookingStatus("failed"); }
-		} catch (e) { console.error("Booking Error:", e); setBookingStatus("failed"); }
+			} else {
+				setIsLoading(false);
+				console.error("[PujaReviewForm] Booking status not success:", response);
+				alert(response?.message || "Booking failed. Please try again.");
+			}
+		} catch (e) {
+			setIsLoading(false);
+			console.error("[PujaReviewForm] Booking Error:", e);
+			alert("Something went wrong while booking. Please try again.");
+		}
 	};
 
-	const handleStatusClose = () => { if (bookingStatus === "success") navigate("/my_puja_booking"); else setBookingStatus(null); };
+	const handleStatusClose = () => {
+		setBookingStatus(null);
+		window.location.href = "/my_puja_booking";
+	};
 
 	if (!cart && !cartError) {
 		return (
@@ -1334,6 +1390,69 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 									with <strong>devotion &amp;</strong><br />
 									<strong>authentic rituals</strong>
 								</div>
+							</div>
+						</div>
+
+						{/* ── SANKALP ASSURANCE CARD ── */}
+						<div className="pff-summary-card" style={{ marginTop: 20, padding: "20px 24px" }}>
+							<div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+								<div style={{ width: 34, height: 34, borderRadius: 10, background: "#fef3f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#9B1C1C", fontSize: 16 }}>
+									<i className="fas fa-hands-praying" />
+								</div>
+								<div>
+									<div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>How Sankalp Works</div>
+									<div style={{ fontSize: 11, color: "#9ca3af" }}>Vedic ritual process &amp; assurance</div>
+								</div>
+							</div>
+
+							<div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+								<div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+									<div style={{ width: 22, height: 22, borderRadius: "50%", background: "#9B1C1C", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>1</div>
+									<div style={{ fontSize: 12.5, color: "#374151", lineHeight: 1.4 }}>
+										<strong>Name &amp; Gotra Recitation:</strong> Dedicated Pandits recite your name &amp; gotra during the sacred Mahapuja.
+									</div>
+								</div>
+								<div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+									<div style={{ width: 22, height: 22, borderRadius: "50%", background: "#9B1C1C", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>2</div>
+									<div style={{ fontSize: 12.5, color: "#374151", lineHeight: 1.4 }}>
+										<strong>Live Video Recording:</strong> HD video proof of your Sankalp will be sent via WhatsApp.
+									</div>
+								</div>
+								<div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+									<div style={{ width: 22, height: 22, borderRadius: "50%", background: "#9B1C1C", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>3</div>
+									<div style={{ fontSize: 12.5, color: "#374151", lineHeight: 1.4 }}>
+										<strong>Holy Prasad Dispatch:</strong> Blessed Kumkum, Akshat &amp; Mahaprasad packed safely &amp; shipped home.
+									</div>
+								</div>
+							</div>
+						</div>
+
+						{/* ── NEED HELP / SUPPORT CARD ── */}
+						<div className="pff-summary-card" style={{ marginTop: 16, padding: "18px 20px", background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)", border: "1px solid #fde68a" }}>
+							<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+								<div style={{ width: 40, height: 40, borderRadius: "50%", background: "#f5a623", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+									<i className="fas fa-headset" />
+								</div>
+								<div>
+									<div style={{ fontSize: 14, fontWeight: 700, color: "#78350f" }}>Questions about Sankalp?</div>
+									<div style={{ fontSize: 12, color: "#92400e" }}>Call or WhatsApp support anytime for guidance</div>
+								</div>
+							</div>
+							<div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+								<a
+									href="https://wa.me/917311104573"
+									target="_blank"
+									rel="noreferrer"
+									style={{ flex: 1, padding: "8px 12px", background: "#25d366", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+								>
+									<i className="fab fa-whatsapp" style={{ fontSize: 14 }} /> WhatsApp Us
+								</a>
+								<a
+									href="tel:+917311104573"
+									style={{ flex: 1, padding: "8px 12px", background: "#9B1C1C", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+								>
+									<i className="fas fa-phone-alt" style={{ fontSize: 12 }} /> Call Support
+								</a>
 							</div>
 						</div>
 					</div>

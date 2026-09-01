@@ -17,11 +17,15 @@ const PujaBookingListPage = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const res = await apiService.postBearer('/puja/mypujabookings', {});
-        if (res && res.status) {
-          const list = res.results || res.bookPooja || res.data || res.result || [];
+        let res = await apiService.postBearer('/puja/mypujabookings', {}).catch(() => null);
+        if (!res || (!res.status && !res.results && !res.data)) {
+          res = await apiService.getBearer('/puja/mypujabookings').catch(() => null);
+        }
+        if (res) {
+          const raw = res.results || res.bookPooja || res.data || res.result || res.record || res.bookings || (Array.isArray(res) ? res : []);
+          const list = Array.isArray(raw) ? raw : [];
           const sorted = [...list].sort(
-            (a, b) => new Date(b.createdAt || b.puja_date) - new Date(a.createdAt || a.puja_date)
+            (a, b) => new Date(b.createdAt || b.puja_date || b.created_at || 0) - new Date(a.createdAt || a.puja_date || a.created_at || 0)
           );
           setBookings(sorted);
         }

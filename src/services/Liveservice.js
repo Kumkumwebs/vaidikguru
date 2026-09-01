@@ -76,11 +76,27 @@ export function callInitiateStatus(channel_id) {
   return apiService.postBearer(ENDPOINTS.call_initiate_status, { channel_id });
 }
 
+import { ref, update } from 'firebase/database';
+import { db } from './liveFirebase';
+
 /**
  * call_status_update.
  * 'disconnect_user' = cancelled while waiting | 'end_user' = user ended session
+ * Syncs directly to Firebase CallSession/{channel_id} so the Astrologer side
+ * receives real-time disconnect notifications instantly.
  */
-export function callStatusUpdate(channel_id, status) {
+export async function callStatusUpdate(channel_id, status) {
+  if (channel_id) {
+    try {
+      await update(ref(db, `CallSession/${channel_id}`), {
+        status: status,
+        ended_by: 'user',
+        end_time: Date.now(),
+      });
+    } catch (err) {
+      console.warn('[callStatusUpdate] Firebase update warning:', err);
+    }
+  }
   return post(ENDPOINTS.call_status_update, { channel_id, status });
 }
 

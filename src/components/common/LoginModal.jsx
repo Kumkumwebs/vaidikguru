@@ -137,20 +137,14 @@ function Toast({ msg, type = "error", onDone }) {
 /* ── LEFT PANEL ── */
 function LeftPanel() {
   return (
-    <div style={{
-      width: 300, 
+    <div className="diq-left-panel" style={{
+      width: 300,
       minWidth: 300,
-      backgroundImage: `url('/assets/img/login.jpeg')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
+      backgroundImage: `url('/assets/img/whtspic.webp')`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
       borderRadius: "20px 0 0 20px",
-      display: "flex", 
-      flexDirection: "column", 
-      alignItems: "center",
-      padding: "32px 24px 28px",
-      position: "relative", 
-      overflow: "hidden",
     }} />
   );
 }

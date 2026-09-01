@@ -169,7 +169,6 @@ const ChadhavaCartPage = () => {
 
 	const handlePayNow = async () => {
 		if (!userDetails.name) return setIsEditModalOpen(true);
-		setBookingStatus('pending');
 		try {
 			const payload = {
 				chadhava_id: contextActiveChadhavaId,
@@ -186,25 +185,30 @@ const ChadhavaCartPage = () => {
 				'/puja/createChadhavaBooking',
 				payload
 			);
-			if (res && res.status === true) {
+			const isSuccess = res?.status === true || res?.status === "success" || res?.status === 200 || res?.success === true || !!res?.orderId || !!res?.order_id;
+			if (isSuccess) {
 				if (paymentMode === 'razorpay') {
 					const razorpayLoaded = await loadRazorpay();
 					if (!razorpayLoaded) {
 						alert("Razorpay SDK failed to load");
 						return;
 					}
+					const orderId = res.orderId || res.order_id || res.id;
+					let isPaymentDone = false;
+					const redirectTarget = window.location.origin + '/my_chadhava_booking';
 					const options = {
-						key: "rzp_test_TJfZRU2xcY3vGX", // Razorpay test key
+						key: "rzp_test_TJfZRU2xcY3vGX",
 						amount: res.amount,
 						currency: "INR",
 						name: "vaidikguru",
 						description: "Puja Booking Payment",
-						order_id: res.orderId,
-						handler: function (response1) {
-							const interval = setInterval(() => verifyPayment(res.orderId), 3000);
-							verifyPayment(res.orderId).then((status) => {
-								if (status === "Success") clearInterval(interval);
-							});
+						order_id: orderId,
+						callback_url: redirectTarget,
+						redirect: false,
+						handler: function () {
+							isPaymentDone = true;
+							try { fetchWalletBalance(); } catch (err) { console.error(err); }
+							window.location.replace(redirectTarget);
 						},
 						prefill: {
 							name: userDetails.name,
@@ -213,22 +217,29 @@ const ChadhavaCartPage = () => {
 						theme: {
 							color: "#7B1F3A",
 						},
+						modal: {
+							ondismiss: function () {
+								if (isPaymentDone) {
+									window.location.replace(redirectTarget);
+								}
+							}
+						}
 					};
 
 					const rzp = new window.Razorpay(options);
 					rzp.open();
 					return;
 				}
-				// For other payment modes, directly show success
+				// For other payment modes, directly redirect to Chadhava history
 				else {
-					setBookingStatus('success');
-					fetchWalletBalance();
+					try { fetchWalletBalance(); } catch (err) { console.error(err); }
+					window.location.replace('/my_chadhava_booking');
 				}
 			} else {
-				setBookingStatus('failed');
+				alert(res?.message || "Chadhava booking failed. Please try again.");
 			}
 		} catch (e) {
-			setBookingStatus('failed');
+			alert("Something went wrong while processing offering.");
 		}
 	};
 	const verifyPayment = async (paymentResponse) => {
@@ -236,7 +247,8 @@ const ChadhavaCartPage = () => {
 			const data = await apiService.getBearer(`/puja/chadhava_payment_status/${paymentResponse}`);
 
 			if (data?.payment_status === "Success") {
-				setBookingStatus('success');
+				setBookingStatus(null);
+				window.location.href = '/my_chadhava_booking';
 			}
 
 			if (data?.payment_status === "Failed") {
@@ -259,8 +271,8 @@ const ChadhavaCartPage = () => {
 	};
 
 	const closeStatusModal = () => {
-		if (bookingStatus === 'success') navigate('/');
 		setBookingStatus(null);
+		window.location.href = '/my_chadhava_booking';
 	};
 
 	// --- Sub-Components ---

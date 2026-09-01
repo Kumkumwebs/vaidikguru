@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import apiService from '../../services/apiServices';
-import { getAstroPrice, getAstroRating, getAstroReviewCount } from '../../services/astroHelpers';
+import storageService from '../../services/storageServices';
+import LoginOTPModal from '../accounts/LoginOTPModel';
+import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroChatPrice, getAstroCallPrice, getAstroRole, getAstroStatus } from '../../services/astroHelpers';
 
 const TeamSection = ({ astrologer }) => {
 	const [list, setList] = useState(() => (Array.isArray(astrologer) && astrologer.length ? astrologer : []));
+	const [showLoginModal, setShowLoginModal] = useState(false);
 
 	useEffect(() => {
-		if (Array.isArray(astrologer) && astrologer.length > 0) {
-			setList(astrologer);
-			return;
-		}
 		let active = true;
 		const loadAstrologers = async () => {
 			try {
@@ -19,13 +18,15 @@ const TeamSection = ({ astrologer }) => {
 				const data = Array.isArray(res?.results) ? res.results : Array.isArray(res?.record) ? res.record : Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : null;
 				if (active) {
 					if (data && data.length > 0) {
-						setList(data.slice(0, 6));
+						setList(data.slice(0, 8));
+					} else if (Array.isArray(astrologer) && astrologer.length > 0) {
+						setList(astrologer.slice(0, 8));
 					} else {
 						setList([]);
 					}
 				}
 			} catch (_) {
-				if (active) setList([]);
+				if (active && Array.isArray(astrologer)) setList(astrologer.slice(0, 8));
 			}
 		};
 		loadAstrologers();
@@ -36,6 +37,11 @@ const TeamSection = ({ astrologer }) => {
 	if (!items || items.length === 0) return null;
 
 	const handleAction = (astro, type) => {
+		const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+		if (!token && (type === 'chat' || type === 'call')) {
+			setShowLoginModal(true);
+			return;
+		}
 		if (type === 'chat') {
 			window.location.href = `/astrologer/${astro.id || astro._id}?action=chat`;
 		} else if (type === 'call') {
@@ -59,6 +65,15 @@ const TeamSection = ({ astrologer }) => {
 					))}
 				</div>
 			</div>
+
+			<LoginOTPModal
+				isOpen={showLoginModal}
+				onClose={() => setShowLoginModal(false)}
+				onSuccess={() => {
+					setShowLoginModal(false);
+					window.location.reload();
+				}}
+			/>
 		</section>
 	);
 };
@@ -90,16 +105,22 @@ const AstrologerCard = ({ astro, onChat }) => {
 	const [liked, setLiked] = useState(false);
 	const [imgErr, setImgErr] = useState(false);
 	const [notified, setNotified] = useState(false);
-	const cats = astro.category?.slice(0, 3).map((c) => c.name || c) || ['Vedic'];
-	const busy = astro.is_busy == 1 || astro.is_busy === '1' || astro.is_busy === true;
-	const isExplicitOffline = astro.is_online === 0 || astro.is_online === '0' || astro.is_offline == 1 || astro.is_offline === '1';
-	const online = !busy && !isExplicitOffline;
-	const dotCls = busy ? 'db' : online ? 'dn' : 'do';
+	const cats = (Array.isArray(astro.category) ? astro.category : []).slice(0, 3).map((c) => (typeof c === 'object' ? (c.name || c.category_name || c.title) : c)).filter(Boolean);
+	const role = getAstroRole(astro);
+	const { isBusy, isOnline } = getAstroStatus(astro);
+	const dotCls = isBusy ? 'db' : isOnline ? 'dn' : 'do';
 
-	const handleNotifyClick = (e) => {
+	const handleNotifyClick = async (e) => {
 		e.stopPropagation();
 		setNotified(!notified);
-		console.log('[NotifyWhenAvailable] Toggled for TeamSection astro:', astro.name);
+		const astroId = String(astro?.id || astro?._id || '');
+		if (astroId) {
+			try {
+				await apiService.postBearer('/user_api/notifyme', { astro_id: astroId });
+			} catch (err) {
+				console.error('[NotifyMe] API error:', err);
+			}
+		}
 	};
 
 	return (
@@ -139,7 +160,7 @@ const AstrologerCard = ({ astro, onChat }) => {
 			</div>
 
 			<div className="al-cname">{astro.name}</div>
-			<div className="al-crole">Vedic Astrologer</div>
+			{role ? <div className="al-crole">{role}</div> : null}
 			<div className="al-tags">
 				{cats.map((c, i) => (
 					<span key={i} className="al-tag">{c}</span>
@@ -148,28 +169,33 @@ const AstrologerCard = ({ astro, onChat }) => {
 			<div className="al-stats">
 				<div className="al-rat">
 					<i className="fas fa-star" />
-					<span>{getAstroRating(astro) ? parseFloat(getAstroRating(astro)).toFixed(1) : '4.8'}</span>
-					<span className="al-rev">({getAstroReviewCount(astro) ?? 80})</span>
+					<span>{Number(getAstroRating(astro)).toFixed(1)}</span>
+					<span className="al-rev">({getAstroReviewCount(astro)})</span>
 				</div>
-				{getAstroPrice(astro) ? (
-					<div className="al-price">₹{getAstroPrice(astro)}/min</div>
+				{getAstroChatPrice(astro) !== null ? (
+					<div className="al-price">₹{getAstroChatPrice(astro)}/min</div>
 				) : null}
 			</div>
 			<div className="al-actions">
-				{busy ? (
+				{isBusy ? (
 					<button className={`al-notify-btn${notified ? ' active' : ''}`} onClick={handleNotifyClick}>
 						<i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
 						<span>{notified ? 'Notified' : 'Notify Me'}</span>
 					</button>
-				) : (
+				) : isOnline ? (
 					<>
 						<button className="al-chat" onClick={(e) => { e.stopPropagation(); onChat(astro, 'chat'); }}>
 							Chat Now
 						</button>
-						<button className="al-call" onClick={(e) => { e.stopPropagation(); onChat(astro, 'call'); }} title="Call">
+						<button className="al-call" onClick={(e) => { e.stopPropagation(); onChat(astro, 'call'); }} title={`Call (₹${getAstroCallPrice(astro)}/min)`}>
 							<i className="fas fa-phone" />
 						</button>
 					</>
+				) : (
+					<button className="al-notify-btn disabled" style={{ opacity: 0.65, cursor: 'not-allowed', background: '#9ca3af' }} onClick={(e) => e.stopPropagation()}>
+						<i className="fas fa-moon" />
+						<span>Offline</span>
+					</button>
 				)}
 			</div>
 		</motion.div>

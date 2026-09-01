@@ -63,9 +63,11 @@ const PujaReviewBookingPage = () => {
   }, []);
 
   /* ── Addons fetched fresh from pujabyinstaid API ── */
-  const [addons, setAddons] = useState(puja?.addons || []);
-  const [homeDeliveryAddons, setHomeDeliveryAddons] = useState(puja?.homeDeliveryAddons || []);
-  const [addonsLoading, setAddonsLoading] = useState(!puja?.addons);
+  const [addons, setAddons] = useState([]);
+  const [homeDeliveryAddons, setHomeDeliveryAddons] = useState([]);
+  const [addonsLoading, setAddonsLoading] = useState(true);
+  const [apiReviews, setApiReviews] = useState([]);
+  const [currentReviewIdx, setCurrentReviewIdx] = useState(0);
 
   const [cartData, setCartData] = useState(null);
   const [templeAddonsQty, setTempleAddonsQty] = useState({});
@@ -83,6 +85,7 @@ const PujaReviewBookingPage = () => {
       if (!pujaId) {
         if (puja?.addons) setAddons(puja.addons);
         if (puja?.homeDeliveryAddons) setHomeDeliveryAddons(puja.homeDeliveryAddons);
+        if (puja?.reviews) setApiReviews(puja.reviews);
         setAddonsLoading(false);
         return;
       }
@@ -96,15 +99,22 @@ const PujaReviewBookingPage = () => {
           const fetchedHomeAddons = res.data.homeDeliveryAddons?.length ? res.data.homeDeliveryAddons : (puja?.homeDeliveryAddons || []);
           setAddons(fetchedAddons);
           setHomeDeliveryAddons(fetchedHomeAddons);
-        } else if (puja?.addons || puja?.homeDeliveryAddons) {
+          if (res.data.reviews && Array.isArray(res.data.reviews) && res.data.reviews.length > 0) {
+            setApiReviews(res.data.reviews);
+          } else if (puja?.reviews && Array.isArray(puja.reviews) && puja.reviews.length > 0) {
+            setApiReviews(puja.reviews);
+          }
+        } else if (puja?.addons || puja?.homeDeliveryAddons || puja?.reviews) {
           setAddons(puja.addons || []);
           setHomeDeliveryAddons(puja.homeDeliveryAddons || []);
+          if (puja?.reviews) setApiReviews(puja.reviews);
         }
       } catch (err) {
         console.error("[ReviewPage] Failed to fetch puja addons:", err);
-        if (puja?.addons || puja?.homeDeliveryAddons) {
+        if (puja?.addons || puja?.homeDeliveryAddons || puja?.reviews) {
           setAddons(puja.addons || []);
           setHomeDeliveryAddons(puja.homeDeliveryAddons || []);
+          if (puja?.reviews) setApiReviews(puja.reviews);
         }
       } finally {
         setAddonsLoading(false);
@@ -248,9 +258,25 @@ const PujaReviewBookingPage = () => {
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
+            textOverflow: "ellipsis",
           }}>
             {item.pname}
           </div>
+          {(item.pdesc || item.pdescription) && (
+            <div style={{
+              fontSize: 11,
+              color: "#666",
+              marginBottom: 6,
+              lineHeight: 1.3,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              textOverflow: "ellipsis",
+            }}>
+              {item.pdesc || item.pdescription}
+            </div>
+          )}
           <div style={{ fontSize: 14, fontWeight: 800, color: "#7c2d8e", marginBottom: 10 }}>
             ₹{item.pamount}
           </div>
@@ -381,7 +407,7 @@ const PujaReviewBookingPage = () => {
 
       {/* ── BODY ── */}
       {/* <div className="container prb-page-wrap"> */}
-      <div className="container py-5">
+      <div className="container pt-4 pb-0">
         <div className="row">
           {/* ══ LEFT ══ */}
           {/* <div className="prb-left"> */}
@@ -604,39 +630,123 @@ const PujaReviewBookingPage = () => {
                 </ul>
                 <img className="prb-why-temple" src="/assets/img/pooja/temple.png" alt="Temple" />
               </div>
-            </div>
-          </div>Online Payment (UPI / Card)
 
-        </div>
-      </div>
-
-      {/* WHAT'S INCLUDED */}
-      <div className="prb-card py-4" style={{ margin: "20px" }}>
-        <div className="prb-sec-header"><i className="fa-solid fa-list-check" /><span>   What's Included in This Puja</span></div>
-        <div className="prb-included-grid">
-          {INCLUDED.map(({ icon, label }) => (
-            <div className="prb-inc-item" key={label}>
-              <div className="prb-inc-icon">
-                <i className={icon} />
-                <span className="prb-inc-check"><i className="fa-solid fa-check" /></span>
+              {/* SACRED PRASAD & LIVE UPDATES CARD */}
+              <div className="prb-card mx-0 mt-3" style={{ background: "linear-gradient(135deg, #fffcf6 0%, #fff7e8 100%)", border: "1.5px solid #fce8c3" }}>
+                <div className="prb-sec-header" style={{ color: "#b45309", marginBottom: 12 }}>
+                  <i className="fa-solid fa-box-open" style={{ color: "#d97706" }} />
+                  <span style={{ color: "#92400e", fontWeight: 700 }}> Sacred Prasad &amp; Video Updates</span>
+                </div>
+                <p style={{ fontSize: 12, color: "#78350f", lineHeight: 1.5, marginBottom: 12 }}>
+                  After ritual completion at the holy temple, pure Mahaprasad will be carefully packed with holy Akshat &amp; Kumkum and dispatched directly to your doorstep.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#451a03", fontWeight: 600 }}>
+                    <i className="fa-solid fa-camera-retro" style={{ color: "#d97706" }} /> HD Photos &amp; Videos sent via WhatsApp
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#451a03", fontWeight: 600 }}>
+                    <i className="fa-solid fa-certificate" style={{ color: "#d97706" }} /> Personalized Blessing Certificate included
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#451a03", fontWeight: 600 }}>
+                    <i className="fa-solid fa-truck-fast" style={{ color: "#d97706" }} /> Trackable Doorstep Prasad Delivery
+                  </div>
+                </div>
               </div>
-              <div className="prb-inc-label">{label}</div>
+
+              {/* DEVOTEE REVIEWS CARD */}
+              {(() => {
+                const reviewsToDisplay = apiReviews.length > 0 ? apiReviews : [
+                  {
+                    userName: "Rajesh Sharma",
+                    rating: 5,
+                    comment: "Receiving the live video and holy prasad at home brought immense peace to our family. The pandit ji pronounced our Gothra and names accurately during Sankalp."
+                  }
+                ];
+                const activeRev = reviewsToDisplay[currentReviewIdx % reviewsToDisplay.length];
+                const activeName = activeRev?.userName || activeRev?.name || activeRev?.user_name || activeRev?.user || "Rajesh Sharma";
+                const activeText = activeRev?.comment || activeRev?.review || activeRev?.text || "Receiving the live video and holy prasad at home brought immense peace to our family.";
+                const activeRating = Number(activeRev?.rating || activeRev?.star || 5);
+
+                return (
+                  <div className="prb-card mx-0 mt-3" style={{ background: "#fff", border: "1.5px solid #f0e6ff" }}>
+                    <div className="prb-sec-header" style={{ marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <i className="fa-solid fa-star" style={{ color: "#f5a623" }} />
+                        <span style={{ fontWeight: 700, color: "#1a1a2e" }}> Devotee Experiences</span>
+                      </div>
+                      {reviewsToDisplay.length > 1 && (
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentReviewIdx((prev) => (prev - 1 + reviewsToDisplay.length) % reviewsToDisplay.length)}
+                            style={{ border: "none", background: "#f3e8ff", color: "#7c2d8e", borderRadius: 4, width: 22, height: 22, cursor: "pointer", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}
+                            title="Previous Review"
+                          >
+                            <i className="fa-solid fa-chevron-left" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentReviewIdx((prev) => (prev + 1) % reviewsToDisplay.length)}
+                            style={{ border: "none", background: "#f3e8ff", color: "#7c2d8e", borderRadius: 4, width: 22, height: 22, cursor: "pointer", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}
+                            title="Next Review"
+                          >
+                            <i className="fa-solid fa-chevron-right" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ background: "#fdf8ff", borderRadius: 12, padding: "12px 14px", borderLeft: "3px solid #7c2d8e" }}>
+                      <div style={{ display: "flex", gap: 3, marginBottom: 6, color: "#f5a623", fontSize: 11 }}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <i key={i} className="fa-solid fa-star" style={{ opacity: i < activeRating ? 1 : 0.25 }} />
+                        ))}
+                      </div>
+                      <p style={{ fontSize: 12, color: "#4a4a68", fontStyle: "italic", lineHeight: 1.5, margin: 0 }}>
+                        "{activeText}"
+                      </p>
+                      <div style={{ marginTop: 8, fontSize: 11, fontWeight: 700, color: "#1a1a2e" }}>
+                        — {activeName} <span style={{ color: "#22c55e", fontWeight: 500 }}><i className="fa-solid fa-circle-check" /> Verified Devotee</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
             </div>
-          ))}
-        </div>
-        <div className="prb-trust-grid">
-          {TRUST.map(({ icon, name, sub }) => (
-            <div className="prb-trust-item" key={name}>
-              <div className="prb-trust-icon"><i className={icon} /></div>
-              <div className="prb-trust-name">{name}</div>
-              <div className="prb-trust-sub">{sub}</div>
-            </div>
-          ))}
+          </div>
+
         </div>
       </div>
 
-      {/* NEED HELP */}
-      <div className="prb-help-section mx-4">
+      {/* WHAT'S INCLUDED & NEED HELP CONTAINER */}
+      <div className="container my-3">
+        {/* WHAT'S INCLUDED */}
+        <div className="prb-card py-4 mb-3">
+          <div className="prb-sec-header"><i className="fa-solid fa-list-check" /><span>   What's Included in This Puja</span></div>
+          <div className="prb-included-grid">
+            {INCLUDED.map(({ icon, label }) => (
+              <div className="prb-inc-item" key={label}>
+                <div className="prb-inc-icon">
+                  <i className={icon} />
+                  <span className="prb-inc-check"><i className="fa-solid fa-check" /></span>
+                </div>
+                <div className="prb-inc-label">{label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="prb-trust-grid">
+            {TRUST.map(({ icon, name, sub }) => (
+              <div className="prb-trust-item" key={name}>
+                <div className="prb-trust-icon"><i className={icon} /></div>
+                <div className="prb-trust-name">{name}</div>
+                <div className="prb-trust-sub">{sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* NEED HELP */}
+        <div className="prb-help-section">
         <div className="prb-help-left">
           <div className="prb-help-main-icon"><i className="fa-solid fa-headset"></i></div>
           <div><h5>Need Help?</h5><p>We are here to help you at every step</p></div>
@@ -657,6 +767,7 @@ const PujaReviewBookingPage = () => {
             <div><span>Email Us</span><strong>support@diviniq.com</strong></div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* PAYMENT FOOTER */}

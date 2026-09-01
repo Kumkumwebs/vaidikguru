@@ -153,11 +153,16 @@ function NotFound() {
 				/>
 				<Route path="/puja_fill_form" element={<PujaFillForm />} />
 				<Route path="/my_puja_booking" element={<PujaBookingListPage />} />
+				<Route path="/my-puja-booking" element={<PujaBookingListPage />} />
 				<Route path="/my-puja-booking/:id" element={<PujaBookingDetailsPage />} />
 				<Route path="/my-chadhava-booking/:id" element={<ChadhavaBookingDetailsPage />} />
 
 				<Route
 					path="/my_chadhava_booking"
+					element={<ChadhavaBookingListPage />}
+				/>
+				<Route
+					path="/my-chadhava-booking"
 					element={<ChadhavaBookingListPage />}
 				/>
 				<Route path="/privacy_policy" element={<PrivacyPolicy />} />

@@ -9,7 +9,9 @@ import PopupSearch from '../components/layout/PopupSearch';
 import ScrollTop from '../components/common/ScrollTop';
 import apiService from '../services/apiServices';
 import NewAppDownloadModal from '../components/common/NewAppDownloadModel';
-import { getAstroPrice, getAstroRating, getAstroReviewCount } from '../services/astroHelpers';
+import LoginOTPModal from '../components/accounts/LoginOTPModel';
+import storageService from '../services/storageServices';
+import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroChatPrice, getAstroCallPrice, getAstroRole, getAstroStatus } from '../services/astroHelpers';
 import './AstrologerList.css';
 import MobileBottomNav from '../components/layout/MobileNavbar';
 
@@ -95,11 +97,10 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
   const [liked,  setLiked]  = useState(false);
   const [imgErr, setImgErr] = useState(false);
   const [notified, setNotified] = useState(false);
-  const cats   = astro.category?.slice(0,3).map(c=>c.name||c) || ['Vedic'];
-  const busy = astro.is_busy == 1 || astro.is_busy === '1' || astro.is_busy === true;
-  const isExplicitOffline = astro.is_online === 0 || astro.is_online === '0' || astro.is_offline == 1 || astro.is_offline === '1';
-  const online = !busy && !isExplicitOffline;
-  const dotCls = busy ? 'db' : online ? 'dn' : 'do';
+  const cats = (Array.isArray(astro.category) ? astro.category : []).slice(0, 3).map(c => typeof c === 'object' ? (c.name || c.category_name || c.title) : c).filter(Boolean);
+  const role = getAstroRole(astro);
+  const { isBusy, isOnline } = getAstroStatus(astro);
+  const dotCls = isBusy ? 'db' : isOnline ? 'dn' : 'do';
 
   const handleNotifyClick = (e) => {
     e.stopPropagation();
@@ -133,35 +134,40 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
       </div>
 
       <div className="al-cname">{astro.name}</div>
-      <div className="al-crole">Vedic Astrologer</div>
+      {role ? <div className="al-crole">{role}</div> : null}
       <div className="al-tags">
         {cats.map((c,i)=><span key={i} className="al-tag">{c}</span>)}
       </div>
       <div className="al-stats">
         <div className="al-rat">
           <i className="fas fa-star" />
-          <span>{getAstroRating(astro) ? parseFloat(getAstroRating(astro)).toFixed(1) : '4.8'}</span>
-          <span className="al-rev">({getAstroReviewCount(astro) ?? 80})</span>
+          <span>{Number(getAstroRating(astro)).toFixed(1)}</span>
+          <span className="al-rev">({getAstroReviewCount(astro)})</span>
         </div>
-        {getAstroPrice(astro) ? (
-          <div className="al-price">₹{getAstroPrice(astro)}/min</div>
+        {getAstroChatPrice(astro) !== null ? (
+          <div className="al-price">₹{getAstroChatPrice(astro)}/min</div>
         ) : null}
       </div>
       <div className="al-actions">
-        {busy ? (
+        {isBusy ? (
           <button className={`al-notify-btn${notified ? ' active' : ''}`} onClick={handleNotifyClick}>
             <i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
             <span>{notified ? 'Notified' : 'Notify Me'}</span>
           </button>
-        ) : (
+        ) : isOnline ? (
           <>
             <button className="al-chat" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'chat'); }}>
               Chat Now
             </button>
-            <button className="al-call" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'call'); }} title="Call">
+            <button className="al-call" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'call'); }} title={`Call (₹${getAstroCallPrice(astro)}/min)`}>
               <i className="fas fa-phone" />
             </button>
           </>
+        ) : (
+          <button className="al-notify-btn disabled" style={{ opacity: 0.65, cursor: 'not-allowed', background: '#9ca3af' }} onClick={(e) => e.stopPropagation()}>
+            <i className="fas fa-moon" />
+            <span>Offline</span>
+          </button>
         )}
       </div>
     </motion.div>
@@ -450,14 +456,18 @@ const AstrologerList = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch,     setShowSearch]     = useState(false);
   const [showRecModal,   setShowRecModal]   = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [toastMsg,       setToastMsg]       = useState(null);
 
-  const handleNotify = useCallback((astro, isNotified) => {
-    console.log('[NotifyWhenAvailable] Toggled for astrologer:', {
-      astrologer_id: astro.id || astro._id,
-      name: astro.name,
-      status: isNotified ? 'subscribed' : 'unsubscribed'
-    });
+  const handleNotify = useCallback(async (astro, isNotified) => {
+    const astroId = String(astro?.id || astro?._id || '');
+    if (astroId) {
+      try {
+        await apiService.postBearer('/user_api/notifyme', { astro_id: astroId });
+      } catch (err) {
+        console.error('[NotifyMe] API error:', err);
+      }
+    }
     if (isNotified) {
       setToastMsg(`🔔 We will notify you as soon as ${astro.name} is available!`);
     } else {
@@ -477,7 +487,7 @@ const AstrologerList = () => {
 
       let res = await apiService.postBearer('/user_api/astrologer_list', payload).catch(() => null);
       if (!res || (!res.results && !res.record && !res.data && !Array.isArray(res))) {
-        res = await apiService.getBearer('/user_api/astrologer_list', payload).catch(() => null);
+        res = await apiService.post('/user_api/astrologer_list', payload).catch(() => null);
       }
 
       const list = Array.isArray(res?.results)
@@ -816,8 +826,18 @@ const AstrologerList = () => {
                           {filteredAstrologers.map((a,i)=>(
                             <div key={a.id||i} className="col-6 col-md-4">
                               <AstrologerCard astro={a} onNotify={handleNotify} onChat={(astro, type) => {
-                                if (type === 'call') { setSelectedAstro(astro); }
-                                else { navigate(`/astrologer/${astro.id || astro._id}`); }
+                                const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+                                if (!token && (type === 'chat' || type === 'call')) {
+                                  setShowLoginModal(true);
+                                  return;
+                                }
+                                if (type === 'call') {
+                                  navigate(`/astrologer/${astro.id || astro._id}?action=call`);
+                                } else if (type === 'chat') {
+                                  navigate(`/astrologer/${astro.id || astro._id}?action=chat`);
+                                } else {
+                                  navigate(`/astrologer/${astro.id || astro._id}`);
+                                }
                               }} />
                             </div>
                           ))}
@@ -866,6 +886,15 @@ const AstrologerList = () => {
         subtitle={selectedAstro
           ?`Speak with ${selectedAstro.name} for clarity on ${selectedAstro.category?.[0]?.name||'Life'}.`
           :'Join thousands who found clarity.'}
+      />
+
+      <LoginOTPModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={() => {
+          setShowLoginModal(false);
+          window.location.reload();
+        }}
       />
 
       <RecommendationModal isOpen={showRecModal} onClose={() => setShowRecModal(false)} />

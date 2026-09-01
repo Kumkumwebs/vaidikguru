@@ -417,7 +417,7 @@ const ChatConsultation = () => {
             fbchannelID: chatCtx.chatInfo.fbchannelID || chatCtx.chatInfo.gid,
             astrologer_id: String(chatCtx.chatInfo.astrologer_id || id || ''),
             name: chatCtx.chatInfo.astroName || 'Astrologer',
-            profileImg: chatCtx.chatInfo.astrologerImage || '',
+            profileImg: fixImgHost(chatCtx.chatInfo.astrologerImage || ''),
             rate: parseFloat(chatCtx.chatInfo.rate || 5),
             wallet: w,
             intake: {
@@ -444,7 +444,7 @@ const ChatConsultation = () => {
             fbchannelID: st.gid,
             astrologer_id: String(st.astrologer_id || id || ''),
             name: st.astroName || 'Astrologer',
-            profileImg: st.astrologerImage || '',
+            profileImg: fixImgHost(st.astrologerImage || st.profileImg || ''),
             rate: parseFloat(st.rate || 5),
             wallet: parseFloat(st.wallet || 0),
             intake: {
@@ -470,9 +470,6 @@ const ChatConsultation = () => {
         const matchesThisAstrologer = String(data2?.astro_id || '') === String(id);
 
         if (result && data2 && callType === 'chat' && ACCEPTED_STATUSES.includes(status) && matchesThisAstrologer) {
-          // data2.total_amount is a transaction debit amount (often "0"
-          // mid-session, since no per-minute debit has posted yet) — NOT
-          // the user's real balance. Fetch that separately.
           let realWallet = data2.total_amount || '0';
           try {
             const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
@@ -487,7 +484,7 @@ const ChatConsultation = () => {
               fbchannelID: data2.fb_channel_id || data2.channel_id,
               astrologer_id: String(data2.astro_id || ''),
               name: data2.astro_name || 'Astrologer',
-              profileImg: data2.astro_profile_img || '',
+              profileImg: fixImgHost(data2.astro_profile_img || data2.image || ''),
               rate: parseFloat(data2.call_rate || 5),
               wallet: parseFloat(realWallet || 0),
               intake: { name: '', gender: '', dob: '', tob: '', place: '' },
@@ -523,16 +520,53 @@ const ChatConsultation = () => {
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [imgErr, setImgErr] = useState(false);
-  // FIX: previously elapsedSecs was a separate local counter
-  // (setInterval ticking up from 0 on every mount), completely disconnected
-  // from chatCtx.chatTimeLeft — the value that's ACTUALLY Firebase-synced
-  // via ChatContext's correction logic. That meant "Time Elapsed" always
-  // reset to 0 on resume/refresh (same bug audio had), and its own
-  // "Remaining Balance" calc could disagree with the real synced value.
-  // Now both are derived from chatCtx.chatTimeLeft directly — one
-  // authoritative source, no separate counter to fall out of sync.
+  const [startedAt, setStartedAt] = useState(null);
+  const [nowSec, setNowSec] = useState(Date.now());
+  const mountTimeRef = useRef(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowSec(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!gid) return;
+    const sessionRef = ref(db, `CallSession/${gid}`);
+    const unSub = onValue(sessionRef, (snap) => {
+      const val = snap.val();
+      if (val) {
+        const start = val.started_at || val.created_at || val.start_time;
+        if (start) setStartedAt(Number(start));
+      }
+    });
+    return () => unSub();
+  }, [gid]);
+
+  // Fallback fetch if astrologer image is missing in session object on refresh
+  useEffect(() => {
+    if (!astrologer_id || profileImg) return;
+    let cancelled = false;
+    apiService.getBearer(`https://admin.vaidikguru.com/user_api/astrologer_details/${astrologer_id}`)
+      .then((res) => {
+        const astroData = res?.results ?? res?.data;
+        const fetchedImg = astroData?.profile_img || astroData?.image || astroData?.astro_profile_img;
+        if (!cancelled && fetchedImg) {
+          setSession((prev) => prev ? { ...prev, profileImg: fixImgHost(fetchedImg) } : prev);
+          setImgErr(false);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [astrologer_id, profileImg]);
+
   const maxSeconds = rate > 0 ? Math.floor((wallet / rate) * 60) : 0;
-  const elapsedSecs = Math.max(maxSeconds - (chatCtx.chatTimeLeft || 0), 0);
+  const elapsedSecs = startedAt
+    ? Math.max(Math.floor((nowSec - startedAt) / 1000), 0)
+    : session?.initialElapsed
+    ? session.initialElapsed + Math.max(Math.floor((nowSec - mountTimeRef.current) / 1000), 0)
+    : maxSeconds > 0 && chatCtx.chatTimeLeft > 0
+    ? Math.max(maxSeconds - chatCtx.chatTimeLeft, 0)
+    : Math.max(Math.floor((nowSec - mountTimeRef.current) / 1000), 0);
   const [sending, setSending] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [endFlowOpen, setEndFlowOpen] = useState(false);
@@ -920,15 +954,34 @@ const saveNoteToFirebase = useCallback(async (text) => {
     setNoteDraft('');
     setShowNoteInput(false);
   };
-  /* ── kundli auto-message (once) ── */
+  /* ── kundli auto-message (once per session, guarded against refresh) ── */
   useEffect(() => {
-    if (kundliSentRef.current) return;
     if (!gid || !userId || !astrologer_id) return;
     if (!intake.gender || !intake.dob) return;
+
+    const sentKey = `kundli_sent_${gid}`;
+
+    // Guard 1: Local ref & sessionStorage check for this channel session
+    if (kundliSentRef.current || sessionStorage.getItem(sentKey)) {
+      kundliSentRef.current = true;
+      return;
+    }
+
+    // Guard 2: Check if Firebase messages already contain this intake message
+    const alreadyExists = messages.some(
+      (m) => String(m.from) === String(userId) && (m.message?.includes('Name :') || m.message?.includes('Birth Date :'))
+    );
+
+    if (alreadyExists) {
+      kundliSentRef.current = true;
+      sessionStorage.setItem(sentKey, 'true');
+      return;
+    }
+
     kundliSentRef.current = true;
+    sessionStorage.setItem(sentKey, 'true');
     sendFirebaseMessage(buildKundliString(intake), 'text');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gid, userId, astrologer_id]);
+  }, [gid, userId, astrologer_id, intake, messages, sendFirebaseMessage]);
 
   const flashSendError = (msg) => {
     setSendError(msg);
@@ -1072,18 +1125,61 @@ const saveNoteToFirebase = useCallback(async (text) => {
  
 
 
-  /* ── end chat → EndCallFlow (confirm → rate → thankYou → gift → ended) ── */
-  const handleEndChat = () => {
-    if (endingRef.current) return; // already ending (e.g. remote end already opened the flow)
-    setEndFlowInitialStep('confirm');
-    setEndFlowOpen(true);
-  };
-
+  /* ── end chat → EndCallFlow (immediate disconnect + rate → thankYou → gift → ended) ── */
   const handleConfirmEndChat = async () => {
     if (endingRef.current) return;
     endingRef.current = true;
     writeTyping(false);
+    chatCtx.stopChatTimer();
+
+    // 1) Update Firebase CallSession immediately for real-time astrologer app notification
+    if (gid) {
+      try {
+        await update(ref(db, `CallSession/${gid}`), {
+          status: 'end_user',
+          channel_id: gid,
+          ended_by: 'user',
+          end_time: Date.now(),
+        });
+      } catch (e) {
+        console.error('[ChatConsultation] Firebase CallSession status update failed:', e);
+      }
+    }
+
+    // 2) Call REST API call_status_update
     try { await callStatusUpdate(gid, 'end_user'); } catch { /* silent */ }
+
+    // 3) Push system end message into Firebase chat nodes so both sides register session end
+    if (gid && userId && astrologer_id) {
+      try {
+        const senderPath = groupPath(gid, userId, astrologer_id);
+        const receiverPath = groupPath(gid, astrologer_id, userId);
+        const msgId = push(ref(db, senderPath)).key;
+        if (msgId) {
+          const body = {
+            name: 'System',
+            to: astrologer_id,
+            from: userId,
+            message: 'Consultation ended by user',
+            type: 'system',
+            message_id: msgId,
+            date_time: Date.now(),
+            seen: true,
+          };
+          await set(ref(db, `${senderPath}/${msgId}`), body);
+          await set(ref(db, `${receiverPath}/${msgId}`), body);
+        }
+      } catch (e) {
+        console.error('[ChatConsultation] System end message failed:', e);
+      }
+    }
+  };
+
+  const handleEndChat = () => {
+    if (endingRef.current) return; // already ending
+    handleConfirmEndChat(); // Disconnect astrologer side IMMEDIATELY on click!
+    setEndFlowInitialStep('rate');
+    setEndFlowOpen(true);
   };
 
   const handleSubmitChatRating = async (payload) => {
@@ -1279,9 +1375,9 @@ const saveNoteToFirebase = useCallback(async (text) => {
               <button
                 type="button"
                 className="cc-minimize-btn"
-                onClick={handleMinimize}
-                title="Minimize — chat stays active"
-                aria-label="Minimize chat"
+                onClick={() => navigate(`/astrologer/${astrologer_id}`)}
+                title="Back to Astrologer Profile"
+                aria-label="Back to Astrologer Profile"
               >
                 <i className="fas fa-chevron-left" />
               </button>

@@ -461,7 +461,21 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 													onClick={() => setIsDropdownOpen(!isDropdownOpen)}
 												>
 													{user.profile_img ? (
-														<img src={fixImageUrl(user.profile_img)} alt="User" />
+														<img
+															src={fixImageUrl(user.profile_img)}
+															alt="User"
+															style={{
+																width: "100%",
+																height: "100%",
+																minWidth: "100%",
+																minHeight: "100%",
+																maxWidth: "100%",
+																maxHeight: "100%",
+																borderRadius: "50%",
+																objectFit: "cover",
+																display: "block"
+															}}
+														/>
 													) : (
 														<span className={styles.userInitial}>
 															{getUserInitial(user.name)}

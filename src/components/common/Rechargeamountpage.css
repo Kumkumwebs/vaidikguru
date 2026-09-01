@@ -125,8 +125,9 @@
 }
 
 .recharge-amount-input-icon {
-  color: #9ca3af;
-  font-size: 16px;
+  color: #7a1f3d;
+  font-size: 20px;
+  font-weight: 700;
   margin-right: 8px;
 }
 
@@ -135,12 +136,15 @@
   border: none;
   outline: none;
   padding: 14px 0;
-  font-size: 16px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a !important;
   background: transparent;
 }
 
 .recharge-amount-input::placeholder {
-  color: #b0aaa2;
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 /* Quick recharge grid */

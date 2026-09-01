@@ -124,40 +124,40 @@ export function ChatProvider({ children }) {
       const secondsRemaining = data.seconds_remaining;
 
       // Server ended the session
-      if (['end_astro', 'end_user', 'wallet_empty', 'rejected'].includes(status)) {
-        setTimeout(() => {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          if (firebaseSubRef.current) {
-            firebaseSubRef.current();
-            firebaseSubRef.current = null;
-          }
-          activeGidRef.current = null;
-          chatInfoRef.current = null;
-          setChatTimeLeft(0);
-          setChatActive(false);
-          setChatInfo(null);
-        }, 2000); // grace so UI can show rating dialog
+      if (['end_astro', 'end_user', 'disconnect_user', 'wallet_empty', 'rejected', 'completed', 'ended'].includes(status)) {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        if (firebaseSubRef.current) {
+          firebaseSubRef.current();
+          firebaseSubRef.current = null;
+        }
+        activeGidRef.current = null;
+        chatInfoRef.current = null;
+        setChatTimeLeft(0);
+        setChatActive(false);
+        setChatInfo(null);
         return;
       }
 
-      // Correct drift from seconds_remaining + last_tick_at
-      if (secondsRemaining != null && lastTick != null) {
-        const elapsed = Math.floor((Date.now() - Number(lastTick)) / 1000);
-        const accurate = Math.max(Number(secondsRemaining) - elapsed, 0);
-        setChatTimeLeft((prev) => (Math.abs(prev - accurate) > 5 ? accurate : prev));
-      }
-
-      // Correct drift from max_minutes + last_tick_at
-      if (maxMinutes != null) {
-        let serverSeconds = Math.max(Math.floor(Number(maxMinutes) * 60), 0);
-        if (lastTick) {
+      // Synchronize time left from Firebase CallSession
+      const secRem = data.seconds_remaining ?? data.seconds_left ?? data.time_left;
+      if (secRem != null) {
+        let accurate = Number(secRem);
+        if (lastTick != null) {
           const elapsed = Math.floor((Date.now() - Number(lastTick)) / 1000);
+          accurate = Math.max(accurate - elapsed, 0);
+        }
+        setChatTimeLeft((prev) => (Math.abs(prev - accurate) > 3 ? accurate : prev));
+      } else if (maxMinutes != null) {
+        let serverSeconds = Math.max(Math.floor(Number(maxMinutes) * 60), 0);
+        const refTime = lastTick || startedAt || data.start_time || data.created_at;
+        if (refTime) {
+          const elapsed = Math.floor((Date.now() - Number(refTime)) / 1000);
           serverSeconds = Math.max(serverSeconds - elapsed, 0);
         }
-        setChatTimeLeft((prev) => (Math.abs(prev - serverSeconds) > 30 ? serverSeconds : prev));
+        setChatTimeLeft((prev) => (Math.abs(prev - serverSeconds) > 3 ? serverSeconds : prev));
       }
 
       

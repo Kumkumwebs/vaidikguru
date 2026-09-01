@@ -4,11 +4,21 @@ import { motion } from "framer-motion";
 
 import apiService from "../../services/apiServices";
 import { mergeGiftTransactions } from "../../services/giftService";
+import { useStorage } from "../../context/StorageContext";
 import Header from "../layout/Header";
 import Footer from "../layout/Footer";
 import ScrollToTop from "./ScrollToTop";
 
 import "./Walletpage.css";
+
+const formatMoney = (val) => {
+    const num = Number(val) || 0;
+    if (Number.isInteger(num)) {
+        return num.toLocaleString('en-IN');
+    }
+    const rounded = Math.round(num * 100) / 100;
+    return Number.isInteger(rounded) ? rounded.toLocaleString('en-IN') : rounded.toFixed(2);
+};
 
 // Simple inline transaction row — replace with a shared component later if you have one
 function TransactionItem({ data }) {
@@ -31,7 +41,7 @@ function TransactionItem({ data }) {
                 className={`wallet-transaction-item__amount ${isCredit ? "wallet-transaction-item__amount--credit" : "wallet-transaction-item__amount--debit"
                     }`}
             >
-                {isCredit ? "+" : "-"}₹{data.amount}
+                {isCredit ? "+" : "-"}₹{formatMoney(data.amount)}
             </p>
         </div>
     );
@@ -91,12 +101,32 @@ const mapWalletTransaction = (t) => {
     };
 };
 
+// Helper to safely extract wallet balance from API response or storage user object
+const extractWalletAmount = (res, userObj) => {
+    if (res && (res.status === true || res.status === 'true' || res.status === 1)) {
+        const data = res.results_web || res.results || res.record || res.data || res;
+        const targetObj = Array.isArray(data) ? data[0] : data;
+        const val = targetObj?.wallet ?? targetObj?.wallet_amount ?? targetObj?.wallet_balance ?? targetObj?.balance ?? res.wallet ?? res.wallet_amount;
+        if (val !== undefined && val !== null) {
+            return Number(val) || 0;
+        }
+    }
+    if (userObj) {
+        const val = userObj.wallet ?? userObj.wallet_amount ?? userObj.wallet_balance ?? userObj.balance;
+        if (val !== undefined && val !== null) {
+            return Number(val) || 0;
+        }
+    }
+    return 0;
+};
+
 export default function WalletPage() {
     const [loading, setLoading] = useState(true);
     const [wallet, setWallet] = useState(0);
     const [transactions, setTransactions] = useState([]);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const { user, refreshProfile } = useStorage() || {};
 
     // ─── Fetch Wallet + Logs ───
     const getWalletData = async () => {
@@ -104,26 +134,34 @@ export default function WalletPage() {
             setLoading(true);
             setError(null);
 
-            const [profileRes, txnRes] = await Promise.all([
-                apiService.getBearer("https://admin.vaidikguru.com/user_api/get_profile").catch(() => null),
-                apiService.postBearer("https://admin.vaidikguru.com/user_api/transaction").catch(() => null)
-            ]);
-
-            if (profileRes?.status) {
-                const data = profileRes.results_web || profileRes.results;
-                setWallet(Number(data?.wallet || 0));
+            let profileRes = await apiService.getBearer("/user_api/get_profile").catch(() => null);
+            if (!profileRes || (!profileRes.status && !profileRes.results)) {
+                profileRes = await apiService.getBearer("https://admin.vaidikguru.com/user_api/get_profile").catch(() => null);
             }
+
+            let txnRes = await apiService.postBearer("/user_api/transaction").catch(() => null);
+            if (!txnRes) {
+                txnRes = await apiService.postBearer("https://admin.vaidikguru.com/user_api/transaction").catch(() => null);
+            }
+
+            const bal = extractWalletAmount(profileRes, user);
+            setWallet(bal);
 
             let apiList = [];
             if (txnRes && txnRes.result && txnRes.transactions && Array.isArray(txnRes.transactions.data)) {
                 apiList = txnRes.transactions.data;
             } else if (txnRes && Array.isArray(txnRes.data)) {
                 apiList = txnRes.data;
+            } else if (txnRes && Array.isArray(txnRes.transactions)) {
+                apiList = txnRes.transactions;
+            } else if (txnRes && Array.isArray(txnRes.results)) {
+                apiList = txnRes.results;
             }
 
             const merged = mergeGiftTransactions(apiList);
             setTransactions(merged.map(mapWalletTransaction));
         } catch (e) {
+            console.error("Wallet data fetch error:", e);
             setError("Unable to load your wallet balance right now.");
         } finally {
             setLoading(false);
@@ -131,6 +169,7 @@ export default function WalletPage() {
     };
 
     useEffect(() => {
+        if (refreshProfile) refreshProfile();
         getWalletData();
     }, []);
 
@@ -265,7 +304,7 @@ export default function WalletPage() {
                                     {loading ? (
                                         <span className="wallet-balance-loading">Loading...</span>
                                     ) : (
-                                        <>₹ {wallet}</>
+                                        <>₹ {formatMoney(wallet)}</>
                                     )}
                                 </h2>
                                 {error && (

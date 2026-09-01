@@ -20,9 +20,11 @@ body { top: 0px !important; }
 .userBtn {
     background: #ffffff;
     border: 1.5px solid #e0e0e0;
-    padding: 3px;
+    padding: 2px;
     width: 42px;
     height: 42px;
+    min-width: 42px;
+    min-height: 42px;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
@@ -30,6 +32,8 @@ body { top: 0px !important; }
     justify-content: center;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
 .userBtn:hover {
@@ -39,10 +43,15 @@ body { top: 0px !important; }
 }
 
 .userBtn img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    display: block !important;
 }
 
 .userInitial {

@@ -203,13 +203,13 @@
   /* Header minimize button — dedicated class, no longer shares/overrides
      the sidebar's .cc-back styling with an inline style hack. */
   .cc-minimize-btn {
+    display: flex;
     width: 34px;
     height: 34px;
     border-radius: 50%;
     border: none;
     background: #f3f4f6;
     color: #374151;
-    display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
@@ -11,9 +11,11 @@ import NewAppDownloadModal from '../components/common/NewAppDownloadModel';
 import WalletConnectModal from '../components/common/WalletConnectModal';
 import UserDetailsModal from '../components/common/UserDetailsModal';
 import SendGiftModal from "./Sendgiftmodal";
+import LoginOTPModal from '../components/accounts/LoginOTPModel';
+import storageService from '../services/storageServices';
 import apiService from '../services/apiServices';
 import { recordGiftTransaction } from '../services/giftService';
-import { getAstroPrice, getAstroRating, getAstroReviewCount } from '../services/astroHelpers';
+import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroRole, getAstroStatus } from '../services/astroHelpers';
 import './AstrologerDetail.css';
 
 /* helpers */
@@ -135,6 +137,16 @@ const AstrologerDetail = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showGift, setShowGift] = useState(false); // Send Gift modal
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const handleChatCallClick = (type) => {
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
+    setWalletModal(type);
+  };
   const [giftList, setGiftList] = useState(STATIC_GIFTS); // sidebar gifts (API-backed)
   const [giftImgErr, setGiftImgErr] = useState({}); // { [giftId]: true }
   const [sendingGiftId, setSendingGiftId] = useState(null); // gift currently being sent
@@ -213,6 +225,21 @@ const AstrologerDetail = () => {
       }
     } catch (_) {}
   }, [id]);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const act = query.get('action');
+    if ((act === 'chat' || act === 'call') && astro) {
+      const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (token) {
+        setWalletModal(act);
+      } else {
+        setShowLoginModal(true);
+      }
+    }
+  }, [location.search, astro]);
 
   useEffect(() => {
     load();
@@ -296,14 +323,17 @@ const fixImgHost = (url) =>
   const [notified, setNotified] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
 
-  const handleNotifyToggle = () => {
+  const handleNotifyToggle = async () => {
     const next = !notified;
     setNotified(next);
-    console.log('[NotifyWhenAvailable] Toggled for astro detail:', {
-      id: astro?.id || astro?._id,
-      name: astro?.name,
-      status: next ? 'subscribed' : 'unsubscribed'
-    });
+    const astroId = String(astro?.id || astro?._id || id || '');
+    if (astroId) {
+      try {
+        await apiService.postBearer('/user_api/notifyme', { astro_id: astroId });
+      } catch (err) {
+        console.error('[NotifyMe] API error:', err);
+      }
+    }
     if (next) {
       setToastMsg(`🔔 We will notify you as soon as ${astro?.name || 'this astrologer'} is available!`);
     } else {
@@ -350,19 +380,19 @@ const fixImgHost = (url) =>
     </div>
   );
 
-  const isBusy = astro.is_busy == 1 || astro.is_busy === '1' || astro.is_busy === true;
-  const isExplicitOffline = astro.is_online === 0 || astro.is_online === '0' || astro.is_offline == 1 || astro.is_offline === '1';
-  const isOnline = !isBusy && !isExplicitOffline;
-  const cats = astro.category?.map(c => c.name) || [];
-  const langs = astro.language?.map(l => l.name).join(', ') || 'Hindi, English';
+  const { status: astroStatusVal, isBusy, isOnline, label: statusLabel } = getAstroStatus(astro);
+  const cats = (Array.isArray(astro.category) ? astro.category : []).map(c => typeof c === 'object' ? (c.name || c.category_name || c.title) : c).filter(Boolean);
+  const astroRole = getAstroRole(astro);
+  const langs = (Array.isArray(astro.language) ? astro.language : []).map(l => typeof l === 'object' ? (l.name || l.title) : l).filter(Boolean).join(', ') || 'Hindi, English';
   const price = getAstroPrice(astro);
   const rating = parseFloat(getAstroRating(astro));
   const totalReviewCount = getAstroReviewCount(astro);
-  const totalConsultations = astro.consult || astro.total_orders || '25,000';
+  const totalConsultations = astro.consult ?? astro.total_orders ?? '0';
+  const followersCount = astro.follow_count ?? astro.followers ?? 0;
 
-  const SKILLS = (astro.skill && astro.skill.length > 0)
-    ? astro.skill.map(s => (s.name || '').trim()).filter(Boolean)
-    : DEFAULT_SKILLS;
+  const SKILLS = (Array.isArray(astro.skill) && astro.skill.length > 0)
+    ? astro.skill.map(s => typeof s === 'object' ? (s.name || s.skill_name || s.title) : s).filter(Boolean)
+    : cats;
 
   const FAQS = [
     { q: `How can I consult ${astro.name}?`, a: 'Click Chat Now or Call Now to connect instantly.' },
@@ -448,10 +478,11 @@ const fixImgHost = (url) =>
 
                   {/* Info right */}
                   <div className="ad-pc-right">
-                    <div className="d-flex align-items-center gap-2 flex-wrap mb-2">
+                    <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
                       <span className="ad-pc-name">{astro.name}</span>
                       <span className="ad-pc-badge"><i className="fas fa-check-circle" /> Verified Expert</span>
                     </div>
+                    {astroRole && <div className="ad-pc-role mb-2" style={{ fontSize: '15px', color: '#f59e0b', fontWeight: '600' }}>{astroRole}</div>}
                     <div className="ad-pc-stars-row">
                       <Stars val={rating} />
                       <span className="ad-pc-score">{rating.toFixed(1)}</span>
@@ -463,7 +494,7 @@ const fixImgHost = (url) =>
                       <span className="ad-pc-meta-item"><i className="fas fa-briefcase" />{astro.experience || '5'}+ Years Experience</span>
                       <span className="ad-pc-meta-item"><i className="fas fa-map-marker-alt" />From {astro.city || 'India'}</span>
                       <span className="ad-pc-meta-item"><i className="fas fa-language" />Languages: {langs}</span>
-                      <span className="ad-pc-meta-item"><i className="fas fa-users" />Followers: {astro.followers || '50K'}+</span>
+                      <span className="ad-pc-meta-item"><i className="fas fa-users" />Followers: {followersCount}</span>
                     </div>
                     <div className="ad-pc-tags">
                       {cats.slice(0, 6).map((c, i) => <span key={i} className="ad-pc-tag">{c}</span>)}
@@ -565,8 +596,8 @@ const fixImgHost = (url) =>
                     <span className="ad-fee-unit">/min</span>
                   </div>
                   <div className="ad-avail-row">
-                    <span className={`ad-avail-dot ${isBusy ? 'busy' : ''}`} />
-                    <span className={`ad-avail-txt ${isBusy ? 'busy' : ''}`}>{isBusy ? 'Busy' : 'Available Now'}</span>
+                    <span className={`ad-avail-dot ${isBusy ? 'busy' : isOnline ? '' : 'offline'}`} style={!isBusy && !isOnline ? { background: '#9ca3af' } : {}} />
+                    <span className={`ad-avail-txt ${isBusy ? 'busy' : isOnline ? '' : 'offline'}`} style={!isBusy && !isOnline ? { color: '#6b7280' } : {}}>{isBusy ? 'Busy' : isOnline ? 'Available Now' : 'Offline'}</span>
                   </div>
                   <div className="ad-resp-time">Avg. Response Time: &lt; 2 min</div>
                   {isBusy ? (
@@ -574,17 +605,22 @@ const fixImgHost = (url) =>
                       <i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
                       <span>{notified ? "We'll Notify You When Available!" : "Notify When Available"}</span>
                     </button>
-                  ) : (
+                  ) : isOnline ? (
                     <>
-                      <button className="ad-btn-chat" onClick={() => setWalletModal('chat')}>
+                      <button className="ad-btn-chat" onClick={() => handleChatCallClick('chat')}>
                         <div className="ad-btn-chat-main"><i className="fas fa-comment-dots" style={{ fontSize: 16 }} />Chat Now</div>
                         <div className="ad-btn-chat-sub">Get instant guidance</div>
                       </button>
-                      <button className="ad-btn-call" onClick={() => setWalletModal('call')}>
+                      <button className="ad-btn-call" onClick={() => handleChatCallClick('call')}>
                         <div className="ad-btn-call-main"><i className="fas fa-phone" style={{ fontSize: 15 }} />Call Now</div>
                         <div className="ad-btn-call-sub">Start a call session</div>
                       </button>
                     </>
+                  ) : (
+                    <button className="ad-btn-notify disabled" style={{ opacity: 0.7, background: '#9ca3af', cursor: 'not-allowed' }} onClick={(e) => e.stopPropagation()}>
+                      <i className="fas fa-moon" style={{ fontSize: 16 }} />
+                      <span>Astrologer Currently Offline</span>
+                    </button>
                   )}
                   <button className="ad-btn-gift" onClick={() => setShowGift(true)}>
                     <i className="ad-btn-gift-ico fas fa-gift" />
@@ -961,17 +997,26 @@ const fixImgHost = (url) =>
           </button>
         ) : (
           <>
-            <button className="ad-mobile-chat-btn" onClick={() => setWalletModal('chat')}>
+            <button className="ad-mobile-chat-btn" onClick={() => handleChatCallClick('chat')}>
               <i className="fas fa-comment-dots" />
               Chat Now
             </button>
-            <button className="ad-mobile-call-btn" onClick={() => setWalletModal('call')}>
+            <button className="ad-mobile-call-btn" onClick={() => handleChatCallClick('call')}>
               <i className="fas fa-phone" />
               Call Now
             </button>
           </>
         )}
       </div>
+
+      <LoginOTPModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={() => {
+          setShowLoginModal(false);
+          window.location.reload();
+        }}
+      />
 
       {toastMsg && (
         <div className="al-toast">

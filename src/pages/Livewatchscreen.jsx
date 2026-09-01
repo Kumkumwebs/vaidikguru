@@ -866,12 +866,7 @@ export default function LiveWatchScreen() {
         }
 
         if (onlineList.length === 0) {
-          onlineList = [
-            { id: '1', _id: '1', name: 'Acharya Alok', profile_img: '/assets/img/home/astrologer_1.jpg', per_min_chat: 15 },
-            { id: '2', _id: '2', name: 'Dr. Neeraj Sharma', profile_img: '/assets/img/home/astrologer_2.jpg', per_min_chat: 20 },
-            { id: '3', _id: '3', name: 'Acharya Ruchi', profile_img: '/assets/img/home/astrologer_3.jpg', per_min_chat: 12 },
-            { id: '4', _id: '4', name: 'Pandit Om Prakash', profile_img: '/assets/img/home/astrologer_4.jpg', per_min_chat: 18 },
-          ].filter(a => String(a._id) !== String(astroId) && String(a.id) !== String(astroId) && !channelId.includes(a._id));
+          onlineList = [];
         }
 
         const fallbackOther = onlineList.map((astro, idx) => ({
@@ -897,11 +892,37 @@ export default function LiveWatchScreen() {
   useEffect(() => { fetchOtherLives(); }, [fetchOtherLives]);
 
   // ── Leave handling ─────────────────────────────────────────────────────────
+  const isLeavingRef = useRef(false);
+
   const leave = useCallback(async () => {
+    if (isLeavingRef.current) return;
+    isLeavingRef.current = true;
+
     clearInterval(timerRef.current);
-    try { await clientRef.current?.leave(); } catch { }
-    navigate("/live-astrologer", { replace: true });
-  }, [navigate]);
+    clearInterval(waitTimerRef.current);
+
+    // Remove web viewer presence from Firebase
+    const webUserId = myId() || `web_${Date.now()}`;
+    if (channelId) {
+      try {
+        set(ref(db, `LiveViewers/${channelId}/${webUserId}`), null).catch(() => {});
+      } catch (e) {}
+    }
+
+    // Leave Agora RTC stream immediately
+    try {
+      if (clientRef.current) {
+        await clientRef.current.leave();
+        clientRef.current.removeAllListeners?.();
+        clientRef.current = null;
+      }
+    } catch (err) {
+      console.error("[LiveWatchScreen] Agora leave error:", err);
+    }
+
+    // Instant disconnect navigation
+    window.location.href = "/live-astrologer";
+  }, [channelId]);
 
   const handleBackPress = useCallback(() => {
     setShowLeavePopup(true);
@@ -912,6 +933,7 @@ export default function LiveWatchScreen() {
     window.history.pushState(null, "", window.location.href);
 
     const handlePopState = () => {
+      if (isLeavingRef.current) return;
       window.history.pushState(null, "", window.location.href);
       setShowLeavePopup(true);
       fetchOtherLives();
@@ -921,12 +943,34 @@ export default function LiveWatchScreen() {
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, []);
+  }, [fetchOtherLives]);
 
   const handleJoinOther = useCallback(async (a) => {
+    if (isLeavingRef.current) return;
+    isLeavingRef.current = true;
+
     setShowLeavePopup(false);
     clearInterval(timerRef.current);
-    try { await clientRef.current?.leave(); } catch { }
+    clearInterval(waitTimerRef.current);
+
+    // Remove web viewer presence from Firebase
+    const webUserId = myId() || `web_${Date.now()}`;
+    if (channelId) {
+      try {
+        set(ref(db, `LiveViewers/${channelId}/${webUserId}`), null).catch(() => {});
+      } catch (e) {}
+    }
+
+    try {
+      if (clientRef.current) {
+        await clientRef.current.leave();
+        clientRef.current.removeAllListeners?.();
+        clientRef.current = null;
+      }
+    } catch (err) {
+      console.error("[LiveWatchScreen] Agora leave error:", err);
+    }
+
     navigate(`/live/${a.channel_id}`, {
       replace: true,
       state: {
@@ -941,7 +985,7 @@ export default function LiveWatchScreen() {
         tags: a.tags || [],
       },
     });
-  }, [navigate]);
+  }, [channelId, navigate]);
 
   // ── Send message ───────────────────────────────────────────────────────────
   const sendMsg = () => {

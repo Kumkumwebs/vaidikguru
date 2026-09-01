@@ -26,11 +26,15 @@ const ChadhavaBookingListPage = () => {
   useEffect(() => {
     const fetchChadhava = async () => {
       try {
-        const res = await apiService.postBearer('/puja/mychdhavabookings', {});
-        if (res && res.status) {
-          const list = res.results || res.bookPooja || res.data || res.result || res.chadhavaBookings || [];
+        let res = await apiService.postBearer('/puja/mychdhavabookings', {}).catch(() => null);
+        if (!res || (!res.status && !res.results && !res.data)) {
+          res = await apiService.getBearer('/puja/mychdhavabookings').catch(() => null);
+        }
+        if (res) {
+          const raw = res.results || res.bookPooja || res.data || res.result || res.chadhavaBookings || res.record || (Array.isArray(res) ? res : []);
+          const list = Array.isArray(raw) ? raw : [];
           const sorted = [...list].sort(
-            (a, b) => new Date(b.createdAt || b.puja_date) - new Date(a.createdAt || a.puja_date)
+            (a, b) => new Date(b.createdAt || b.puja_date || b.created_at || 0) - new Date(a.createdAt || a.puja_date || a.created_at || 0)
           );
           setBookings(sorted);
         }

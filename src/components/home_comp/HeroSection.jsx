@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import '../../pages/home.css';
 
 const TRUST_ITEMS = [
@@ -7,12 +8,29 @@ const TRUST_ITEMS = [
 	{ icon: '/assets/img/home/penindia.png', value: 'Pan India', label: 'Delivery' },
 	{ icon: '/assets/img/home/lockhome.png', value: '100%', label: 'Secure Payments' },
 ];
-const HeroSection = ({ astrologer }) => {
+
+const fixImgHost = (url) =>
+	typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
+
+const HeroSection = ({ astrologer, banners }) => {
+	const [activeBannerIdx, setActiveBannerIdx] = useState(0);
+	const validBanners = Array.isArray(banners) ? banners.filter(b => b && (b.image || b.img)) : [];
+
+	useEffect(() => {
+		if (validBanners.length <= 1) return;
+		const timer = setInterval(() => {
+			setActiveBannerIdx(prev => (prev + 1) % validBanners.length);
+		}, 5000);
+		return () => clearInterval(timer);
+	}, [validBanners.length]);
+
+	const currentBannerImg = validBanners.length > 0 ? fixImgHost(validBanners[activeBannerIdx]?.image || validBanners[activeBannerIdx]?.img) : '/assets/img/home/banner_home_page.webp';
+
 	return (
 		<>
 			<section
 				className="dq-hero"
-				style={{ backgroundImage: `url(/assets/img/home/banner_home_page.webp)` }}
+				style={{ backgroundImage: `url(${currentBannerImg})`, transition: 'background-image 0.5s ease-in-out' }}
 			>
 				<div className="dq-hero-inner">
 					<h1>

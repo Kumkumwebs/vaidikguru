@@ -79,14 +79,7 @@ function LeftPanel() {
 			backgroundPosition: "center",
 			backgroundRepeat: "no-repeat",
 			borderRadius: "20px 0 0 20px",
-			display: "flex",
-			flexDirection: "column",
-			alignItems: "center",
-			padding: "32px 24px 28px",
-			position: "relative",
-			overflow: "hidden",
-		}}>
-		</div>
+		}} />
 	);
 }
 

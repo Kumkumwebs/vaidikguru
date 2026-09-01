@@ -141,9 +141,16 @@
   border: 1px solid #e6d9c6;
   border-radius: 999px;
   padding: 12px 18px;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a !important;
   background: #fffdf9;
   outline: none;
+}
+
+.recharge-coupon-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 .recharge-coupon-input:focus {

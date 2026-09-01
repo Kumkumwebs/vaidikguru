@@ -208,7 +208,7 @@ export const StorageProvider = ({ children }) => {
     if (!token || token === 'null' || token === 'undefined') return;
 
     let isMounted = true;
-    apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile')
+    apiService.getBearer('/user_api/get_profile')
       .then((res) => {
         if (!isMounted) return;
         if (res && res.status === true) {
@@ -243,7 +243,7 @@ export const StorageProvider = ({ children }) => {
   const refreshProfile = useCallback(async () => {
     if (!token || token === 'null' || token === 'undefined') return null;
     try {
-      const res = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
+      const res = await apiService.getBearer('/user_api/get_profile');
       if (res && res.status === true) {
         const profileData = res.results || res.results_web || {};
         setUserState((prev) => {

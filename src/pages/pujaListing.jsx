@@ -564,23 +564,16 @@ const PujaListing = () => {
       const res = await PujaService.getPujaList(null);
       let list = [];
       if (res?.status) {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          list = res.data.flatMap((group) => group.result || (group.title ? [group] : []));
-        }
-        if (list.length === 0 && Array.isArray(res.result) && res.result.length > 0) {
-          list = res.result;
-        }
-        if (list.length === 0 && Array.isArray(res.promotionalBanner) && res.promotionalBanner.length > 0) {
-          list = res.promotionalBanner;
-        }
-        if (list.length === 0 && Array.isArray(res.results) && res.results.length > 0) {
-          list = res.results;
-        }
-        if (list.length === 0 && Array.isArray(res.data) && res.data.length > 0) {
-          list = res.data;
+        let raw = res.data || res.results || res.result || res.recordList || [];
+        if (Array.isArray(raw)) {
+          list = raw.flatMap((group) => {
+            if (group && Array.isArray(group.result)) return group.result;
+            if (group && typeof group === 'object') return [group];
+            return [];
+          }).filter(item => item && (item.title || item.name) && item.type !== 'App');
         }
       } else if (Array.isArray(res)) {
-        list = res;
+        list = res.filter(item => item && (item.title || item.name) && item.type !== 'App');
       }
 
       if (list && list.length > 0) {

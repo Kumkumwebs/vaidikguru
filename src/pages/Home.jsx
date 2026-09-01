@@ -75,7 +75,7 @@ const Home = () => {
 			/>
 
 			{/* Hero Section + Trust strip (Authentic Rituals. Divine Blessings. Peaceful Life.) */}
-			<HeroSection astrologer={homeData?.astrologer} />
+			<HeroSection astrologer={homeData?.astrologer} banners={homeData?.promotionalBanner} />
 
 			{/* Our Vaidik Services */}
 			<CategorySection />
@@ -84,7 +84,7 @@ const Home = () => {
 			<WhyTrustSection />
 
 			{/* Most Booked Pujas */}
-			<PujaListSection puja={{ result: homeData?.puja?.flatMap((g) => g.result) }} />
+			<PujaListSection puja={homeData?.data || homeData?.puja || homeData?.results} />
 			{/* Sacred Chadhava Delivered with Devotion */}
 			<ChadhavaSection chadhava={homeData?.chadhava} />
 

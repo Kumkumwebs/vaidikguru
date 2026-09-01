@@ -93,8 +93,8 @@ export const getUserName = () => {
 // These mirror the Flutter/astroguruji backend contract. If DivinIq named any
 // of them differently, change the string here — nothing else needs to move.
 export const ENDPOINTS = {
-  call_initiate: 'https://admin.vaidikguru.com/user_api/call_initiate',
-  call_initiate_status: 'https://admin.vaidikguru.com/user_api/call_initiate_status',
+  call_initiate: '/user_api/call_initiate',
+  call_initiate_status: '/user_api/call_initiate_status',
   call_status_update: '/user_api/call_status_update',
   add_rating: '/user_api/add_rating',
   geocode: '/user_api/geocode',

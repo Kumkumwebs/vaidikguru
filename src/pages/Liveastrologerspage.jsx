@@ -89,101 +89,20 @@ export default function LiveAstrologersPage() {
     if (!isBackground) setLoading(true);
     setError(false);
     try {
-      const [res, astroRes] = await Promise.all([
-        apiService.getBearer('/user_api/listing_of_live_astrlogers').catch(() => null),
-        apiService.postBearer('/user_api/astrologer_list', { search: "", page: "1" }).catch(() => null),
-      ]);
+      const res = await apiService.getBearer('/user_api/listing_of_live_astrlogers').catch(() => null);
 
       let list = [];
       if (res) {
         list = res.results || res.data || (Array.isArray(res) ? res : []);
       }
 
-      if (Array.isArray(list) && list.length > 0) {
-        setLiveList(list);
-      } else {
-        let onlineAstros = [];
-        if (astroRes) {
-          const all = astroRes.results || astroRes.data || (Array.isArray(astroRes) ? astroRes : []);
-          onlineAstros = all.filter((a) => truthy(a.is_online) || truthy(a.is_live));
-        }
-        if (onlineAstros.length === 0) {
-          onlineAstros = [
-            { id: '1', _id: '1', name: 'Acharya Alok', profile_img: '', avg_rate: 4.9, per_min_chat: 15, is_online: 1 },
-            { id: '2', _id: '2', name: 'Dr. Neeraj Sharma', profile_img: '', avg_rate: 4.9, per_min_chat: 20, is_online: 1 },
-            { id: '3', _id: '3', name: 'Acharya Ruchi', profile_img: '', avg_rate: 4.8, per_min_chat: 12, is_online: 1 },
-            { id: '4', _id: '4', name: 'Pandit Om Prakash', profile_img: '', avg_rate: 4.9, per_min_chat: 18, is_online: 1 },
-          ];
-        }
-        const fallbackLiveStreams = onlineAstros.map((astro, idx) => ({
-          _id: `live_stream_${astro._id || astro.id || idx}`,
-          channel_id: `live_channel_${astro._id || astro.id || idx}`,
-          is_live: "1",
-          title: `Live Consultation with ${astro.name || astro.displayname || 'Astrologer'}`,
-          live_type: "home",
-          users: 18 + idx * 6,
-          astrologer_id: {
-            _id: astro._id || astro.id,
-            name: astro.name || astro.displayname || 'Astrologer',
-            displayname: astro.displayname || astro.name || 'Astrologer',
-            profile_img: astro.profile_img || astro.profileImg || '',
-            avg_rate: astro.avg_rate || astro.per_min_chat || 15,
-            per_min_chat: astro.per_min_chat || 15,
-            is_online: 1,
-            is_live: 1,
-          }
-        }));
-
-        const upcomingStreams = [
-          {
-            _id: "upcoming_stream_1",
-            channel_id: "upcoming_channel_1",
-            is_live: "0",
-            start_time: "Today, 04:00 PM",
-            end_time: "05:00 PM",
-            title: "Evening Kundli & Career Guidance Live",
-            live_type: "home",
-            users: 0,
-            astrologer_id: {
-              _id: "astro_up_1",
-              name: "Acharya Vansh",
-              displayname: "Acharya Vansh",
-              profile_img: "",
-              avg_rate: 4.9,
-              per_min_chat: 18,
-              is_online: 0,
-              is_live: 0,
-            }
-          },
-          {
-            _id: "upcoming_stream_2",
-            channel_id: "upcoming_channel_2",
-            is_live: "0",
-            start_time: "Today, 06:30 PM",
-            end_time: "07:30 PM",
-            title: "Love & Relationship Remedies Live QA",
-            live_type: "home",
-            users: 0,
-            astrologer_id: {
-              _id: "astro_up_2",
-              name: "Dr. Sunita Devi",
-              displayname: "Dr. Sunita Devi",
-              profile_img: "",
-              avg_rate: 4.8,
-              per_min_chat: 22,
-              is_online: 0,
-              is_live: 0,
-            }
-          }
-        ];
-
-        setLiveList([...fallbackLiveStreams, ...upcomingStreams]);
-      }
+      setLiveList(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error("[LiveAstrologersPage] Live API Error:", err);
       if (!isBackground) {
         setError(false);
       }
+      setLiveList([]);
     } finally {
       if (!isBackground) setLoading(false);
     }

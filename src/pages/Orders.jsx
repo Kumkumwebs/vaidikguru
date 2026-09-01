@@ -28,7 +28,7 @@ const formatTimeString = (date) => {
 // Map one row from the /user_api/transaction response into the shape the
 // page renders (id, name, duration, type, date/time, status, price, category).
 const mapApiTransaction = (t) => {
-    const rawDate = (t.transaction_date || t.created_at || '').trim();
+    const rawDate = (t.transaction_date || t.created_at || t.date || '').trim();
     const isoish = rawDate.replace(' ', 'T');
     let dateObj = new Date(isoish);
     if (isNaN(dateObj.getTime())) {
@@ -40,24 +40,23 @@ const mapApiTransaction = (t) => {
     }
     const validDate = isNaN(dateObj.getTime()) ? new Date() : dateObj;
 
-    const minutes = parseInt(t.time, 10);
+    const minutes = parseInt(t.time || t.duration || t.call_duration || t.minutes, 10);
     const duration = !isNaN(minutes) && minutes > 0 ? `${minutes} min` : '-';
 
-    const rawType = (t.type || t.category || t.transaction_type || '').toLowerCase();
+    const rawType = (t.call_type || t.type || t.category || t.transaction_type || '').toLowerCase();
     const desc = (t.description || t.title || t.message || '').toLowerCase();
     const amountType = (t.amount_type || '').toLowerCase();
     const astroName = (t.astro_name || t.astrologer_name || t.name || '').trim();
     const giftName = (t.gift_title || t.gift_name || t.gift || '').trim();
 
     let category;
-    if (rawType === 'video') {
+    if (rawType.includes('video') || desc.includes('video')) {
         category = 'Video';
-    } else if (rawType === 'chat') {
+    } else if (rawType.includes('chat') || desc.includes('chat')) {
         category = 'Chat';
-    } else if (rawType === 'audio' || rawType === 'call') {
+    } else if (rawType.includes('audio') || rawType.includes('call') || desc.includes('call') || desc.includes('audio')) {
         category = 'Call';
     } else if (
-        rawType === 'gift' || 
         rawType.includes('gift') || 
         desc.includes('gift') || 
         t.gift_id || t.giftId || giftName ||
@@ -65,9 +64,9 @@ const mapApiTransaction = (t) => {
     ) {
         category = 'Gift';
     } else if (
-        rawType === 'puja' || 
-        rawType === 'pooja' || 
-        rawType === 'chadhava' || 
+        rawType.includes('puja') || 
+        rawType.includes('pooja') || 
+        rawType.includes('chadhava') || 
         desc.includes('puja') || 
         desc.includes('pooja') || 
         desc.includes('chadhava') || 
@@ -86,7 +85,7 @@ const mapApiTransaction = (t) => {
     else if (category === 'Other') typeLabel = t.puja_name || t.description || 'Puja / Sacred Offering';
     else typeLabel = t.description || t.type || 'Wallet Transaction';
 
-    const amount = Number(t.amount) || 0;
+    const amount = Number(t.amount || t.price || t.total_amount) || 0;
     const price = amountType === 'credit' ? amount : -amount;
 
     const daysAgo = Math.floor((Date.now() - validDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -97,8 +96,8 @@ const mapApiTransaction = (t) => {
          category === 'Other' ? (t.description || 'Puja Offering') : 'VaidikGuru Service');
 
     return {
-        uid: t.id || t.order_id || Math.random().toString(),
-        id: t.order_id || t.id,
+        uid: t.id || t.order_id || t.transaction_id || Math.random().toString(),
+        id: t.order_id || t.id || t.transaction_id || 'N/A',
         name: titleName,
         verified: category !== 'Wallet',
         duration,
@@ -107,7 +106,7 @@ const mapApiTransaction = (t) => {
         time: formatTimeString(validDate),
         dateObj: validDate,
         daysAgo,
-        status: 'Completed',
+        status: t.status ? (String(t.status).charAt(0).toUpperCase() + String(t.status).slice(1)) : 'Completed',
         price,
         category
     };
@@ -143,17 +142,48 @@ const OrdersPage = () => {
         setIsLoading(true);
         setLoadError(null);
         try {
-            const json = await apiService.postBearer('https://admin.vaidikguru.com/user_api/transaction').catch(() => null);
+            let json = await apiService.postBearer('/user_api/transaction', {}).catch(() => null);
+            if (!json || (!json.status && !json.results && !json.transactions && !json.data)) {
+                json = await apiService.postBearer('https://admin.vaidikguru.com/user_api/transaction', {}).catch(() => null);
+            }
 
             let apiList = [];
-            if (json && json.result && json.transactions && Array.isArray(json.transactions.data)) {
-                apiList = json.transactions.data;
-            } else if (json && Array.isArray(json.data)) {
-                apiList = json.data;
+            if (json) {
+                if (json.result && json.transactions && Array.isArray(json.transactions.data)) {
+                    apiList = json.transactions.data;
+                } else if (json.transactions && Array.isArray(json.transactions.data)) {
+                    apiList = json.transactions.data;
+                } else if (Array.isArray(json.transactions)) {
+                    apiList = json.transactions;
+                } else if (Array.isArray(json.data)) {
+                    apiList = json.data;
+                } else if (Array.isArray(json.results)) {
+                    apiList = json.results;
+                } else if (Array.isArray(json.records)) {
+                    apiList = json.records;
+                } else if (Array.isArray(json.record)) {
+                    apiList = json.record;
+                } else if (Array.isArray(json.list)) {
+                    apiList = json.list;
+                }
             }
 
             const merged = mergeGiftTransactions(apiList);
-            setApiTransactions(merged.map(mapApiTransaction));
+            const mapped = merged.map(mapApiTransaction);
+            setApiTransactions(mapped);
+
+            // If default 'Call' category has no data, automatically select the first category that HAS data
+            if (mapped.length > 0) {
+                const hasCallData = mapped.some(item => item.category === 'Call');
+                if (!hasCallData) {
+                    const firstWithData = ['Chat', 'Wallet', 'Other', 'Gift', 'Video'].find(catKey => 
+                        mapped.some(item => item.category === catKey)
+                    );
+                    if (firstWithData) {
+                        setActiveCategory(firstWithData);
+                    }
+                }
+            }
         } catch (err) {
             console.error('Failed to load transactions:', err);
             const localOnly = mergeGiftTransactions([]);

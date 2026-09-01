@@ -1,6 +1,8 @@
 import "../../pages/LiveAstrologer.css";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import storageService from "../../services/storageServices";
+import LoginOTPModal from "../accounts/LoginOTPModel";
 
 function isRealApiUrl(path) {
   if (!path) return false;
@@ -68,6 +70,7 @@ export default function LiveCard({ item }) {
   const navigate = useNavigate();
   const [imgErr, setImgErr] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const astro = item.astrologer_id ?? item.astrologerId ?? {};
 
   const truthy = (v) => v === true || v === 1 || v === "1" || v === "true";
@@ -106,6 +109,11 @@ export default function LiveCard({ item }) {
     : 1;
 
   const handleClick = () => {
+    if (!storageService.getToken()) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (isLive) {
       const channelId = item.channel_id ?? item.channelId;
       navigate(`/live/${channelId}`, {
@@ -205,6 +213,11 @@ export default function LiveCard({ item }) {
           </div>
         </div>
       )}
+
+      <LoginOTPModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </>
   );
 }
