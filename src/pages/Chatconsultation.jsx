@@ -7,13 +7,14 @@ import EndCallFlow from './EndCallFlow';
 import { db } from '../services/liveFirebase';
 import { useChat } from '../context/ChatContext';
 import SendGiftModal from './Sendgiftmodal';
-import { ref, onValue, push, set, update, off, remove } from 'firebase/database';
+import { ref, onValue, push, set, update, off, remove, onDisconnect } from 'firebase/database';
 import {
   callStatusUpdate,
   addRating,
   uploadChatFile,
   buildKundliString,
   lastCallList,
+  getWalletBalance,
 } from '../services/liveService';
 import { getUserId, getUserName } from '../services/Liveconfig';
 import apiService from '../services/apiServices';
@@ -75,6 +76,36 @@ const resolveUserName = () => {
 // How long to wait after the last keystroke before clearing the typing flag —
 // mirrors a normal debounce so we're not writing to Firebase on every keypress.
 const TYPING_IDLE_MS = 2000;
+
+// How long a RECEIVED typing flag stays trusted after the last write. A
+// crashed / backgrounded / refreshed astrologer app leaves the node stuck at
+// `true` and onValue never fires again, so the flag needs a local expiry.
+const TYPING_STALE_MS = 8000;
+
+// Is this raw Firebase value a "currently typing" signal? Accepts boolean,
+// numeric and string flags, {typing:…}/{isTyping:…} wrappers, and heartbeat
+// timestamps in either ms or seconds — so it works whatever shape the
+// astrologer app writes.
+const isTypingValue = (v) => {
+  if (v === true || v === 1) return true;
+  if (typeof v === 'string') {
+    const s = v.trim().toLowerCase();
+    if (s === 'true' || s === '1' || s === 'typing') return true;
+    const n = Number(s);
+    return Number.isFinite(n) && n > 1e9 ? isTypingValue(n) : false;
+  }
+  if (typeof v === 'number') {
+    if (v > 1e12) return Math.abs(Date.now() - v) < TYPING_STALE_MS;               // ms epoch
+    if (v > 1e9)  return Math.abs(Date.now() / 1000 - v) < TYPING_STALE_MS / 1000; // s epoch
+    return false;
+  }
+  if (v && typeof v === 'object') {
+    if (isTypingValue(v.typing) || isTypingValue(v.isTyping) || isTypingValue(v.is_typing)) return true;
+    const ts = v.timestamp ?? v.time ?? v.updatedAt ?? v.last_typed ?? v.date_time;
+    if (ts != null) return isTypingValue(Number(ts));
+  }
+  return false;
+};
 
 // ── Personal-info detection (phone / email / link) ──
 // Regexes are created fresh on every call (not module-level `g` constants)
@@ -405,8 +436,8 @@ const ChatConsultation = () => {
         if (!w || w <= 0) {
           console.warn('[ChatConsultation] chatCtx.chatInfo.wallet was empty/zero on resume — fetching real balance');
           try {
-            const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
-            w = parseFloat(profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? 0);
+            const fetchedW = await getWalletBalance();
+            if (fetchedW > 0) w = fetchedW;
           } catch (err) {
             console.error('[ChatConsultation] failed to fetch wallet on resume:', err);
           }
@@ -472,8 +503,8 @@ const ChatConsultation = () => {
         if (result && data2 && callType === 'chat' && ACCEPTED_STATUSES.includes(status) && matchesThisAstrologer) {
           let realWallet = data2.total_amount || '0';
           try {
-            const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
-            realWallet = profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? realWallet;
+            const fetchedW = await getWalletBalance();
+            if (fetchedW > 0) realWallet = String(fetchedW);
           } catch (err) {
             console.error('[ChatConsultation] failed to fetch real wallet balance:', err);
           }
@@ -508,7 +539,7 @@ const ChatConsultation = () => {
   }, []);
 
   const gid = session?.gid || '';
-  const astrologer_id = String(session?.astrologer_id || '');
+  const astrologer_id = String(session?.astrologer_id || id || '');
   const name = session?.name || 'Astrologer';
   const profileImg = session?.profileImg || '';
   const rate = session?.rate || 5;
@@ -575,7 +606,7 @@ const ChatConsultation = () => {
   //             (Firebase status), so we skip straight past the confirm step.
   const [endFlowInitialStep, setEndFlowInitialStep] = useState('confirm');
    const [showGift, setShowGift] = useState(false);
-   const [giftList, setGiftList] = useState(STATIC_GIFTS); 
+   const [giftList, setGiftList] = useState([]); 
 
   // Whether the astrologer is currently typing — mirrors Dart's
   // `typingStream` (Typing/{groupId}/{astrologerId}).
@@ -643,6 +674,7 @@ const ChatConsultation = () => {
   const kundliSentRef = useRef(false);
   const endingRef = useRef(false);
   const typingTimeoutRef = useRef(null);
+  const astroTypingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false); // tracks last value we wrote, so we don't spam Firebase
 
   const scrollToBottom = useCallback(() => {
@@ -651,16 +683,58 @@ const ChatConsultation = () => {
     });
   }, []);
 
-  /* ── typing indicator (astrologer) ── */
+  /* ── typing indicator (astrologer → user) ──
+     One listener on the whole Typing/{gid} subtree, so it works whether the
+     astrologer app keys its flag by astro_id, by uid, or nests it one level.
+     Hides on a falsy write, on an incoming astrologer message (effect below),
+     and — as a safety net — TYPING_STALE_MS after the last write, since a
+     stuck `true` never fires onValue again.
+     Unsubscribe is off(ref, 'value', handler), never bare off(ref): bare off()
+     drops EVERY listener on a path, which is what the old off(sessionRef) was
+     doing to the CallSession start-time and remote-end listeners. */
   useEffect(() => {
-    if (!gid || !astrologer_id) return;
-    const path = `Typing/${gid}/${astrologer_id}`;
-    const typingRef = ref(db, path);
-    onValue(typingRef, (snap) => {
-      setAstroTyping(snap.val() == true); // == not === handles string "true" too
-    });
-    return () => off(typingRef);
-  }, [gid, astrologer_id]);
+    setAstroTyping(false);
+    if (!gid) return;
+
+    const meId = String(userId || '');
+    const astroId = String(astrologer_id || '');
+    const typingRef = ref(db, `Typing/${gid}`);
+
+    const decide = (val) => {
+      if (val == null) return false;
+      if (typeof val !== 'object') return isTypingValue(val);
+      // Preferred: the astrologer's own node.
+      if (Object.prototype.hasOwnProperty.call(val, astroId)) return isTypingValue(val[astroId]);
+      // Fallback: anything under this gid that isn't OUR flag was written by
+      // the other side, whatever key they chose. Requires a known meId so we
+      // can never mistake our own flag for theirs.
+      if (!meId) return false;
+      return Object.entries(val).some(([k, v]) => String(k) !== meId && isTypingValue(v));
+    };
+
+    const handler = (snap) => {
+      const raw = snap.val();
+      console.debug('[typing] Typing/%s =', gid, raw); // keep until verified, then delete
+      const typing = decide(raw);
+
+      if (astroTypingTimeoutRef.current) clearTimeout(astroTypingTimeoutRef.current);
+      astroTypingTimeoutRef.current = null;
+      setAstroTyping(typing);
+
+      if (typing) {
+        astroTypingTimeoutRef.current = setTimeout(() => setAstroTyping(false), TYPING_STALE_MS);
+      }
+    };
+
+    onValue(typingRef, handler, (err) =>
+      console.error('[typing] listener REJECTED — check Firebase rules on /Typing:', err));
+
+    return () => {
+      if (astroTypingTimeoutRef.current) clearTimeout(astroTypingTimeoutRef.current);
+      off(typingRef, 'value', handler);
+      setAstroTyping(false);
+    };
+  }, [gid, userId, astrologer_id]);
 
 // API still returns gift images hosted on the old domain — rewrite to the current one.
 const fixImgHost = (url) =>
@@ -669,20 +743,22 @@ const fixImgHost = (url) =>
     let cancelled = false;
     (async () => {
       try {
-        const resp = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts');
-        console.log('[get_gifts] raw response:', resp); // ← check this in devtools
-        const arr = resp?.data ?? resp?.results ?? (Array.isArray(resp) ? resp : []);
-      if (!cancelled && Array.isArray(arr) && arr.length > 0) {
-  setGiftList(arr.map(g => ({
-    _id: g._id,           // keep the REAL server id — this is what gift_transaction needs
-    title: g.title,
-    price: g.price,
-    image: fixImgHost(g.image),
-    emoji: emojiFor(g.title),
-  })));
-
+        let resp = await apiService.getBearer('/user_api/get_gifts').catch(() => null);
+        if (!resp || (!resp.data && !resp.results && !resp.record && !Array.isArray(resp))) {
+          resp = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts').catch(() => null);
+        }
+        console.log('[get_gifts] raw response:', resp);
+        const arr = resp?.data ?? resp?.results ?? resp?.record ?? (Array.isArray(resp) ? resp : []);
+        if (!cancelled && Array.isArray(arr) && arr.length > 0) {
+          setGiftList(arr.map(g => ({
+            _id: g._id || g.id,
+            title: g.title || g.name || g.label || 'Gift',
+            price: g.price || g.amount || 0,
+            image: fixImgHost(g.image || g.img || g.icon || ''),
+            emoji: g.emoji || emojiFor(g.title || g.name),
+          })));
         } else {
-          console.warn('[get_gifts] empty or unrecognized shape, keeping static fallback:', resp);
+          console.warn('[get_gifts] empty or unrecognized shape:', resp);
         }
       } catch (err) {
         console.error('[get_gifts] request FAILED:', err?.response?.status, err?.response?.data || err.message);
@@ -709,8 +785,8 @@ const fixImgHost = (url) =>
       if (!realWallet || realWallet <= 0) {
         console.warn('[ChatConsultation] resolved wallet was empty/zero — fetching real balance from get_profile');
         try {
-          const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
-          realWallet = parseFloat(profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? 0);
+          const w = await getWalletBalance();
+          if (w > 0) realWallet = w;
           console.log('[ChatConsultation] fetched wallet:', realWallet);
         } catch (err) {
           console.error('[ChatConsultation] failed to fetch wallet:', err);
@@ -796,6 +872,28 @@ const fixImgHost = (url) =>
     return () => off(dbRef);
   }, [gid, userId, astrologer_id]);
 
+  /* ── auto-clear astrologer typing indicator when a message from astrologer arrives ── */
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && String(lastMsg.from) === String(astrologer_id)) {
+      setAstroTyping(false);
+      if (astroTypingTimeoutRef.current) {
+        clearTimeout(astroTypingTimeoutRef.current);
+        astroTypingTimeoutRef.current = null;
+      }
+    }
+  }, [messages, astrologer_id]);
+
+  /* ── server-side cleanup of our own typing flag ──
+     Fires on tab close, crash, or network drop — cases the unmount cleanup
+     below can't cover, and which otherwise leave the astrologer staring at a
+     permanent "user is typing". */
+  useEffect(() => {
+    if (!gid || !userId) return;
+    onDisconnect(ref(db, `Typing/${gid}/${userId}`)).set(false);
+  }, [gid, userId]);
+
   /* ── write our own typing status ──
      Debounced so we don't hit Firebase on every keystroke — clears itself
      after TYPING_IDLE_MS of no input, and always clears immediately on send. */
@@ -857,7 +955,7 @@ const fixImgHost = (url) =>
      via onLoad / onReady once they know their real height. */
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [messages, astroTyping, scrollToBottom]);
 
   /* ── track scroll position to show/hide the WhatsApp-style
      scroll-to-bottom arrow once the user has scrolled away from the
@@ -912,7 +1010,7 @@ const saveNoteToFirebase = useCallback(async (text) => {
 
   /* ── send message (writes both sides) ── */
   const sendFirebaseMessage = useCallback(
-    async (content, type = 'text') => {
+    async (content, type = 'text', extraData = {}) => {
       if (!gid || !userId || !astrologer_id || !content) {
         console.warn('[ChatConsultation] sendFirebaseMessage aborted — missing value(s):', { gid, userId, astrologer_id, content });
         return;
@@ -934,6 +1032,7 @@ const saveNoteToFirebase = useCallback(async (text) => {
         message_id: msgId,
         date_time: timestamp,
         seen: false,
+        ...extraData,
       };
       try {
         await set(ref(db, `${senderPath}/${msgId}`), body);
@@ -1186,6 +1285,37 @@ const saveNoteToFirebase = useCallback(async (text) => {
     try { await addRating(gid, payload?.rating || 5, payload?.review || ''); } catch { /* silent */ }
   };
 
+  const fetchLatestWallet = useCallback(async (giftPrice = 0) => {
+    try {
+      const numGiftPrice = Number(giftPrice) || 0;
+
+      // 1. Immediately deduct giftPrice from session wallet state for instant zero-delay UI balance deduction
+      if (numGiftPrice > 0) {
+        setSession((prev) => {
+          if (!prev) return prev;
+          const currentW = Number(prev.wallet) || 0;
+          const updatedW = Math.max(0, currentW - numGiftPrice);
+          return { ...prev, wallet: updatedW };
+        });
+
+        // 2. Instantly deduct corresponding chat seconds from ChatContext so Remaining Balance drops immediately
+        if (rate > 0 && chatCtx.deductChatTime) {
+          const secsToDeduct = (numGiftPrice / rate) * 60;
+          chatCtx.deductChatTime(secsToDeduct);
+        }
+      }
+
+      // 3. Fetch latest backend wallet balance asynchronously to stay in sync
+      const fetchedW = await getWalletBalance();
+      console.log('[ChatConsultation] fetched updated wallet balance from backend:', fetchedW);
+      if (typeof fetchedW === 'number' && !isNaN(fetchedW) && fetchedW >= 0) {
+        setSession((prev) => (prev ? { ...prev, wallet: fetchedW } : prev));
+      }
+    } catch (err) {
+      console.error('[ChatConsultation] failed to refresh wallet balance:', err);
+    }
+  }, [getWalletBalance, rate, chatCtx]);
+
   const handleSendBlessingGift = async (giftId) => {
     const gift = giftList.find((g) => String(g._id) === String(giftId));
     if (!gift) {
@@ -1200,6 +1330,19 @@ const saveNoteToFirebase = useCallback(async (text) => {
         type: 'normal',
       });
       recordGiftTransaction({ gift, astroName: name, astroId: astrologer_id, amount: gift.price });
+      sendFirebaseMessage(
+        `Sent a gift: ${gift.title || gift.name || gift.label || 'Gift'} 🎁`,
+        'gift',
+        {
+          isGift: true,
+          gift_id: String(gift._id || gift.id || ''),
+          gift_title: gift.title || gift.name || gift.label || 'Gift',
+          gift_price: gift.price,
+          gift_emoji: gift.emoji || '🎁',
+          gift_image: gift.image || '',
+        }
+      );
+      fetchLatestWallet(gift.price);
     } catch (err) {
       console.error('[ChatConsultation] EndCallFlow gift send failed:', err?.response?.data || err.message);
     }
@@ -1232,6 +1375,73 @@ const saveNoteToFirebase = useCallback(async (text) => {
     }
     if (msg.type === 'audio') {
       return <AudioPlayer src={msg.message} onReady={scrollToBottom} />;
+    }
+    if (msg.type === 'gift' || msg.isGift || (typeof msg.message === 'string' && msg.message.startsWith('Sent a gift:'))) {
+      let giftTitle = msg.gift_title || msg.gift_name || msg.giftName || msg.title || '';
+      if (!giftTitle && typeof msg.message === 'string') {
+        giftTitle = msg.message.replace(/^Sent a gift:\s*/i, '').replace(/🎁/g, '').trim();
+      }
+      if (!giftTitle) giftTitle = 'Gift';
+
+      let giftPrice = msg.gift_price ?? msg.amount ?? msg.price ?? msg.giftPrice;
+      if (giftPrice == null || giftPrice === '') {
+        const found = (giftList || []).find(
+          (g) => (g.title || g.name || '').toLowerCase() === giftTitle.toLowerCase() || String(g._id) === String(msg.gift_id)
+        ) || (STATIC_GIFTS || []).find(
+          (g) => (g.title || g.name || '').toLowerCase() === giftTitle.toLowerCase() || String(g._id) === String(msg.gift_id)
+        );
+        if (found) giftPrice = found.price;
+      }
+
+      const rawImg = msg.gift_image || msg.giftImg || msg.image || '';
+      const giftImg = rawImg ? fixImgHost(rawImg) : '';
+      const giftEmoji = msg.gift_emoji || msg.giftEmoji || msg.emoji || '🎁';
+
+      return (
+        <div className="cc-gift-bubble" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0' }}>
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: 'rgba(255, 111, 0, 0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              overflow: 'hidden',
+              border: '1.5px solid rgba(255, 111, 0, 0.35)',
+              fontSize: 22,
+            }}
+          >
+            {giftImg ? (
+              <img
+                src={giftImg}
+                alt={giftTitle}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  if (e.currentTarget.nextSibling) e.currentTarget.nextSibling.style.display = 'inline';
+                }}
+              />
+            ) : null}
+            <span style={{ display: giftImg ? 'none' : 'inline' }}>{giftEmoji}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+            <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#9a3412', fontWeight: 700 }}>
+              Sent a Gift
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#1f2937', lineHeight: 1.2 }}>
+              {giftTitle}
+            </span>
+            {giftPrice != null && giftPrice !== '' && (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#059669', marginTop: 2 }}>
+                ₹{giftPrice}
+              </span>
+            )}
+          </div>
+        </div>
+      );
     }
     return (msg.message || '').split('\n').map((line, i, arr) => (
       <React.Fragment key={i}>
@@ -1792,11 +2002,16 @@ const saveNoteToFirebase = useCallback(async (text) => {
   isOpen={showGift}
   onClose={() => setShowGift(false)}
   astrologerName={name}
-  astrologerId={astrologer_id}
+  astrologerId={astrologer_id || id}
   astrologerImage={profileImg}
-  gifts={giftList}
+  gifts={giftList.length > 0 ? giftList : undefined}
   walletBalance={wallet}
   showChatCallActions={false}
+  channelId={gid}
+  onGiftSent={({ gift } = {}) => {
+    const price = gift?.price || gift?.amount || 0;
+    fetchLatestWallet(price);
+  }}
 />
     </div>
   );

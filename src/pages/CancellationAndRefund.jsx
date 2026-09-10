@@ -4,8 +4,11 @@ import Footer from '../components/layout/Footer';
 import ScrollTop from '../components/common/ScrollTop';
 import { motion } from 'framer-motion';
 import apiService from '../services/apiServices';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 
 const CancellationAndRefund = () => {
+    useSEO(SEO.cancellationAndRefund);
     const [content, setContent] = useState("");
     const [sections, setSections] = useState([]);
     const [loading, setLoading] = useState(true);

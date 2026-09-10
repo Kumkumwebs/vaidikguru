@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import ScrollTop from '../components/common/ScrollTop';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -38,6 +40,7 @@ const FriendFaqItem = ({ num, q, a }) => {
 };
 
 const FriendshipCalculator = () => {
+    useSEO(SEO.friendshipCalculator);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
 
@@ -72,8 +75,8 @@ const FriendshipCalculator = () => {
     const handleShareResult = async () => {
         if (!result) return;
         const url = window.location.href;
-        const title = "DivinIQ Friendship Finder";
-        const text = `${result.name1} & ${result.name2} scored ${result.score}% (${result.status}) on DivinIQ's Friendship Finder! 🎉`;
+        const title = "VaidikGuru Friendship Finder";
+        const text = `${result.name1} & ${result.name2} scored ${result.score}% (${result.status}) on VaidikGuru's Friendship Finder! 🎉`;
 
         if (navigator.share) {
             try {
@@ -92,19 +95,19 @@ const FriendshipCalculator = () => {
     };
 
     return (
-        <div className="main-wrapper bg-white">
+        <div className="main-wrapper bg-white" style={{ paddingTop: 0, marginTop: 0 }}>
             <Header />
 
             {/* HERO BANNER — image + teal/green gradient overlay, standalone rounded card */}
-            <div className="container pt-40">
+            <div className="container py-3 py-md-4">
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                     className="position-relative overflow-hidden rounded-25 d-flex align-items-center justify-content-center text-center"
                     style={{
-                        minHeight: '300px',
-                        padding: '70px 30px',
+                        minHeight: '220px',
+                        padding: '45px 24px',
                         backgroundImage:
                             "linear-gradient(100deg, #2c0a17 0%, #3d0f21 46%, rgba(61,15,33,.55) 68%, rgba(61,15,33,0) 100%), url('/assets/img/images/profile-hero-banner.jpeg')",
                         backgroundSize: 'cover',
@@ -113,18 +116,18 @@ const FriendshipCalculator = () => {
                 >
                     <div className="position-relative" style={{ zIndex: 2, maxWidth: '640px' }}>
                         <span
-                            className="d-block mb-3 fw-semibold"
+                            className="d-block mb-2 fw-semibold"
                             style={{ color: '#f5bc5e', fontSize: '13px', letterSpacing: '3px', textTransform: 'uppercase' }}
                         >
                             Social Science
                         </span>
-                        <h1 className="text-white mb-3" style={{ fontSize: '3rem', lineHeight: 1.1 }}>
+                        <h1 className="text-white mb-2" style={{ fontSize: '2.5rem', lineHeight: 1.1 }}>
                             Friendship <span style={{ color: '#f0a530' }}>Finder</span>
                         </h1>
-                        <p className="mb-0" style={{ color: '#e7d9dd' }}>
+                        <p className="mb-0" style={{ color: '#e7d9dd', fontSize: '14.5px' }}>
                             Discover the vibrational compatibility between you and your friend based on Name Numerology.
                         </p>
-                        <div className="mx-auto mt-4" style={{ width: '64px', height: '3px', background: '#f0a530', borderRadius: '2px' }} />
+                        <div className="mx-auto mt-3" style={{ width: '64px', height: '3px', background: '#f0a530', borderRadius: '2px' }} />
                     </div>
                 </motion.div>
             </div>
@@ -156,11 +159,11 @@ const FriendshipCalculator = () => {
                                 <div className="row align-items-center mb-3">
                                     <div className="col-6">
                                         <p className="small mb-1" style={{ color: '#d9b9c4' }}>Current Vibe</p>
-                                        <h3 className="mb-0" style={{ color: '#f5bc5e' }}>{todayData.vibeStatus}</h3>
+                                        <h3 className="mb-0" style={{ color: '#f5bc5e', fontSize: '18px', fontWeight: 700 }}>{todayData.vibeStatus}</h3>
                                     </div>
                                     <div className="col-6 border-start border-white-10 ps-3">
                                         <p className="small mb-1" style={{ color: '#d9b9c4' }}>Cosmic Energy</p>
-                                        {/* <h4 className="text-white mb-0 h5">{todayData.energy.split(' ')[0]}</h4> */}
+                                        <h4 className="text-white mb-0" style={{ fontSize: '13px', fontWeight: 600 }}>{todayData.energy}</h4>
                                     </div>
                                 </div>
                                 <div className="pt-3 border-top border-white-10 small d-flex justify-content-between" style={{ color: '#e7d3da' }}>
@@ -169,14 +172,14 @@ const FriendshipCalculator = () => {
                                 </div>
                             </motion.div>
 
-                            <div className="bg-white p-4 rounded-25 shadow-sm">
+                            <div className="bg-white p-4 rounded-25 shadow-sm border border-light">
                                 <div className="d-flex align-items-center gap-3 mb-3">
                                     <div className="d-flex align-items-center justify-content-center rounded-15" style={{ width: '38px', height: '38px', background: '#efe8db', flexShrink: 0 }}>
                                         <img src="assets/img/icon/about_1_1.svg" width="18" alt="" />
                                     </div>
                                     <div>
-                                        <small className="d-block text-muted" style={{ fontSize: '10px', textTransform: 'uppercase' }}>What We Match</small>
-                                        <strong className="small">Name Vibrations</strong>
+                                        <small className="d-block text-muted" style={{ fontSize: '10px', textTransform: 'uppercase', color: '#66555d' }}>What We Match</small>
+                                        <strong className="small" style={{ color: '#241318', fontSize: '13px' }}>Name Vibrations</strong>
                                     </div>
                                 </div>
                                 <div className="d-flex align-items-center gap-3">
@@ -184,8 +187,8 @@ const FriendshipCalculator = () => {
                                         <img src="assets/img/icon/contact.svg" width="18" alt="" />
                                     </div>
                                     <div>
-                                        <small className="d-block text-muted" style={{ fontSize: '10px', textTransform: 'uppercase' }}>Contact Us</small>
-                                        <strong className="small">support@vaidikguru.com</strong>
+                                        <small className="d-block text-muted" style={{ fontSize: '10px', textTransform: 'uppercase', color: '#66555d' }}>Contact Us</small>
+                                        <strong className="small" style={{ color: '#241318', fontSize: '13px' }}>support@vaidikguru.com</strong>
                                     </div>
                                 </div>
                             </div>
@@ -194,26 +197,26 @@ const FriendshipCalculator = () => {
                         {/* FORM */}
                         <div className="col-lg-4">
                             <div className="bg-white py-20 px-20 rounded-25 shadow-sm border border-light h-100">
-                                <h3 className="h4 mb-30">Check Your Synergy</h3>
+                                <h3 className="h4 mb-30" style={{ color: '#241318', fontWeight: 700 }}>Check Your Synergy</h3>
                                 <form onSubmit={handleCalculate}>
                                     <div className="mb-3">
-                                        <label className="small fw-bold mb-2">Your Name</label>
+                                        <label className="small fw-bold mb-2" style={{ color: '#3d0f21' }}>Your Name</label>
                                         <input name="name1" type="text" className="form-control input-modern py-3 rounded-inner" placeholder="Your Name" required />
                                     </div>
                                     <div className="mb-3">
-                                        <label className="small fw-bold mb-2">Friend's Name</label>
+                                        <label className="small fw-bold mb-2" style={{ color: '#3d0f21' }}>Friend's Name</label>
                                         <input name="name2" type="text" className="form-control input-modern py-3 rounded-inner" placeholder="Friend's Name" required />
                                     </div>
                                     <div className="mb-4">
-                                        <label className="small fw-bold mb-2">Email Address</label>
-                                        <input name="email" type="email" className="form-control input-modern py-3 rounded-inner" placeholder="email@diviniq.com" required />
+                                        <label className="small fw-bold mb-2" style={{ color: '#3d0f21' }}>Email Address</label>
+                                        <input name="email" type="email" className="form-control input-modern py-3 rounded-inner" placeholder="email@vaidikguru.com" required />
                                     </div>
                                     <button type="submit" className="th-btn style3 w-100 py-3 rounded-inner border-0 shadow-lg">
                                         {loading ? "Syncing Names..." : "Calculate Friendship %"}
                                     </button>
                                 </form>
                                 <div className="mt-4 p-2 bg-light rounded-15 border border-dashed text-center">
-                                    <p className="xsmall text-muted mb-0" style={{ fontSize: '11px' }}>
+                                    <p className="xsmall text-muted mb-0" style={{ fontSize: '11px', color: '#55444c' }}>
                                         *Note: This tool is based on Name Numerology for <strong>fun and entertainment purposes only</strong>.
                                     </p>
                                 </div>
@@ -259,7 +262,7 @@ const FriendshipCalculator = () => {
                                         </div>
 
                                         <div className="mt-4 bg-white-10 p-3 rounded-inner border border-white-10">
-                                            <p className="small text-theme fw-bold mb-1">DivinIQ Social Remark:</p>
+                                            <p className="small text-theme fw-bold mb-1">VaidikGuru Social Remark:</p>
                                             <p className="small text-white-50 mb-0 leading-relaxed">{result.remark}</p>
                                         </div>
 
@@ -296,7 +299,7 @@ const FriendshipCalculator = () => {
                             </div>
                             <h3 className="fc-heading">How Names Influence Bonds?</h3>
                             <p className="fc-prose">
-                                In Numerology, names aren't just labels—they are vibrational frequencies. When two names interact, their numeric values create either a harmonic resonance or a challenging frequency. DivinIQ analyzes these vibrations to determine the natural flow of your friendship.
+                                In Numerology, names aren't just labels—they are vibrational frequencies. When two names interact, their numeric values create either a harmonic resonance or a challenging frequency. VaidikGuru analyzes these vibrations to determine the natural flow of your friendship.
                             </p>
                             <div className="fc-pill-row">
                                 <span className="fc-pill">Vibrational Sync</span>
@@ -340,6 +343,24 @@ const FriendshipCalculator = () => {
             <ScrollTop />
 
             <style>{`
+                .input-modern, input.input-modern {
+                    background-color: #f9f7f4 !important;
+                    color: #241318 !important;
+                    border: 1px solid #e2d9cd !important;
+                    font-weight: 500 !important;
+                    font-size: 14px !important;
+                }
+                .input-modern::placeholder, input.input-modern::placeholder {
+                    color: #8a7880 !important;
+                    opacity: 1 !important;
+                }
+                .input-modern:focus, input.input-modern:focus {
+                    background-color: #ffffff !important;
+                    color: #241318 !important;
+                    border-color: #7c1d40 !important;
+                    box-shadow: 0 0 0 3px rgba(124, 29, 64, 0.15) !important;
+                }
+
                 .fc-science { padding: 70px 0; background: #faf7f2; }
                 .fc-science__eyebrow {
                     display: block; font-family: 'Playfair Display', serif; font-style: italic;

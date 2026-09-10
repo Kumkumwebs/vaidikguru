@@ -161,4 +161,4 @@ export const agoraManager = {
     speakerOn = on;
     remoteTrack?.setVolume(on ? 100 : 0);
   },
-};
+}

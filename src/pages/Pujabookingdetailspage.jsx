@@ -37,31 +37,59 @@ const PujaBookingDetailsPage = () => {
   const [isAppModalOpen, setIsAppModalOpen] = useState(false);
 
   useEffect(() => {
-    if (booking) return;
     const fetchBooking = async () => {
       try {
-        // AFTER
         const res = await apiService.getBearer(`/puja/pujabookingdetails/${id}`);
+        let bData = null;
         if (res && res.status) {
-          setBooking(res.results || res.data || res.booking || null);
+          bData = res.results || res.data || res.booking || null;
+        }
+        if (!bData && location.state?.booking) {
+          bData = location.state.booking;
+        }
+
+        if (bData) {
+          const isWallet = bData.payment_mode?.toLowerCase() === 'wallet';
+          if (isWallet || bData.payment_status?.toLowerCase() === 'pending') {
+            try {
+              const targetBookingId = bData._id || id;
+              const statusRes = await apiService.getBearer(`/puja/puja_payment_status/${targetBookingId}`);
+              if (statusRes?.payment_status === "Success" || statusRes?.status === true || isWallet) {
+                bData = { ...bData, payment_status: "Success" };
+              }
+            } catch (err) {
+              if (isWallet) {
+                bData = { ...bData, payment_status: "Success" };
+              }
+            }
+          }
+          setBooking(bData);
         }
       } catch (error) {
         console.error("Fetch error:", error);
+        if (location.state?.booking) {
+          let bData = location.state.booking;
+          if (bData.payment_mode?.toLowerCase() === 'wallet') {
+            bData = { ...bData, payment_status: "Success" };
+          }
+          setBooking(bData);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchBooking();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, location.state]);
 
-  const getStatusClass = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'success': return 'success';
-      case 'pending': return 'pending';
-      case 'failed': return 'failed';
-      default: return 'default';
+  const getStatusClass = (status, mode) => {
+    const s = status?.toLowerCase();
+    const m = mode?.toLowerCase();
+    if (s === 'success' || s === 'paid' || s === 'completed' || m === 'wallet') {
+      return 'success';
     }
+    if (s === 'pending') return 'pending';
+    if (s === 'failed') return 'failed';
+    return 'default';
   };
 
   if (loading) {
@@ -94,7 +122,9 @@ const PujaBookingDetailsPage = () => {
     );
   }
 
-  const statusClass = getStatusClass(booking.payment_status);
+  const isWalletPayment = booking.payment_mode?.toLowerCase() === 'wallet';
+  const displayStatus = isWalletPayment || booking.payment_status?.toLowerCase() === 'success' || booking.payment_status?.toLowerCase() === 'paid' ? 'Success' : (booking.payment_status || 'Pending');
+  const statusClass = getStatusClass(displayStatus, booking.payment_mode);
   const isSuccess = statusClass === 'success';
   const isPending = statusClass === 'pending';
 
@@ -167,7 +197,7 @@ const PujaBookingDetailsPage = () => {
                   <span className="pbd-puja-type">{booking.puja_type} Puja</span>
                   <div className="pbd-puja-price">₹{booking.puja_amount}</div>
                 </div>
-                <div className={`puja-status ${statusClass}`}>{booking.payment_status}</div>
+                <div className={`puja-status ${statusClass}`}>{displayStatus}</div>
               </div>
 
               <div className="pbd-meta-list">

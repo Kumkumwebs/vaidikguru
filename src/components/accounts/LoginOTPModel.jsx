@@ -344,6 +344,7 @@ function OTPScreen({ phone, otpMeta, onBack, onVerified, shieldSrc }) {
 						ref={el => refs.current[i] = el}
 						type="tel"
 						inputMode="numeric"
+						autoComplete={i === 0 ? "one-time-code" : "off"}
 						maxLength={1}
 						value={d}
 						onChange={e => handleChange(i, e.target.value)}
@@ -352,19 +353,18 @@ function OTPScreen({ phone, otpMeta, onBack, onVerified, shieldSrc }) {
 						onPaste={i === 0 ? handlePaste : undefined}
 						disabled={loading}
 						style={{
-							flex: 1, height: 52,
+							flex: 1, minWidth: 0, height: 52, padding: 0,
 							border: `2px solid ${error ? C.expireRed : focused === i ? C.otpFocus : (d ? C.otpBorder : C.borderLight)}`,
 							borderRadius: 10, textAlign: "center",
-							fontSize: 18, fontWeight: 700, color: C.titleBlack,
+							fontSize: 20, fontWeight: 700, color: C.titleBlack,
 							outline: "none", background: "#fff",
 							transition: "border-color 0.15s",
-							WebkitTextSecurity: "disc", // masks the typed digit as a dot, Chrome/Safari
-							MozTextSecurity: "disc",     // Firefox equivalent (older builds behind a flag)
-							// iOS/Safari renders the masked dot using -webkit-text-fill-color,
-							// NOT the regular `color` property — without this it defaults to
-							// white on mobile Safari, making the dot invisible on this white input.
-							WebkitTextFillColor: C.titleBlack,
-							caretColor: C.titleBlack, // keep the blinking cursor visible/dark too
+							// -webkit-text-security renders a near-invisible glyph on Android
+							// Chrome/WebView and older iOS Safari, so the digit is shown plainly.
+							WebkitTextFillColor: C.titleBlack, // iOS ignores `color` on inputs without this
+							caretColor: C.titleBlack,
+							WebkitAppearance: "none", // strips iOS inner shadow + default padding
+							appearance: "none",
 						}}
 					/>
 				))}

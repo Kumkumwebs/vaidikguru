@@ -41,6 +41,7 @@ export function ChatProvider({ children }) {
   const timerRef = useRef(null);
   const activeGidRef = useRef(null);
   const firebaseSubRef = useRef(null);
+  const totalDeductedSecondsRef = useRef(0);
 
   useEffect(() => {
     chatInfoRef.current = chatInfo;
@@ -67,6 +68,7 @@ export function ChatProvider({ children }) {
           timerRef.current = null;
           activeGidRef.current = null;
           chatInfoRef.current = null;
+          totalDeductedSecondsRef.current = 0;
           if (firebaseSubRef.current) {
             firebaseSubRef.current();
             firebaseSubRef.current = null;
@@ -135,13 +137,14 @@ export function ChatProvider({ children }) {
         }
         activeGidRef.current = null;
         chatInfoRef.current = null;
+        totalDeductedSecondsRef.current = 0;
         setChatTimeLeft(0);
         setChatActive(false);
         setChatInfo(null);
         return;
       }
 
-      // Synchronize time left from Firebase CallSession
+      // Synchronize time left from Firebase CallSession (accounting for gift deductions)
       const secRem = data.seconds_remaining ?? data.seconds_left ?? data.time_left;
       if (secRem != null) {
         let accurate = Number(secRem);
@@ -149,6 +152,7 @@ export function ChatProvider({ children }) {
           const elapsed = Math.floor((Date.now() - Number(lastTick)) / 1000);
           accurate = Math.max(accurate - elapsed, 0);
         }
+        accurate = Math.max(0, accurate - totalDeductedSecondsRef.current);
         setChatTimeLeft((prev) => (Math.abs(prev - accurate) > 3 ? accurate : prev));
       } else if (maxMinutes != null) {
         let serverSeconds = Math.max(Math.floor(Number(maxMinutes) * 60), 0);
@@ -157,6 +161,7 @@ export function ChatProvider({ children }) {
           const elapsed = Math.floor((Date.now() - Number(refTime)) / 1000);
           serverSeconds = Math.max(serverSeconds - elapsed, 0);
         }
+        serverSeconds = Math.max(0, serverSeconds - totalDeductedSecondsRef.current);
         setChatTimeLeft((prev) => (Math.abs(prev - serverSeconds) > 3 ? serverSeconds : prev));
       }
 
@@ -170,23 +175,12 @@ export function ChatProvider({ children }) {
 
   const startChatTimer = useCallback(
     (info, initialSeconds) => {
-      // FIX: this branch previously did `setChatTimeLeft(initialSeconds)`
-      // even when it's the SAME session already running — but
-      // Chatconsultation.jsx recomputes initialSeconds fresh from the
-      // CURRENT wallet on every mount, and since there's no real
-      // per-minute billing tick happening server-side yet, the wallet
-      // never actually decreases — so that recomputed value is always the
-      // FULL original duration. Every resume/refresh was silently
-      // resetting the countdown back to full, wiping out whatever time had
-      // actually elapsed. The context's own ticking + Firebase correction
-      // already maintains the real chatTimeLeft correctly — a resume
-      // should only update chatInfo (astrologer details etc.), never
-      // reset the timer.
       if (activeGidRef.current === info.gid) {
         chatInfoRef.current = info;
         setChatInfo(info);
         return;
       }
+      totalDeductedSecondsRef.current = 0;
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -204,6 +198,7 @@ export function ChatProvider({ children }) {
   );
 
   const stopChatTimer = useCallback(() => {
+    totalDeductedSecondsRef.current = 0;
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -219,9 +214,20 @@ export function ChatProvider({ children }) {
     setChatTimeLeft(0);
   }, []);
 
+  const updateChatTimeLeft = useCallback((seconds) => {
+    setChatTimeLeft(Math.max(0, Math.floor(seconds)));
+  }, []);
+
+  const deductChatTime = useCallback((secondsToDeduct) => {
+    const s = Math.floor(Number(secondsToDeduct) || 0);
+    if (s <= 0) return;
+    totalDeductedSecondsRef.current += s;
+    setChatTimeLeft((prev) => Math.max(0, Math.floor(prev - s)));
+  }, []);
+
   return (
     <ChatContext.Provider
-      value={{ chatActive, chatInfo, chatTimeLeft, startChatTimer, stopChatTimer }}
+      value={{ chatActive, chatInfo, chatTimeLeft, startChatTimer, stopChatTimer, updateChatTimeLeft, deductChatTime }}
     >
       {children}
     </ChatContext.Provider>

@@ -186,6 +186,12 @@ const PujaReviewBookingPage = () => {
   };
 
   const handleContinueToForm = () => {
+    try {
+      if (puja) sessionStorage.setItem("activePujaData", JSON.stringify(puja));
+      if (selectedPackage) sessionStorage.setItem("activeSelectedPackage", JSON.stringify(selectedPackage));
+      if (templeAddonsQty) sessionStorage.setItem("activeTempleAddonsQty", JSON.stringify(templeAddonsQty));
+      if (homeAddonsQty) sessionStorage.setItem("activeHomeAddonsQty", JSON.stringify(homeAddonsQty));
+    } catch (_) {}
     navigate("/puja_fill_form", {
       state: {
         pujaData: puja,
@@ -754,7 +760,7 @@ const PujaReviewBookingPage = () => {
         <div className="prb-help-right">
           <div className="prb-help-item">
             <div className="prb-help-icon prb-help-purple"><i className="fa-solid fa-phone"></i></div>
-            <div><span>Call Support</span><strong>+91 7311104573</strong></div>
+            <div><span>Call Support</span><strong>+91 8881110520</strong></div>
           </div>
           <div className="prb-help-divider"></div>
           <div className="prb-help-item">
@@ -764,7 +770,7 @@ const PujaReviewBookingPage = () => {
           <div className="prb-help-divider"></div>
           <div className="prb-help-item">
             <div className="prb-help-icon prb-help-yellow"><i className="fa-solid fa-envelope"></i></div>
-            <div><span>Email Us</span><strong>support@diviniq.com</strong></div>
+            <div><span>Email Us</span><strong>support@vaidikguru.com</strong></div>
           </div>
         </div>
       </div>

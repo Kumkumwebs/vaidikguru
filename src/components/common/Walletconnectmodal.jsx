@@ -13,12 +13,27 @@ const avColor  = n => COLORS[((n||'').charCodeAt(0)||65) % COLORS.length];
 const fixImgHost = (url) =>
   typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
 
+/* per-minute rate straight from the API — offer price wins when it's set */
+const rate = (base, offer) => {
+  const o = Number(offer);
+  if (offer !== '' && offer !== null && offer !== undefined && !Number.isNaN(o) && o > 0) return o;
+  const b = Number(base);
+  return Number.isNaN(b) || b <= 0 ? null : b;
+};
+
+/* everything the modal shows keys off the mode the user pressed */
+const MODES = {
+  chat:  { label: 'Chat',       icon: 'fas fa-comment-dots', cta: 'Connect Now' },
+  call:  { label: 'Voice Call', icon: 'fas fa-phone',        cta: 'Call Now' },
+  // video: { label: 'Video Call', icon: 'fas fa-video',        cta: 'Start Video Call' },
+};
+
 /**
  * WalletConnectModal
  * Props:
  *  - isOpen        boolean
  *  - onClose       fn
- *  - astrologer    { name, profile_img, per_min_chat, avg_rate, category[], is_online }
+ *  - astrologer    { name, profile_img, per_min_chat, per_min_voice_call, avg_rate, category[], is_online }
  *  - walletBalance number  (rupees in user wallet)
  *  - mode          'chat' | 'call'  (default 'chat')
  *  - onConnect     fn  (called when user clicks Connect Now)
@@ -30,7 +45,17 @@ const WalletConnectModal = ({
 }) => {
   const navigate = useNavigate();
 
-  const perMin = Number(getAstroPrice(astrologer));
+  const m = MODES[mode] || MODES.chat;
+
+  // per_min_chat / per_min_voice_call — picked by mode, falling back to the
+  // chat rate (then getAstroPrice) if the API omits the one we asked for.
+  const perMin = useMemo(() => {
+    const byMode = mode === 'call'
+      ? rate(astrologer.per_min_voice_call, astrologer.per_min_voice_call_offer)
+      : rate(astrologer.per_min_chat, astrologer.per_min_chat_offer);
+    return byMode ?? rate(astrologer.per_min_chat, astrologer.per_min_chat_offer) ?? Number(getAstroPrice(astrologer)) ?? 0;
+  }, [astrologer, mode]);
+
   // Max minutes user can afford with current balance
   const maxMinutes = useMemo(
     () => (perMin > 0 ? Math.floor(walletBalance / perMin) : 0),
@@ -83,8 +108,8 @@ const WalletConnectModal = ({
                   <span className="wc-cats">{cats.slice(0, 2).join(' • ') || 'Vedic Astrology'}</span>
                 </div>
                 <div className="wc-rate">
-                  <i className={`fas fa-${mode === 'call' ? 'phone' : 'comment-dots'}`} />
-                  ₹{perMin}/min · {mode === 'call' ? 'Voice Call' : 'Chat'}
+                  <i className={m.icon} />
+                  ₹{perMin}/min · {m.label}
                 </div>
               </div>
             </div>
@@ -132,7 +157,7 @@ const WalletConnectModal = ({
               </button>
             ) : (
               <button className="wc-btn wc-btn-connect" onClick={handleConnect}>
-                <i className={`fas fa-${mode === 'call' ? 'phone' : 'comment-dots'}`} /> Connect Now
+                <i className={m.icon} /> {m.cta}
               </button>
             )}
 

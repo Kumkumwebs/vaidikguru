@@ -97,3 +97,30 @@
     margin-bottom: 10px;
   }
 }
+
+/* ===== Modern Input styling for calculators & forms ===== */
+.input-modern,
+input.input-modern,
+select.input-modern {
+  background-color: #f9f7f4 !important;
+  color: #241318 !important;
+  border: 1px solid #e2d9cd !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+}
+
+.input-modern::placeholder,
+input.input-modern::placeholder {
+  color: #8a7880 !important;
+  opacity: 1 !important;
+}
+
+.input-modern:focus,
+input.input-modern:focus {
+  background-color: #ffffff !important;
+  color: #241318 !important;
+  border-color: #7c1d40 !important;
+  box-shadow: 0 0 0 3px rgba(124, 29, 64, 0.15) !important;
+  outline: none !important;
+}
+

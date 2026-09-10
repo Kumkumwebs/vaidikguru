@@ -14,14 +14,26 @@ import SendGiftModal from "./Sendgiftmodal";
 import LoginOTPModal from '../components/accounts/LoginOTPModel';
 import storageService from '../services/storageServices';
 import apiService from '../services/apiServices';
-import { recordGiftTransaction } from '../services/giftService';
-import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroRole, getAstroStatus } from '../services/astroHelpers';
+import { recordGiftTransaction, notifyAstrologerGiftInFirebase } from '../services/giftService';
+import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroRole, getAstroStatus, getWaitLabel } from '../services/astroHelpers';
 import './AstrologerDetail.css';
 
 /* helpers */
 const initials = n => (n || '').trim().split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
 const COLORS = ['#7c3aed', '#059669', '#dc2626', '#d97706', '#2563eb'];
 const avColor = n => COLORS[((n || '').charCodeAt(0) || 65) % COLORS.length];
+
+/* per-minute rates straight from the API — offer price wins when set */
+const rate = (base, offer) => {
+  const o = Number(offer);
+  if (offer !== '' && offer !== null && offer !== undefined && !Number.isNaN(o) && o > 0) return o;
+  const b = Number(base);
+  return Number.isNaN(b) || b <= 0 ? null : b;
+};
+const getChatPrice  = a => rate(a?.per_min_chat,       a?.per_min_chat_offer);
+const getVoicePrice = a => rate(a?.per_min_voice_call, a?.per_min_voice_call_offer);
+const getVideoPrice = a => rate(a?.per_min_video_call, a?.per_min_video_call_offer);
+const isOn = v => String(v || '').toLowerCase() === 'on';
 
 // Converts "2025-06-23 16:35:17" style API dates into "5 days ago"
 const timeAgo = dateStr => {
@@ -202,27 +214,38 @@ const AstrologerDetail = () => {
     finally { setLoading(false); }
   }, [id]);
 
+  const astroNameRef = useRef('');
+  useEffect(() => { if (astro?.name) astroNameRef.current = astro.name; }, [astro?.name]);
+
   const pollProfileStatus = useCallback(async () => {
-    if (document.visibilityState === 'hidden' || !id) return;
+      if (document.visibilityState === 'hidden' || !id) return;
     try {
-      const res = await apiService.postBearer('/user_api/astrologer_profile', { astrologer_id: String(id) });
-      const data = res?.results || res?.record || res?.data;
-      if (data) {
-        setAstro(prev => {
-          if (!prev) return data;
-          return {
-            ...prev,
-            is_busy: data.is_busy ?? prev.is_busy,
-            is_online: data.is_online ?? prev.is_online,
-            is_chat_online: data.is_chat_online ?? prev.is_chat_online,
-            is_call_online: data.is_call_online ?? prev.is_call_online,
-            is_video_online: data.is_video_online ?? prev.is_video_online,
-            is_chat: data.is_chat ?? prev.is_chat,
-            is_call: data.is_call ?? prev.is_call,
-            watting_time: data.watting_time ?? prev.watting_time
-          };
-        });
-      }
+      // Live status comes from astrologer_list — the same endpoint the cards read,
+      // and the only one that reports is_busy correctly. astrologer_profile either
+      // omits the field or returns a stale 0, which is why this page kept saying
+      // "Available Now" while a call with the astrologer was in progress.
+      const payload = { page: '1' };
+      if (astroNameRef.current) payload.search = astroNameRef.current; // survives pagination
+      const res = await apiService.postBearer('/user_api/astrologer_list', payload);
+      const raw = res?.results || res?.record || res?.data || [];
+      const live = (Array.isArray(raw) ? raw : []).find(
+        a => String(a?.id) === String(id) || String(a?._id) === String(id)
+      );
+      if (!live) return;
+
+      setAstro(prev => prev ? ({
+        ...prev,
+        // assigned directly, NOT with ?? — a real 0 must be able to clear busy
+        is_busy: live.is_busy,
+        is_online: live.is_online ?? prev.is_online,
+        is_chat_online: live.is_chat_online,
+        is_voice_online: live.is_voice_online,
+        is_video_online: live.is_video_online,
+        watting_time: live.watting_time,
+        per_min_chat: live.per_min_chat ?? prev.per_min_chat,
+        per_min_voice_call: live.per_min_voice_call ?? prev.per_min_voice_call,
+        per_min_video_call: live.per_min_video_call ?? prev.per_min_video_call,
+      }) : prev);
     } catch (_) {}
   }, [id]);
 
@@ -231,7 +254,9 @@ const AstrologerDetail = () => {
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     const act = query.get('action');
-    if ((act === 'chat' || act === 'call') && astro) {
+    if (act === 'video') {
+      window.open('https://play.google.com/store/apps/details?id=com.app.vaidikguru', '_blank', 'noopener,noreferrer');
+    } else if ((act === 'chat' || act === 'call') && astro) {
       const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
       if (token) {
         setWalletModal(act);
@@ -242,8 +267,9 @@ const AstrologerDetail = () => {
   }, [location.search, astro]);
 
   useEffect(() => {
-    load();
-    const interval = setInterval(pollProfileStatus, 10000);
+    // Seed live status as soon as the profile lands, then keep it fresh.
+    load().finally(() => pollProfileStatus());
+    const interval = setInterval(pollProfileStatus, 8000);
     return () => clearInterval(interval);
   }, [load, pollProfileStatus]);
 
@@ -292,9 +318,23 @@ const fixImgHost = (url) =>
     return () => { cancelled = true; };
   }, []);
 
+  const handleOpenGiftModal = () => {
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
+    setShowGift(true);
+  };
+
   // Quick-send: clicking a gift tile in the sidebar sends it immediately,
   // without opening the full SendGiftModal.
   const handleQuickSendGift = async (gift) => {
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
     if (sendingGiftId) return; // already sending one
     const astroId = astro?.id || astro?._id;
     if (!astroId) return;
@@ -311,6 +351,7 @@ const fixImgHost = (url) =>
       } else {
         setSentGift(gift);
         recordGiftTransaction({ gift, astroName: astro?.name, astroId, amount: gift.price });
+        notifyAstrologerGiftInFirebase({ gift, astroId, astroName: astro?.name });
       }
     } catch (err) {
       console.error('[QuickSendGift] error:', err);
@@ -324,6 +365,11 @@ const fixImgHost = (url) =>
   const [toastMsg, setToastMsg] = useState(null);
 
   const handleNotifyToggle = async () => {
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
     const next = !notified;
     setNotified(next);
     const astroId = String(astro?.id || astro?._id || id || '');
@@ -381,6 +427,7 @@ const fixImgHost = (url) =>
   );
 
   const { status: astroStatusVal, isBusy, isOnline, label: statusLabel } = getAstroStatus(astro);
+  const waitLabel = getWaitLabel(astro);
   const cats = (Array.isArray(astro.category) ? astro.category : []).map(c => typeof c === 'object' ? (c.name || c.category_name || c.title) : c).filter(Boolean);
   const astroRole = getAstroRole(astro);
   const langs = (Array.isArray(astro.language) ? astro.language : []).map(l => typeof l === 'object' ? (l.name || l.title) : l).filter(Boolean).join(', ') || 'Hindi, English';
@@ -542,17 +589,17 @@ const fixImgHost = (url) =>
                 </div>
               </div>
 
-              {/* Gallery + Video side by side — 65% height */}
+              {/* Gallery + Video side by side */}
               <div className="row g-3 mb-3">
                 {/* Gallery — left */}
                 <div className="col-lg-6">
-                  <div className="ad-card" style={{ marginBottom: 0, height: '65%', display: 'flex', flexDirection: 'column' }}>
+                  <div className="ad-card" style={{ marginBottom: 0 }}>
                     <div className="d-flex justify-content-between align-items-center mb-2">
                       <div className="ad-card-title mb-0" style={{ fontSize: '13px', marginBottom: 0 }}><i className="fas fa-images" />Gallery</div>
                       <button className="btn btn-link p-0" style={{ fontSize: 11, color: '#7c1d40', fontWeight: 700, textDecoration: 'none' }} onClick={() => setPopup('gallery')}>View All</button>
                     </div>
                     {/* Scrollable gallery with arrows */}
-                    <div className="ad-gallery-wrap" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                    <div className="ad-gallery-wrap" style={{ display: 'flex', alignItems: 'center', padding: '10px 0' }}>
                       <button className="ad-gal-arrow left" onClick={() => scrollGallery(-1)}>
                         <i className="fas fa-chevron-left" />
                       </button>
@@ -572,15 +619,39 @@ const fixImgHost = (url) =>
 
                 {/* Video — right */}
                 <div className="col-lg-6">
-                  <div className="ad-card" style={{ marginBottom: 0, height: '65%', display: 'flex', flexDirection: 'column' }}>
+                  <div className="ad-card" style={{ marginBottom: 0 }}>
                     <div className="ad-card-title mb-2" style={{ fontSize: '13px', marginBottom: '8px' }}><i className="fas fa-play-circle" />Introduction Video</div>
-                    <div className="ad-vid-wrap" style={{ flex: 1 }}>
-                      <img src={fixImgHost(astro.profile_img) || '/assets/img/team/team_1_1.jpg'} alt="intro" style={{ height: '100%' }}
+                    <div className="ad-vid-wrap">
+                      <img src={fixImgHost(astro.profile_img) || '/assets/img/team/team_1_1.jpg'} alt="intro"
                         onError={e => { e.target.src = '/assets/img/team/team_1_1.jpg' }} />
                       <button className="ad-vid-play"><i className="fas fa-play" /></button>
                     </div>
                     <div className="ad-vid-lbl">▶ Watch Introduction Video</div>
                   </div>
+                </div>
+              </div>
+
+              {/* Consultation Process */}
+              <div className="ad-card" style={{ marginBottom: 0 }}>
+                <div className="ad-card-title mb-3"><i className="fas fa-route" />Consultation Process</div>
+                <div className="row g-3">
+                  {[
+                    { ic: 'fas fa-calendar-check', name: 'Book Consultation', desc: 'Choose chat or call and book your slot.' },
+                    { ic: 'fas fa-user-edit', name: 'Share Your Details', desc: 'Tell us your birth details and issue.' },
+                    { ic: 'fas fa-comment-dots', name: 'Get Astrologer', desc: 'Connect with Acharya and discuss concerns.' },
+                  ].map((s, i) => (
+                    <div key={i} className="col-md-4">
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#fcf6f8', padding: '10px 12px', borderRadius: 10, border: '1px solid #f1d7de' }}>
+                        <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#7c1d40', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13 }}>
+                          <i className={s.ic} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1f2937' }}>{s.name}</div>
+                          <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.2 }}>{s.desc}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -591,20 +662,54 @@ const fixImgHost = (url) =>
               <div className="ad-sticky">
                 <div className="ad-fee-card">
                   <div className="ad-fee-lbl">Consultation Fee</div>
-                  <div className="ad-fee-row">
+                  {/* <div className="ad-fee-row">
                     <span className="ad-fee-amt">₹{price}</span>
                     <span className="ad-fee-unit">/min</span>
+                  </div> */}
+
+                  {/* per-minute rates: chat / voice / video */}
+                  <div className="ad-rates">
+                    {[
+                      { ic: 'fas fa-comment-dots', lbl: 'Chat',  amt: getChatPrice(astro),  on: isOn(astro.is_chat_online) },
+                      { ic: 'fas fa-phone',        lbl: 'Call',  amt: getVoicePrice(astro), on: isOn(astro.is_voice_online) },
+                      { ic: 'fas fa-camera',       lbl: 'Video', amt: getVideoPrice(astro), on: isOn(astro.is_video_online) },
+                    ].map(r => (
+                      <div key={r.lbl} className={`ad-rate${r.on && r.amt !== null ? '' : ' off'}`}>
+                        <i className={r.ic} />
+                        <b>{r.amt !== null ? `₹${r.amt}` : '—'}</b>
+                        <span>{r.lbl}/min</span>
+                      </div>
+                    ))}
                   </div>
                   <div className="ad-avail-row">
                     <span className={`ad-avail-dot ${isBusy ? 'busy' : isOnline ? '' : 'offline'}`} style={!isBusy && !isOnline ? { background: '#9ca3af' } : {}} />
-                    <span className={`ad-avail-txt ${isBusy ? 'busy' : isOnline ? '' : 'offline'}`} style={!isBusy && !isOnline ? { color: '#6b7280' } : {}}>{isBusy ? 'Busy' : isOnline ? 'Available Now' : 'Offline'}</span>
+                    <span className={`ad-avail-txt ${isBusy ? 'busy' : isOnline ? '' : 'offline'}`} style={!isBusy && !isOnline ? { color: '#6b7280' } : {}}>{isBusy ? `Busy · ${waitLabel}` : isOnline ? 'Available Now' : 'Offline'}</span>
                   </div>
                   <div className="ad-resp-time">Avg. Response Time: &lt; 2 min</div>
                   {isBusy ? (
-                    <button className={`ad-btn-notify ${notified ? 'active' : ''}`} onClick={handleNotifyToggle}>
-                      <i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
-                      <span>{notified ? "We'll Notify You When Available!" : "Notify When Available"}</span>
-                    </button>
+                    <>
+                      {/* Busy: chat and call both stay visible, showing the queue wait */}
+                      <div className="ad-wait-row">
+                        <div className="ad-wait-card">
+                          <i className="fas fa-comment-dots" />
+                          <div>
+                            <div className="ad-wait-lbl">Chat</div>
+                            <div className="ad-wait-val">{waitLabel}</div>
+                          </div>
+                        </div>
+                        <div className="ad-wait-card">
+                          <i className="fas fa-phone" />
+                          <div>
+                            <div className="ad-wait-lbl">Call</div>
+                            <div className="ad-wait-val">{waitLabel}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <button className={`ad-btn-notify ${notified ? 'active' : ''}`} onClick={handleNotifyToggle}>
+                        <i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
+                        <span>{notified ? "We'll Notify You When Available!" : "Notify When Available"}</span>
+                      </button>
+                    </>
                   ) : isOnline ? (
                     <>
                       <button className="ad-btn-chat" onClick={() => handleChatCallClick('chat')}>
@@ -615,6 +720,36 @@ const fixImgHost = (url) =>
                         <div className="ad-btn-call-main"><i className="fas fa-phone" style={{ fontSize: 15 }} />Call Now</div>
                         <div className="ad-btn-call-sub">Start a call session</div>
                       </button>
+                      <a
+                        href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ad-btn-video"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          width: '100%',
+                          padding: '12px 18px',
+                          borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #521721, #7c1d40)',
+                          color: '#fff',
+                          textDecoration: 'none',
+                          marginTop: '10px',
+                          boxShadow: '0 4px 14px rgba(82, 23, 33, 0.25)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontSize: '14px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <i className="fas fa-video" style={{ fontSize: 15, color: '#f59e0b' }} /> Video Call
+                          </div>
+                          <div style={{ fontSize: '11px', opacity: 0.9, fontWeight: '500' }}>
+                            Download App to Video Call {getVideoPrice(astro) !== null ? `(₹${getVideoPrice(astro)}/min)` : ''}
+                          </div>
+                        </div>
+                        <i className="fas fa-external-link-alt" style={{ fontSize: 13, opacity: 0.8 }} />
+                      </a>
                     </>
                   ) : (
                     <button className="ad-btn-notify disabled" style={{ opacity: 0.7, background: '#9ca3af', cursor: 'not-allowed' }} onClick={(e) => e.stopPropagation()}>
@@ -622,7 +757,7 @@ const fixImgHost = (url) =>
                       <span>Astrologer Currently Offline</span>
                     </button>
                   )}
-                  <button className="ad-btn-gift" onClick={() => setShowGift(true)}>
+                  <button className="ad-btn-gift" onClick={handleOpenGiftModal}>
                     <i className="ad-btn-gift-ico fas fa-gift" />
                     <div className="ad-btn-gift-body">
                       <span className="ad-btn-gift-lbl">Send a Gift</span>
@@ -677,75 +812,75 @@ const fixImgHost = (url) =>
                       {giftError}
                     </p>
                   )}
-                  <button className="ad-gift-more" onClick={() => setShowGift(true)}>View More Gifts</button>
+                  <button className="ad-gift-more" onClick={handleOpenGiftModal}>View More Gifts</button>
                   <style>{`@keyframes ad-gift-spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
+
+                {/* Trust & Guarantee Card (2 points only) */}
+                <div className="ad-card" style={{ marginTop: 12, marginBottom: 0, background: 'linear-gradient(135deg, #fff9fb 0%, #ffffff 100%)', border: '1px solid #f3d9e3' }}>
+                  <div className="ad-card-title mb-2" style={{ fontSize: '13.5px' }}><i className="fas fa-shield-alt" style={{ color: '#7c1d40' }} />Why Consult {astro.name}?</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fbeef3', color: '#7c1d40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>
+                        <i className="fas fa-user-shield" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#1f2937' }}>100% Private & Confidential</div>
+                        <div style={{ fontSize: 10.5, color: '#6b7280' }}>Your identity & discussions remain secret</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fbeef3', color: '#7c1d40', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>
+                        <i className="fas fa-bolt" />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#1f2937' }}>Instant Connect (&lt; 2 mins)</div>
+                        <div style={{ fontSize: 10.5, color: '#6b7280' }}>No waiting, start talking immediately</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
           </div>
 
           {/* ══ FULL-WIDTH SECTIONS BELOW ══ */}
-{/* ══ FULL-WIDTH SECTIONS BELOW ══ */}
           <div className="ad-full-width-sections">
-            {/* Consultation Process + Reviews — single row */}
-            <div className="ad-card" style={{ marginBottom: 14, overflow: 'hidden' }}>
-              <div className="row g-4 mx-0">
-                {/* Consultation Process — left */}
-                <div className="col-lg-3 col-md-4">
-                  <div className="ad-card-title"><i className="fas fa-route" />Consultation Process</div>
-                  <div className="ad-process-vert">
-                    {[
-                      { ic: 'fas fa-calendar-check', name: 'Book Consultation', desc: 'Choose chat or call and book your slot.' },
-                      { ic: 'fas fa-user-edit', name: 'Share Your Details', desc: 'Tell us your birth details and issue.' },
-                      { ic: 'fas fa-comment-dots', name: 'Get Astrologer', desc: 'Connect with Acharya and discuss your concerns.' },
-                    ].map((s, i) => (
-                      <div key={i} className="ad-proc-row">
-                        <div className="ad-proc-ico"><i className={s.ic} /></div>
+            {/* Customer Reviews — full width */}
+            <div className="ad-card" style={{ marginBottom: 14 }}>
+              <div className="d-flex align-items-center justify-content-between mb-3">
+                <div className="ad-card-title mb-0"><i className="fas fa-comments" />Customer Reviews</div>
+                <button
+                  className="btn btn-link p-0 ad-reviews-viewall"
+                  style={{ fontSize: 12, color: '#7c1d40', fontWeight: 700, textDecoration: 'none' }}
+                  onClick={() => setPopup('reviews')}
+                >
+                  View All
+                </button>
+              </div>
+              <div className="row g-3">
+                {reviewsSource.slice(0, 3).map((r, i) => (
+                  <div key={i} className="col-md-4">
+                    <div className="ad-rev-card">
+                      <div className="ad-rev-user">
+                        <img className="ad-rev-av" src={r.av} alt={r.name} onError={e => { e.target.src = '/assets/img/team/team_1_1.jpg' }} />
                         <div>
-                          <div className="ad-proc-name">{s.name}</div>
-                          <div className="ad-proc-desc">{s.desc}</div>
+                          <div className="ad-rev-name">{r.name}</div>
+                          <div className="ad-rev-veri">✓ Verified Purchase</div>
                         </div>
+                        <span className="ad-rev-time">{r.time}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Reviews — right */}
-                <div className="col-lg-9 col-md-8">
-                  <div className="d-flex align-items-center gap-3 mb-3">
-                    <div className="ad-card-title mb-0"><i className="fas fa-comments" />Customer Reviews</div>
-                    <button
-                      className="btn btn-link p-0 ad-reviews-viewall"
-                      style={{ fontSize: 12, color: '#7c1d40', fontWeight: 700, textDecoration: 'none' }}
-                      onClick={() => setPopup('reviews')}
-                    >
-                      View All
-                    </button>
-                  </div>
-                  <div className="row g-3">
-                    {reviewsSource.slice(0, 3).map((r, i) => (
-                      <div key={i} className="col-md-4">
-                        <div className="ad-rev-card">
-                          <div className="ad-rev-user">
-                            <img className="ad-rev-av" src={r.av} alt={r.name} onError={e => { e.target.src = '/assets/img/team/team_1_1.jpg' }} />
-                            <div>
-                              <div className="ad-rev-name">{r.name}</div>
-                              <div className="ad-rev-veri">✓ Verified Purchase</div>
-                            </div>
-                            <span className="ad-rev-time">{r.time}</span>
-                          </div>
-                          <RevStars val={r.stars} />
-                          <div className="ad-rev-text">{r.text}</div>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <span className="ad-rev-tag">{r.tag}</span>
-                            <span className="ad-rev-help"><i className="far fa-thumbs-up me-1" />Helpful ({r.helpful})</span>
-                          </div>
-                        </div>
+                      <RevStars val={r.stars} />
+                      <div className="ad-rev-text">{r.text}</div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <span className="ad-rev-tag">{r.tag}</span>
+                        <span className="ad-rev-help"><i className="far fa-thumbs-up me-1" />Helpful ({r.helpful})</span>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -899,11 +1034,12 @@ const fixImgHost = (url) =>
           // trusting a value that may be stale by several seconds.
           let freshWallet = walletBalance;
           try {
-            const w = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
+            const w = await apiService.getBearer('/user_api/get_profile');
             freshWallet = Number(w?.results?.wallet ?? w?.results_web?.wallet ?? w?.wallet ?? walletBalance);
           } catch (_) { /* keep last-known walletBalance */ }
         
           navigate(`/consultation/calling/${astro.id || astro._id}`, {
+            replace: true,
             state: {
               callType: mode,
               astrologer_id: astro.id || astro._id,
@@ -911,7 +1047,10 @@ const fixImgHost = (url) =>
               profile_img: astro.profile_img,
               // FIX: was always astro.per_min_chat, even for audio calls — should
               // use the voice-call rate for mode === 'call'.
-              rate: mode === 'call' ? (astro.per_min_voice_call || astro.per_min_chat || 5) : (astro.per_min_chat || 5),
+              rate:
+                mode === 'video' ? (getVideoPrice(astro) ?? getVoicePrice(astro) ?? getChatPrice(astro) ?? 5)
+                : mode === 'call' ? (getVoicePrice(astro) ?? getChatPrice(astro) ?? 5)
+                : (getChatPrice(astro) ?? 5),
               wallet: freshWallet,
               intake: {
                 name: details.name,
@@ -990,22 +1129,52 @@ const fixImgHost = (url) =>
       )}
       {/* Mobile sticky Chat/Call/Notify bar */}
       <div className="ad-mobile-cta-bar">
+        <span className={`ad-mobile-status-dot ${isBusy ? 'busy' : isOnline ? 'online' : 'offline'}`} />
         {isBusy ? (
-          <button className={`ad-btn-notify ${notified ? 'active' : ''}`} style={{ margin: 0 }} onClick={handleNotifyToggle}>
-            <i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
-            <span>{notified ? 'Notified' : 'Notify Me'}</span>
-          </button>
-        ) : (
+          <>
+            <button className={`ad-mobile-chat-btn${notified ? ' on' : ''}`} onClick={handleNotifyToggle} title={`Busy · ${waitLabel}`}>
+              <i className={notified ? 'fas fa-check-circle' : 'fas fa-comment-dots'} />
+              <span>{notified ? 'Notified' : `Chat · ${waitLabel}`}</span>
+            </button>
+            <button className={`ad-mobile-call-btn${notified ? ' on' : ''}`} onClick={handleNotifyToggle} title={`Busy · ${waitLabel}`}>
+              <i className={notified ? 'fas fa-check-circle' : 'fas fa-phone'} />
+              <span>{notified ? 'Notified' : `Call · ${waitLabel}`}</span>
+            </button>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ad-mobile-video-btn"
+              title={`Video Call${getVideoPrice(astro) !== null ? ` (₹${getVideoPrice(astro)}/min)` : ''}`}
+            >
+              <i className="fas fa-video" />
+            </a>
+          </>
+        ) : isOnline ? (
           <>
             <button className="ad-mobile-chat-btn" onClick={() => handleChatCallClick('chat')}>
               <i className="fas fa-comment-dots" />
-              Chat Now
+              <span>Chat Now</span>
             </button>
             <button className="ad-mobile-call-btn" onClick={() => handleChatCallClick('call')}>
               <i className="fas fa-phone" />
-              Call Now
+              <span>Call Now</span>
             </button>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ad-mobile-video-btn"
+              title={`Video Call${getVideoPrice(astro) !== null ? ` (₹${getVideoPrice(astro)}/min)` : ''}`}
+            >
+              <i className="fas fa-video" />
+            </a>
           </>
+        ) : (
+          <button className="ad-mobile-chat-btn" style={{ opacity: 0.65, cursor: 'not-allowed', background: '#9ca3af', borderColor: '#9ca3af', color: '#fff' }} onClick={(e) => e.stopPropagation()}>
+            <i className="fas fa-moon" style={{ color: '#fff' }} />
+            <span>Astrologer Currently Offline</span>
+          </button>
         )}
       </div>
 

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 
 import AboutUs from './pages/AboutUs';
@@ -92,7 +92,11 @@ function NotFound() {
 
 			<Routes>
 				<Route path="/" element={<Home />} />
+				<Route path="/about" element={<Navigate to="/about_us" replace />} />
 				<Route path="/about_us" element={<AboutUs />} />
+				<Route path="/contact" element={<Navigate to="/contact_us" replace />} />
+				<Route path="/contact_us" element={<ContactUs />} />
+				<Route path="/astrology" element={<Navigate to="/astrologer" replace />} />
 				<Route path="/chadhava" element={<ChadhavaListing />} />
 				<Route path="/puja" element={<PujaListing />} />
 				<Route path="/chadhava/:name/:id" element={<ChadhavaDetails />} />

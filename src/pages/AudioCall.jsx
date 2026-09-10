@@ -6,18 +6,21 @@ import { db } from '../services/liveFirebase';
 import { useAudioCall } from '../context/AudioCallContext';
 import { agoraManager } from '../services/Agoramanager.';
 import apiService from '../services/apiServices';
-import SendGiftModal from './Sendgiftmodal';
 import {
   fetchAgoraToken,
   callStatusUpdate,
   callInitiateStatus,
   addRating,
   lastCallList,
+  getWalletBalance,
 } from '../services/liveService';
 import './AudioCall.css';
 
 const STATUS_POLL_MS = 2000;
-const ACCEPTED_STATUSES = ['accept_astro', 'accepted', 'ongoing', 'active'];
+const ACCEPTED_STATUSES = ['accept_astro', 'accepted', 'ongoing', 'active', 'accept', 'start', 'initiated', 'connected', 'busy'];
+// Narrower than ACCEPTED_STATUSES: 'initiated'/'busy' mean ringing, not answered,
+// so they must NOT flip the UI to connected or start billing the timer.
+const CONNECTED_STATUSES = ['accept_astro', 'accepted', 'accept', 'ongoing', 'active', 'start', 'connected'];
 
 const initials = (n) => (n || '').trim().split(' ').slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
 const COLORS = ['#7c3aed', '#059669', '#dc2626', '#d97706', '#2563eb'];
@@ -29,9 +32,32 @@ const fmt = (s) => {
   return `${h}:${m}:${sec}`;
 };
 const fmtShort = (s) => {
+  if (s >= 3600) {
+    const h = String(Math.floor(s / 3600)).padStart(2, '0');
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const sec = String(s % 60).padStart(2, '0');
+    return `${h}:${m}:${sec}`;
+  }
   const m = String(Math.floor(s / 60)).padStart(2, '0');
   const sec = String(s % 60).padStart(2, '0');
   return `${m}:${sec}`;
+};
+
+// Real star distribution from the profile's review list (astrologer_profile
+// returns `rating` as an array of review objects).
+const buildDist = (reviews = []) => {
+  const counts = [0, 0, 0, 0, 0]; // index 0 = 1 star
+  reviews.forEach((r) => {
+    const n = Math.round(Number(r?.rating) || 0);
+    if (n >= 1 && n <= 5) counts[n - 1] += 1;
+  });
+  const total = counts.reduce((a, b) => a + b, 0);
+  if (!total) return null;
+  return [5, 4, 3, 2, 1].map((star) => ({
+    lbl: `${star} Star${star > 1 ? 's' : ''}`,
+    pct: Math.round((counts[star - 1] / total) * 100),
+    color: star >= 4 ? '#f5a623' : star === 3 ? '#f5c842' : '#ddd',
+  }));
 };
 
 const BARS = [
@@ -49,31 +75,37 @@ const TRUST_POINTS = [
   { icon: 'fas fa-headset', title: '24x7 Support', sub: 'We\u2019re here whenever you need us' },
 ];
 
-const extractStatus = (res) =>
-  res?.results?.status ??
-  res?.status ??
-  res?.data?.status ??
-  res?.result?.status ??
-  null;
+const fixImgHost = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  let cleaned = url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com');
+  if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+    cleaned = `https://admin.vaidikguru.com${cleaned.startsWith('/') ? '' : '/'}${cleaned}`;
+  }
+  return cleaned;
+};
 
-// FIX: `Number(data2.difference || 0)` still has the same falsy-zero risk if
-// `difference` is ever NaN/undefined from a backend date-parsing hiccup —
-// this adds the start_time-based fallback too, matching RestoreOngoingSession.
+const extractStatus = (res) => {
+  if (!res) return null;
+  if (typeof res.results === 'object' && res.results?.status) return String(res.results.status);
+  if (typeof res.data === 'object' && res.data?.status) return String(res.data.status);
+  if (typeof res.result === 'object' && res.result?.status) return String(res.result.status);
+  if (typeof res.status === 'string') return res.status;
+  return null;
+};
+
 function resolveElapsedSeconds(data2) {
-  const diff = Number(data2?.difference);
-  if (Number.isFinite(diff) && diff >= 0) return diff;
-  if (data2?.start_time) {
-    const startMs = new Date(data2.start_time).getTime();
-    if (Number.isFinite(startMs)) {
+  if (data2?.start_time || data2?.accept_time || data2?.start_at) {
+    const startTimeStr = data2.start_time || data2.accept_time || data2.start_at;
+    const startMs = new Date(startTimeStr).getTime();
+    if (Number.isFinite(startMs) && startMs > 0) {
       return Math.max(Math.floor((Date.now() - startMs) / 1000), 0);
     }
   }
+  const diff = Number(data2?.difference);
+  if (Number.isFinite(diff) && diff >= 0) return diff;
   return 0;
 }
 
-// Reads CallSession/{channelId} ONCE to compute an accurate remaining-time
-// countdown, using the exact same fields ChatContext already relies on for
-// its own countdown (max_minutes / last_tick_at / started_at).
 function readCallSessionRemaining(channelId, rate, wallet) {
   return new Promise((resolve) => {
     try {
@@ -110,132 +142,158 @@ const AudioCall = () => {
 
   const st = location.state || {};
 
-  // ── Session resolution ──
-  // Three sources, tried in order:
-  //   1) AudioCallContext already has an active session for this channel
-  //      (resumed from the minimized bar — no refresh happened).
-  //   2) router state from ChatCallingScreen (normal fresh navigation).
-  //   3) NEITHER exists — this is a page refresh while sitting on this exact
-  //      URL, which wipes router state. Ask the backend what's actually
-  //      still active for this user instead of rendering a broken page.
   const [session, setSession] = useState(null);
   const [resolving, setResolving] = useState(true);
   const [resolveErr, setResolveErr] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    // FIX: Chrome (and other browsers) preserve history.state across a
-    // plain page reload (F5) — it's the same navigation entry being
-    // reloaded, not a fresh one. That meant location.state could still
-    // look "present" right after a refresh, so the router-state branch
-    // below fired and treated it as a brand-new call (seeding
-    // initialElapsed: 0), instead of falling through to the backend
-    // recovery branch that actually restores the true elapsed time.
-    let reloaded = false;
-    try {
-      reloaded = performance.getEntriesByType('navigation')[0]?.type === 'reload';
-    } catch { /* Performance Navigation Timing not supported — assume not a reload */ }
-    console.log('[AudioCall] resolving session — reloaded:', reloaded, 'ctx.callInfo:', ctx.callInfo, 'router state (st):', st);
+    const reloaded = location.key === 'default';
+    console.log('[AudioCall] resolving session — reloaded:', reloaded, 'ctx.callInfo:', ctx.callInfo, 'st:', st);
+
     (async () => {
+      // 1. Existing context session
       if (ctx.callInfo?.channelId) {
-        console.log('[AudioCall] using ctx.callInfo — wallet:', ctx.callInfo.wallet);
-        // Defensive fallback: if the context's wallet is missing/empty/zero
-        // for whatever reason at resume time, don't just display a fake
-        // zero — go fetch the real current balance instead.
         let resumeWallet = ctx.callInfo.wallet;
         if (!resumeWallet || parseFloat(resumeWallet) <= 0) {
-          console.warn('[AudioCall] ctx.callInfo.wallet was empty/zero on resume — fetching real balance from get_profile');
           try {
-            const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
-            resumeWallet = profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? resumeWallet;
-            console.log('[AudioCall] fetched wallet for resume:', resumeWallet);
+            const w = await getWalletBalance();
+            if (w > 0) resumeWallet = String(w);
           } catch (err) {
             console.error('[AudioCall] failed to fetch wallet on resume:', err);
           }
         }
         if (!cancelled) {
-          setSession({
+          const sObj = {
             channelId: ctx.callInfo.channelId,
             astrologerId: ctx.callInfo.astrologerId,
             astroName: ctx.callInfo.astroName,
-            astrologerImage: ctx.callInfo.astroImage,
+            astrologerImage: fixImgHost(ctx.callInfo.astroImage),
             rate: ctx.callInfo.rate,
             wallet: resumeWallet,
-            // Same-session resume (minimized bar → reopened, no refresh
-            // happened) — the context already ticked this up correctly
-            // while minimized, so it's the authoritative value.
             initialElapsed: ctx.elapsedSeconds || 0,
-          });
+          };
+          try { sessionStorage.setItem('activeAudioCall', JSON.stringify({ ...sObj, startedAt: Date.now() - ((ctx.elapsedSeconds || 0) * 1000) })); } catch (_) { }
+          setSession(sObj);
           setResolving(false);
         }
         return;
       }
+
+      // 2. Fresh navigation from ChatCallingScreen (in-app navigation, NOT a hard reload)
       if (!reloaded && (st.channelId || st.gid)) {
-        console.log('[AudioCall] using router state — st.wallet:', st.wallet, '(typeof:', typeof st.wallet, ')');
+        let savedCall = null;
+        try { savedCall = JSON.parse(sessionStorage.getItem('activeAudioCall') || 'null'); } catch (_) { }
+        const isSameChannel = savedCall && savedCall.channelId === (st.channelId || st.gid);
+        const calcElapsed = (isSameChannel && savedCall?.startedAt) ? Math.max(Math.floor((Date.now() - savedCall.startedAt) / 1000), 0) : 0;
+
         if (!cancelled) {
-          setSession({
+          const sObj = {
             channelId: st.channelId || st.gid,
             astrologerId: st.astrologer_id || id,
-            astroName: st.astroName || 'Astrologer',
-            astrologerImage: st.astrologerImage || '',
+            astroName: st.astroName || st.name || 'Astrologer',
+            astrologerImage: fixImgHost(st.astrologerImage || st.profile_img || ''),
             rate: st.rate || 15,
             wallet: st.wallet || '210',
-            // Fresh navigation straight from ChatCallingScreen — this really
-            // is a brand-new call, so 0 is correct here.
-            initialElapsed: 0,
-          });
+            initialElapsed: calcElapsed,
+          };
+          try { sessionStorage.setItem('activeAudioCall', JSON.stringify({ ...sObj, startedAt: isSameChannel ? savedCall.startedAt : Date.now() })); } catch (_) { }
+          setSession(sObj);
           setResolving(false);
         }
         return;
       }
-      // Refresh recovery — no state anywhere. Ask the backend directly.
+
+      // 3. FAST refresh recovery — read this tab's saved session synchronously and
+      // rejoin immediately. Previously we awaited lastCallList() first, which put a
+      // network round trip (often 1–3s) in front of the Agora rejoin; in that gap the
+      // astrologer's client sees us as gone and their app ends the call.
+      let fastSaved = null;
+      try { fastSaved = JSON.parse(sessionStorage.getItem('activeAudioCall') || 'null'); } catch (_) { }
+      if (fastSaved?.channelId && fastSaved.channelId !== id) {
+        if (!cancelled) {
+          const calcElapsed = fastSaved.startedAt
+            ? Math.max(Math.floor((Date.now() - fastSaved.startedAt) / 1000), 0)
+            : (fastSaved.initialElapsed || 0);
+          setSession({
+            ...fastSaved,
+            astrologerImage: fixImgHost(fastSaved.astrologerImage),
+            initialElapsed: calcElapsed,
+          });
+          setResolving(false);
+        }
+        // Wallet refresh happens in the background — never block the rejoin on it.
+        getWalletBalance()
+          .then((w) => { if (!cancelled && w > 0) setSession((prev) => (prev ? { ...prev, wallet: String(w) } : prev)); })
+          .catch(() => { });
+        return;
+      }
+
+      // 4. Backend recovery — ask lastCallList only when this tab has nothing saved
       try {
         const { result, data2 } = await lastCallList();
+        console.log('[AudioCall] refresh recovery lastCallList response:', { result, data2 });
         const callType = String(data2?.call_type || '').toLowerCase();
         const status = String(data2?.status || '').toLowerCase();
-        const matchesThisAstrologer = String(data2?.astro_id || '') === String(id);
-        if (result && data2 && callType === 'audio' && ACCEPTED_STATUSES.includes(status) && matchesThisAstrologer) {
-          // FIX: data2.total_amount is a recorded transaction debit amount
-          // (often "0" mid-call, since no per-minute debit has posted yet —
-          // see the earlier note about billing ticks not being implemented
-          // server-side) — NOT the user's actual wallet balance. Using it
-          // here made the time-remaining fallback compute to 0. Fetch the
-          // real current balance instead, same call Astrologerdetail.jsx
-          // already makes.
+
+        const isAudioType = !callType || callType.includes('audio') || callType.includes('call') || callType.includes('voice');
+        const isAcceptedStatus = ACCEPTED_STATUSES.includes(status) || status.includes('accept') || status.includes('ongoi') || status.includes('activ');
+        const matchesThisAstrologer = !id || String(data2?.astro_id || '') === String(id) || String(data2?.channel_id || '') === String(id) || String(data2?.fb_channel_id || '') === String(id);
+
+        const realChannelId = data2?.channel_id || data2?.fb_channel_id || data2?.channelId || data2?.channel;
+
+        if (result && data2 && realChannelId && isAudioType && isAcceptedStatus && matchesThisAstrologer) {
           let realWallet = data2.total_amount || '0';
           try {
-            const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
-            realWallet = profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? realWallet;
+            const w = await getWalletBalance();
+            if (w > 0) realWallet = String(w);
           } catch (err) {
-            console.error('[AudioCall] failed to fetch real wallet balance for countdown fallback:', err);
+            console.error('[AudioCall] failed to fetch real wallet balance:', err);
           }
 
           if (!cancelled) {
-            setSession({
-              channelId: data2.channel_id,
-              astrologerId: data2.astro_id,
+            const elSec = resolveElapsedSeconds(data2);
+            const sObj = {
+              channelId: realChannelId,
+              astrologerId: data2.astro_id || id,
               astroName: data2.astro_name || 'Astrologer',
-              astrologerImage: data2.astro_profile_img || '',
+              astrologerImage: fixImgHost(data2.astro_profile_img || data2.image || ''),
               rate: data2.call_rate || 15,
               wallet: realWallet,
-              // Refresh recovery — the whole JS runtime just reloaded, so
-              // ctx.elapsedSeconds is gone (reset to 0 on the fresh
-              // AudioCallProvider mount). `difference` is elapsed seconds
-              // computed server-side (see /last_call_list), so it's the
-              // only durable source of "how long has this call actually
-              // been running" left at this point.
-              initialElapsed: resolveElapsedSeconds(data2),
-            });
+              initialElapsed: elSec,
+            };
+            try { sessionStorage.setItem('activeAudioCall', JSON.stringify({ ...sObj, startedAt: Date.now() - (elSec * 1000) })); } catch (_) { }
+            setSession(sObj);
+            setResolving(false);
           }
-        } else {
-          console.warn('[AudioCall] refresh recovery: no matching active audio call found.', { result, data2 });
-          if (!cancelled) setResolveErr('This call session is no longer active.');
+          return;
         }
       } catch (err) {
-        console.error('[AudioCall] refresh recovery failed:', err);
-        if (!cancelled) setResolveErr('Could not restore this call session.');
-      } finally {
-        if (!cancelled) setResolving(false);
+        console.error('[AudioCall] refresh recovery backend query failed:', err);
+      }
+
+      // 4. Saved sessionStorage fallback — ONLY use if savedCall has a real channelId distinct from id (astrologer_id)
+      let savedCall = null;
+      try {
+        savedCall = JSON.parse(sessionStorage.getItem('activeAudioCall') || 'null');
+      } catch (_) { }
+
+      if (savedCall && savedCall.channelId && savedCall.channelId !== id) {
+        if (!cancelled) {
+          const calcElapsed = savedCall.startedAt ? Math.max(Math.floor((Date.now() - savedCall.startedAt) / 1000), 0) : (savedCall.initialElapsed || 0);
+          setSession({
+            ...savedCall,
+            astrologerImage: fixImgHost(savedCall.astrologerImage),
+            initialElapsed: calcElapsed
+          });
+          setResolving(false);
+        }
+        return;
+      }
+
+      if (!cancelled) {
+        setResolveErr('This call session is no longer active.');
+        setResolving(false);
       }
     })();
     return () => { cancelled = true; };
@@ -243,12 +301,50 @@ const AudioCall = () => {
   }, []);
 
   const channelId = session?.channelId || '';
-  const astrologer_id = String(session?.astrologerId || '');
+  const astrologer_id = String(session?.astrologerId || id || '');
   const name = session?.astroName || 'Astrologer';
-  const pImg = session?.astrologerImage || '';
+  const pImg = fixImgHost(session?.astrologerImage || session?.profile_img || session?.astroImage || '');
   const price = session?.rate || 15;
   const wallet = session?.wallet || '210';
   const initialElapsed = session?.initialElapsed || 0;
+
+  useEffect(() => {
+    if (!astrologer_id) return;
+    let cancelled = false;
+    apiService.postBearer('/user_api/astrologer_profile', { astrologer_id: String(astrologer_id), id: String(astrologer_id) })
+      .then((res) => {
+        if (cancelled) return;
+        // astrologer_profile returns `results` as an ARRAY. Reading it as an object
+        // made every field below undefined — which is why the name, photo, rating
+        // and skills never came from the API on this screen.
+        const raw = res?.results ?? res?.record ?? res?.data ?? res?.result;
+        const list = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+        const astro = list.find((a) => String(a?.id) === String(astrologer_id) || String(a?._id) === String(astrologer_id)) || list[0];
+        if (!astro) return;
+
+        const fetchedImg = astro.profile_img || astro.image || astro.astrologer_profile_img;
+        const fetchedName = astro.name || astro.astro_name;
+        const reviewArr = Array.isArray(astro.rating) ? astro.rating : [];
+
+        setSession((prev) => prev ? ({
+          ...prev,
+          astroName: prev.astroName && prev.astroName !== 'Astrologer' ? prev.astroName : (fetchedName || 'Astrologer'),
+          astrologerImage: fixImgHost(fetchedImg || prev.astrologerImage || ''),
+          meta: {
+            rating: Number(astro.avg_rate ?? 0),
+            reviews: reviewArr.length || Number(astro.total_review ?? (typeof astro.rating === 'number' ? astro.rating : 0)),
+            experience: astro.experience ?? '',
+            cats: (Array.isArray(astro.category) ? astro.category : [])
+              .map((c) => (typeof c === 'object' ? (c.name || c.category_name || c.title) : c)).filter(Boolean),
+            langs: (Array.isArray(astro.language) ? astro.language : [])
+              .map((l) => (typeof l === 'object' ? (l.name || l.title) : l)).filter(Boolean),
+            dist: buildDist(reviewArr),
+          },
+        }) : prev);
+      })
+      .catch(() => { });
+    return () => { cancelled = true; };
+  }, [astrologer_id]);
 
   const [imgErr, setImgErr] = useState(false);
   const [secs, setSecs] = useState(0);
@@ -258,12 +354,10 @@ const AudioCall = () => {
   const [err, setErr] = useState('');
   const [showRating, setShowRating] = useState(false);
   const [ratingScore, setRatingScore] = useState(0);
+  const [hoverScore, setHoverScore] = useState(0);
   const [ratingReview, setRatingReview] = useState('');
-  const [showGiftModal, setShowGiftModal] = useState(false);
 
-  // FIX: Remaining Balance / Time Remaining were static or dependent on
-  // Firebase billing-tick fields (max_minutes/last_tick_at) nothing in the
-  // backend writes yet. Both numbers are now derived directly from the
+  // Remaining Balance / Time Remaining are derived directly from the
   // elapsed timer, which IS ticking correctly, so they move together and
   // stay internally consistent even without server-side billing ticks.
   const rateNum = parseFloat(price) || 0;
@@ -276,7 +370,19 @@ const AudioCall = () => {
   const pollRef = useRef(null);
   const endingRef = useRef(false);
   const navRef = useRef(navigate);
+  // Grace window: right after a (re)join, ignore poll/onUserLeft "bad"
+  // statuses for a few seconds so a stale/racing backend record doesn't
+  // immediately end a call that is actually still active (this is what was
+  // causing the rating popup to appear right after a page refresh).
+  const joinGraceUntilRef = useRef(0);
+  const badStatusCountRef = useRef(0);
+  // Guards against a second "connected" signal restarting the timer at 0
+  // (onAudioStarted can fire again on unmute / track republish).
+  const connectedRef = useRef(false);
+  const secsRef = useRef(0);
   useEffect(() => { navRef.current = navigate; }, [navigate]);
+
+  useEffect(() => { secsRef.current = secs; }, [secs]);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -285,26 +391,30 @@ const AudioCall = () => {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
   }, []);
 
-  // FIX: previously always started ticking from 0 regardless of how long
-  // the call had actually been running — `secs` is local component state,
-  // reset to 0 on every mount, and this never looked at any external source
-  // of truth before starting the interval. Now takes an explicit seed value
-  // (`initialElapsed`, resolved above per-case) and applies it before the
-  // interval begins, so both "resume from minimized bar" and "recovered
-  // after a page refresh" show the real elapsed duration immediately.
   const startElapsedTimer = useCallback((from = 0) => {
-    if (timerRef.current) return; // already running — don't reseed mid-flight
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setSecs(from);
     ctx.setElapsedSeconds(from);
     timerRef.current = setInterval(() => {
       setSecs((p) => { const n = p + 1; ctx.setElapsedSeconds(n); return n; });
     }, 1000);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ctx]);
+
+  // Single entry point for "the call is live" — safe to call from any signal
+  // (remote user joined, remote audio started, backend says accepted).
+  const markConnected = useCallback((fromSecs = null) => {
+    if (connectedRef.current) return;
+    connectedRef.current = true;
+    ctx.setCallStatus('connected');
+    setErr('');
+    startElapsedTimer(fromSecs != null ? fromSecs : (ctx.elapsedSeconds || initialElapsed || 0));
+  }, [ctx, startElapsedTimer, initialElapsed]);
 
   const handleEnd = useCallback(async (status = null, { remote = false } = {}) => {
     if (endingRef.current) return;
     endingRef.current = true;
+
+    try { sessionStorage.removeItem('activeAudioCall'); } catch (_) { }
 
     stopTimer();
     stopStatusPoll();
@@ -319,12 +429,6 @@ const AudioCall = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelId, stopTimer, stopStatusPoll]);
 
-  // FIX: previously used navigate(-1), which relies on browser history —
-  // but ChatCallingScreen navigates here with { replace: true }, which
-  // erases history entries as it goes. By the time this page is open,
-  // there's often nothing meaningful left to go "back" to except Home.
-  // Navigating to a known, deterministic destination (the astrologer's
-  // page) fixes that regardless of how the user got here.
   const handleMinimize = useCallback(() => {
     stopStatusPoll();
     agoraManager.clearListeners();
@@ -332,35 +436,108 @@ const AudioCall = () => {
     navRef.current(`/astrologer/${astrologer_id}`, { replace: true });
   }, [ctx, stopStatusPoll, astrologer_id]);
 
+  // Write the exact start instant as the page goes away, so a refresh resumes the
+  // timer where it left off instead of at 0. pagehide fires on reload, tab close
+  // and bfcache navigation; beforeunload is unreliable on mobile Safari.
+  // Write the exact start instant and cached token as the page goes away, so a refresh resumes the
+  // timer where it left off instead of at 0 and re-joins Agora instantly.
+  useEffect(() => {
+    if (!channelId) return;
+    const persist = () => {
+      if (endingRef.current) return;
+      try {
+        let existing = {};
+        try { existing = JSON.parse(sessionStorage.getItem('activeAudioCall') || '{}'); } catch (_) { }
+        sessionStorage.setItem('activeAudioCall', JSON.stringify({
+          ...existing,
+          channelId,
+          astrologerId: astrologer_id,
+          astroName: name,
+          astrologerImage: pImg,
+          rate: price,
+          wallet,
+          startedAt: Date.now() - ((secsRef.current || 0) * 1000),
+        }));
+      } catch (_) { }
+    };
+
+    const handleBeforeUnload = (e) => {
+      if (endingRef.current || ctx.callStatus !== 'connected') return;
+      e.preventDefault();
+      e.returnValue = 'Audio Call in progress. Are you sure you want to reload?';
+      return e.returnValue;
+    };
+
+    window.addEventListener('pagehide', persist);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('pagehide', persist);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      persist();
+    };
+  }, [channelId, astrologer_id, name, pImg, price, wallet, ctx.callStatus]);
+
+  // Browser / Android back must minimize the call — otherwise it pops back to
+  // the "Connecting…" screen still in history, which restarts the call flow.
+  // A sentinel entry is pushed so the first back press lands here, not there.
+  useEffect(() => {
+    if (!channelId) return;
+    window.history.pushState({ acCallGuard: true }, '');
+    const onPop = () => {
+      if (endingRef.current || showRating) return; // call is ending / rating open — let it through
+      handleMinimize();
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [channelId, handleMinimize, showRating]);
+
   const startStatusPoll = useCallback(() => {
     if (pollRef.current) return;
     pollRef.current = setInterval(async () => {
       try {
+        if (!channelId || channelId === astrologer_id || channelId === id) {
+          console.warn('[AudioCall] skipping status poll — channelId is missing or invalid:', channelId);
+          return;
+        }
+
         const res = await callInitiateStatus(channelId);
         const s = extractStatus(res);
-        if (s === 'reject_astro' || s === 'disconnect_user') {
-          handleEnd('disconnect_user', { remote: true });
-        } else if (s === 'end_astro' || s === 'end_user') {
-          handleEnd('end_user', { remote: true });
+        const sl = String(s || '').toLowerCase();
+        const isBad = sl === 'reject_astro' || sl === 'disconnect_user' || sl === 'end_astro' || sl === 'end_user';
+
+        // Astrologer has answered — leave "Connecting…" and start the timer even
+        // if Agora hasn't fired onAudioStarted yet (it waits for a published track).
+        if (!isBad && (CONNECTED_STATUSES.includes(sl) || sl.includes('accept') || sl.includes('ongoi') || sl.includes('activ'))) {
+          markConnected();
+        }
+
+        // Backend needs a moment to settle right after a (re)join — don't act on
+        // an end/reject read inside that window.
+        if (Date.now() < joinGraceUntilRef.current) return;
+
+        if (isBad) {
+          badStatusCountRef.current += 1;
+          // Require 2 consecutive bad polls before acting — filters out a
+          // single flaky/stale response.
+          if (badStatusCountRef.current < 2) return;
+          if (s === 'reject_astro' || s === 'disconnect_user') {
+            handleEnd('disconnect_user', { remote: true });
+          } else {
+            handleEnd('end_user', { remote: true });
+          }
+        } else {
+          badStatusCountRef.current = 0;
         }
       } catch (err) {
         console.error('[AudioCall] status poll error:', err);
       }
     }, STATUS_POLL_MS);
-  }, [channelId, handleEnd]);
+  }, [channelId, astrologer_id, id, handleEnd, markConnected]);
 
   /* ── join/attach, once session resolution finishes ── */
   useEffect(() => {
     if (!channelId) return; // still resolving, or resolution failed
 
-    // FIX: this used to call ctx.startCall() unconditionally on every
-    // mount — including when just reattaching to an already-running call
-    // from the minimized bar. startCall() resets callStatus back to
-    // 'connecting' and elapsedSeconds to 0, which is correct for a brand
-    // new call but wrong for a resume — it was fighting with the "already
-    // connected" branch below that tries to restore the real elapsed time.
-    // Only (re)initialize context state if this is genuinely a different
-    // session than what the context already has.
     if (ctx.callInfo?.channelId !== channelId) {
       ctx.startCall({
         channelId,
@@ -371,37 +548,66 @@ const AudioCall = () => {
         wallet: String(wallet),
       });
     }
-    ctx.maximize(); // we're on the full page — override any minimize from a
-                    // RestoreOngoingSession race, since this page is now the
-                    // authoritative source of truth for this channel.
+    ctx.maximize();
 
     agoraManager.setListeners({
-      onUserJoined: () => { /* no-op */ },
-      onAudioStarted: () => {
-        ctx.setCallStatus('connected');
-        setErr('');
-        // initialElapsed is 0 for a genuinely fresh call, or the backend's
-        // computed elapsed seconds if this connection is a refresh-recovery
-        // rejoin of an already-ongoing call. remainingBalance/timeLeftSecs
-        // above pick this up automatically since they're derived from secs.
-        startElapsedTimer(initialElapsed);
-      },
-      onUserLeft: () => {
-        handleEnd('end_astro', { remote: true });
+      // Remote participant in the channel = the astrologer picked up. Don't wait
+      // for them to publish audio before showing the call as live.
+      onUserJoined: () => { markConnected(); },
+      onAudioStarted: () => { markConnected(); },
+      onUserLeft: async () => {
+        try {
+          if (!channelId) return;
+          if (Date.now() < joinGraceUntilRef.current) {
+            console.log('[AudioCall] ignoring onUserLeft during join grace window');
+            return;
+          }
+          const res = await callInitiateStatus(channelId);
+          const s = extractStatus(res);
+          if (s === 'end_astro' || s === 'disconnect_user' || s === 'end_user' || s === 'reject_astro') {
+            handleEnd('end_astro', { remote: true });
+          } else {
+            console.log('[AudioCall] ignoring transient user-left event from Agora engine, call active:', s);
+          }
+        } catch (_) {
+          /* ignore transient error on refresh */
+        }
       },
       onError: (msg) => setErr(msg),
     });
 
     if (agoraManager.isConnected && agoraManager.channelId === channelId) {
-      // Same-session resume (minimized bar reopened, no refresh happened) —
-      // AudioCallContext already ticked elapsedSeconds up correctly while
-      // minimized, so that's the value to seed from, not initialElapsed.
-      ctx.setCallStatus('connected');
-      startElapsedTimer(ctx.elapsedSeconds || initialElapsed);
+      // Same-session resume (minimized bar reopened, no refresh happened)
+      joinGraceUntilRef.current = Date.now() + 4000;
+      markConnected(ctx.elapsedSeconds || initialElapsed);
     } else {
+      // Fresh join or refresh-recovery rejoin — give the backend longer to settle
+      joinGraceUntilRef.current = Date.now() + 7000;
+
+      // Fast rejoin: use cached Agora token if available in sessionStorage for immediate <500ms join
+      const cachedToken = session?.token || (() => {
+        try {
+          const s = JSON.parse(sessionStorage.getItem('activeAudioCall') || '{}');
+          return s.token || null;
+        } catch (_) { return null; }
+      })();
+
+      if (cachedToken) {
+        console.log('[AudioCall] Joining Agora instantly with cached token for fast refresh recovery');
+        agoraManager.join(channelId, cachedToken);
+      }
+
       fetchAgoraToken(channelId).then((token) => {
-        if (!token) { setErr('Could not get an Agora token for this call.'); return; }
-        agoraManager.join(channelId, token);
+        if (!token && !cachedToken) { setErr('Could not get an Agora token for this call.'); return; }
+        if (token) {
+          try {
+            const currentObj = JSON.parse(sessionStorage.getItem('activeAudioCall') || '{}');
+            sessionStorage.setItem('activeAudioCall', JSON.stringify({ ...currentObj, token }));
+          } catch (_) { }
+          if (!cachedToken) {
+            agoraManager.join(channelId, token);
+          }
+        }
       });
     }
 
@@ -443,23 +649,26 @@ const AudioCall = () => {
     try { await addRating(channelId, ratingScore || 5, ratingReview); } catch { /* silent */ }
     ctx.endCall();
     setShowRating(false);
-    navRef.current('/', { replace: true });
+    const dest = astrologer_id ? `/astrologer/${astrologer_id}` : '/';
+    navRef.current(dest, { replace: true });
   };
   const skipRating = () => {
     ctx.endCall();
     setShowRating(false);
-    navRef.current('/', { replace: true });
+    const dest = astrologer_id ? `/astrologer/${astrologer_id}` : '/';
+    navRef.current(dest, { replace: true });
   };
 
-  const cats = ['Vedic Astrology', 'Numerology', 'Vastu', 'Kundli Matching', 'Career Guidance'];
-  const lang = 'Hindi, English';
-  const rating = 4.9;
-  const reviews = '12,456';
-  const exp = '15';
+  const meta = session?.meta || {};
+  const cats = Array.isArray(meta.cats) ? meta.cats : [];
+  const lang = meta.langs?.length ? meta.langs.join(', ') : '—';
+  const rating = Number(meta.rating || 0);
+  const reviews = Number(meta.reviews || 0).toLocaleString('en-IN');
+  const exp = meta.experience || '';
+  const bars = meta.dist || null; // null until the profile's reviews load
 
   const callState = ctx.callStatus === 'connected' ? 'connected' : ctx.callStatus === 'ended' ? 'ended' : 'connecting';
 
-  // Still figuring out whether there's anything to show (refresh-recovery in flight)
   if (resolving) {
     return (
       <div className="ac-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -470,8 +679,6 @@ const AudioCall = () => {
     );
   }
 
-  // Resolution finished but found nothing to restore (session truly ended,
-  // or this URL doesn't correspond to an active call at all).
   if (!channelId) {
     return (
       <div className="ac-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -500,7 +707,7 @@ const AudioCall = () => {
             {[
               { lbl: 'Topic', val: 'Consultation' },
               { lbl: 'Astrologer', val: name, icon: true },
-              { lbl: 'Experience', val: `${exp}+ Years` },
+              { lbl: 'Experience', val: exp ? `${exp}+ Years` : '—' },
               { lbl: 'Language', val: lang },
               { lbl: 'Call Type', val: 'Audio Call' },
               { lbl: 'Rate', val: `₹${price} / min` },
@@ -515,8 +722,8 @@ const AudioCall = () => {
 
           <motion.div className="ac-lcard" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, delay: 0.07 }}>
             <div className="ac-rtitle"><i className="fas fa-star" /> Astrologer Rating</div>
-            <div className="ac-rscore"><i className="fas fa-star" /><span>{rating} ({reviews} Reviews)</span></div>
-            {BARS.map((b) => (
+            <div className="ac-rscore"><i className="fas fa-star" /><span>{rating > 0 ? `${rating.toFixed(1)} (${reviews} Reviews)` : 'No ratings yet'}</span></div>
+            {(bars || []).map((b) => (
               <div key={b.lbl} className="ac-brow">
                 <span className="ac-blbl">{b.lbl}</span>
                 <div className="ac-btrack"><div className="ac-bfill" style={{ width: `${b.pct}%`, background: b.color }} /></div>
@@ -536,7 +743,7 @@ const AudioCall = () => {
                 <div className="ac-enc-s">Your privacy is 100% protected</div>
               </div>
             </div>
-            <button className="ac-infobtn" onClick={handleMinimize}><i className="fas fa-chevron-left" /> Minimize</button>
+            <button className="ac-infobtn" onClick={handleMinimize}><i className="fas fa-arrow-left" /> Back</button>
 
             <div className="ac-calltop">
               <div className="ac-calllbl">
@@ -567,7 +774,9 @@ const AudioCall = () => {
               <span className="ac-name">{name}</span>
               <span className="ac-pill"><i className="fas fa-check-circle" /> Verified Expert</span>
             </div>
-            <div className="ac-ratingrow"><i className="fas fa-star" /><span>{rating} ({reviews} Reviews)</span></div>
+            {rating > 0 && (
+              <div className="ac-ratingrow"><i className="fas fa-star" /><span>{rating.toFixed(1)} ({reviews} Reviews)</span></div>
+            )}
 
             <div className="ac-skills">
               {cats.map((c, i) => <span key={i} className="ac-spill"><i className="fas fa-om" /> {c}</span>)}
@@ -602,7 +811,6 @@ const AudioCall = () => {
               { icon: 'fas fa-share-alt', lbl: 'Share Details', sub: 'Share your birth details or documents' },
               { icon: 'fas fa-sticky-note', lbl: 'Notes', sub: 'Take notes during your consultation' },
               { icon: 'fas fa-record-vinyl', lbl: 'Record Call', sub: 'Record this call for your reference' },
-              { icon: 'fas fa-gift', lbl: 'Send Gift', sub: 'Show your gratitude with a gift', onClick: () => setShowGiftModal(true) },
             ].map((a) => (
               <div key={a.lbl} className="ac-act" onClick={a.onClick} style={a.onClick ? { cursor: 'pointer' } : undefined}>
                 <div className="ac-aico"><i className={a.icon} /></div>
@@ -626,24 +834,6 @@ const AudioCall = () => {
               <div key={r.lbl} className="ac-srow"><div className="ac-slbl">{r.lbl}</div><div className="ac-sval">{r.val}</div></div>
             ))}
             <div className="ac-srow"><div className="ac-slbl">Remaining Balance</div><div className="ac-sval big">₹{Math.round(remainingBalance)}</div></div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, delay: 0.16 }}
-            style={{ background: '#fff', borderRadius: 12, padding: 14, boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}
-          >
-            <button
-              onClick={() => setShowGiftModal(true)}
-              style={{
-                width: '100%', padding: '12px 0', borderRadius: 10, border: 'none',
-                background: 'linear-gradient(135deg,#FF6F00,#FF9800)', color: '#fff',
-                fontWeight: 700, fontSize: 14, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                boxShadow: '0 4px 14px rgba(255,111,0,0.35)',
-              }}
-            >
-              <i className="fas fa-gift" /> Send a Blessing Gift
-            </button>
           </motion.div>
 
           <motion.div
@@ -677,36 +867,91 @@ const AudioCall = () => {
 
       {/* rating dialog */}
       {showRating && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: 'min(400px,92vw)', textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 6px', color: '#1f2937' }}>Rate your call</h3>
-            <p style={{ color: '#6b7280', fontSize: 13, marginTop: 0 }}>How was your call with {name}?</p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', margin: '14px 0', fontSize: 30 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: 'min(420px,92vw)', textAlign: 'center', boxShadow: '0 20px 30px rgba(0,0,0,0.25)' }}>
+            <h3 style={{ margin: '0 0 6px', color: '#1f2937', fontSize: 20, fontWeight: 700 }}>Rate your call</h3>
+            <p style={{ color: '#6b7280', fontSize: 14, marginTop: 0, marginBottom: 12 }}>How was your call with {name}?</p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', margin: '16px 0' }}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <span key={i} style={{ cursor: 'pointer', color: i <= ratingScore ? '#f5a623' : '#d1d5db' }} onClick={() => setRatingScore(i)}>★</span>
+                <span
+                  key={i}
+                  style={{
+                    cursor: 'pointer',
+                    color: i <= (hoverScore || ratingScore) ? '#f5a623' : '#d1d5db',
+                    fontSize: 34,
+                    transition: 'color 0.15s ease, transform 0.15s ease',
+                    transform: i <= (hoverScore || ratingScore) ? 'scale(1.2)' : 'scale(1)',
+                    display: 'inline-block',
+                    userSelect: 'none',
+                  }}
+                  onMouseEnter={() => setHoverScore(i)}
+                  onMouseLeave={() => setHoverScore(0)}
+                  onClick={() => setRatingScore(i)}
+                >
+                  ★
+                </span>
               ))}
             </div>
-            <textarea value={ratingReview} onChange={(e) => setRatingReview(e.target.value)}
-              placeholder="Write a short review (optional)" rows={3}
-              style={{ width: '100%', borderRadius: 12, border: '1px solid #e5e7eb', padding: 10, resize: 'none', fontSize: 13 }} />
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <button onClick={skipRating} style={{ flex: 1, padding: 12, borderRadius: 30, border: '1px solid #e5e7eb', background: '#fff', fontWeight: 600, cursor: 'pointer' }}>Skip</button>
-              <button onClick={submitRating} style={{ flex: 1, padding: 12, borderRadius: 30, border: 'none', background: '#7b1a3a', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Submit</button>
+            <textarea
+              value={ratingReview}
+              onChange={(e) => setRatingReview(e.target.value)}
+              placeholder="Write a short review (optional)"
+              rows={3}
+              style={{
+                width: '100%',
+                borderRadius: 12,
+                border: '1px solid #e5e7eb',
+                padding: 12,
+                resize: 'none',
+                fontSize: 13,
+                color: '#1f2937',
+                backgroundColor: '#ffffff',
+                outline: 'none',
+                boxSizing: 'border-box',
+                fontFamily: 'inherit',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+              <button
+                onClick={skipRating}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: 30,
+                  border: '1px solid #d1d5db',
+                  background: '#fff',
+                  color: '#374151',
+                  fontWeight: 600,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Skip
+              </button>
+              <button
+                onClick={submitRating}
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  borderRadius: 30,
+                  border: 'none',
+                  background: '#7b1a3a',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(123,26,58,0.25)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Submit
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      <SendGiftModal
-        isOpen={showGiftModal}
-        onClose={() => setShowGiftModal(false)}
-        astrologerName={name}
-        astrologerId={astrologer_id}
-        astrologerImage={pImg}
-        walletBalance={wallet}
-        showChatCallActions={false}
-      />
-   
     </div>
   );
 };

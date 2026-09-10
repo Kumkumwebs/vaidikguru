@@ -578,31 +578,51 @@
 }
 
 .diviniq-modal-card {
-  background: var(--diviniq-cream);
-  height: 550px ;
+  background: #ffffff !important;
+  color: #1f1320 !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: 90vh;
   border-radius: 28px;
-  padding: 22px 26px 20px;
-  max-width: 360px;
+  padding: 24px;
+  max-width: 400px;
   width: 100%;
   position: relative;
   overflow: hidden;
-  border: 2px solid transparent;
-  background-image:
-    linear-gradient(var(--diviniq-cream), var(--diviniq-cream)),
-    linear-gradient(135deg, var(--diviniq-gold), var(--diviniq-saffron), var(--diviniq-maroon));
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: 0 25px 60px rgba(122, 30, 30, 0.35);
+  border: 1.5px solid #f0e0cc;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+}
+
+.diviniq-modal-card h4,
+.diviniq-modal-card .diviniq-title {
+  color: #7B1F3A !important;
+  font-weight: 800 !important;
+}
+
+.diviniq-modal-card p,
+.diviniq-modal-card span,
+.diviniq-modal-card label {
+  color: #4a3b32 !important;
+}
+
+.diviniq-modal-card input.form-control {
+  color: #1f1320 !important;
+  background-color: #fdf8f2 !important;
+  border: 1.5px solid #e9ddc9 !important;
+}
+
+.diviniq-modal-card input.form-control::placeholder {
+  color: #6c757d !important;
+  opacity: 1 !important;
 }
 
 .diviniq-modal-card::before {
   content: '';
   position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  height: 6px;
-  border-radius: 28px 28px 0 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
   background: linear-gradient(90deg, var(--diviniq-maroon), var(--diviniq-saffron), var(--diviniq-gold), var(--diviniq-saffron), var(--diviniq-maroon));
 }
 

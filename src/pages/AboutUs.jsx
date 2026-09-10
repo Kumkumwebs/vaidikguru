@@ -8,6 +8,8 @@ import MobileMenu from '../components/layout/MobileMenu';
 import PopupSearch from '../components/layout/PopupSearch';
 import ScrollTop from '../components/common/ScrollTop';
 import FAQSection from '../components/home_comp/FAQSection';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 
 import './AboutUs.css';
 
@@ -546,7 +548,7 @@ const AppDownload = () => (
             <div className="ab-store-scan">Scan to Download</div>
             <div className="ab-store-sub">Get the VaidikGuru App Now</div>
             <div className="ab-store-btns">
-              <a href="https://play.google.com/store" className="ab-store-btn">
+              <a href="https://play.google.com/store/apps/details?id=com.app.vaidikguru" target="_blank" rel="noopener noreferrer" className="ab-store-btn">
                 <i className="fab fa-google-play" />
                 <span className="btn-txt"><small>GET IT ON</small>Google Play</span>
               </a>
@@ -618,6 +620,7 @@ const TrustBar = () => (
    MAIN PAGE
 ══════════════════════════════════════ */
 const AboutUs = () => {
+  useSEO(SEO.about);
   const [showSideMenu,   setShowSideMenu]   = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch,     setShowSearch]     = useState(false);

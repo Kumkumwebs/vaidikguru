@@ -14,6 +14,8 @@ import ScrollTop from '../components/common/ScrollTop';
 import SideMenu from '../components/layout/SideMenu';
 import PopupSearch from '../components/layout/PopupSearch';
 import MobileMenu from '../components/layout/MobileMenu';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 
 /* ── Reusable: icon-prefixed text input ── */
 const IconInput = ({ icon, error, ...props }) => (
@@ -102,6 +104,7 @@ const FileUploadField = ({ label, name, accept, file, error, hint, onFileSelect 
 };
 
 const AstrologerRegistration = () => {
+    useSEO(SEO.astrologerRegistration);
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -945,7 +948,7 @@ const AstrologerRegistration = () => {
                                     <div className="pp-app-sub">Get the VaidikGuru Astrologer App Now</div>
                                     <div className="pp-app-btns">
                                         <a
-                                            href="https://play.google.com/store/apps/details?id=com.astrologer.vaidikguru&hl=en_IN"
+                                            href="https://play.google.com/store/apps/details?id=com.astrologer.vaidikguru"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="pp-app-store-btn"

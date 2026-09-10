@@ -676,7 +676,7 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 															<p className={styles.helpTitle}>Help & Support</p>
 															<div className={styles.supportBox}>
 																<div className={styles.supportRow}>
-																	<span>+91 7615976021</span>
+																	<span>+91  8881110520</span>
 																	<p className={styles.supportTime}>Available: 10:30 AM - 7:30 PM</p>
 																</div>
 																<i className="fas fa-headset" style={{ color: '#f37335', fontSize: '1.2rem' }}></i>

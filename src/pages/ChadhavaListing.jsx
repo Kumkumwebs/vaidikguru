@@ -11,6 +11,8 @@ import ChadhavaService from '../services/chadhavaServices';
 import apiService from '../services/apiServices';
 import storageService from '../services/storageServices';
 import LoginOTPModal from '../components/accounts/LoginOTPModel';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 import './ChadhavaListing.css';
 import MobileBottomNav from '../components/layout/MobileNavbar';
 
@@ -19,7 +21,7 @@ import MobileBottomNav from '../components/layout/MobileNavbar';
 // mounted under a prefix. Follows the same pattern as other endpoints in
 // this codebase (https://admin.vaidikguru.com/user_api/..., /puja/..., etc).
 // Adjust the prefix below if your backend mounts it differently.
-const CONSULTATION_API = "https://admin.vaidikguru.com/user_api/new_consultation_add";
+const CONSULTATION_API = "/user_api/add_contact_us";
 
 /* ── helpers ── */
 const BADGE_MAP = [
@@ -168,12 +170,22 @@ const RecommendationModal = ({ isOpen, onClose }) => {
     setSubmitting(true);
     setResult(null);
     try {
-      const res = await apiService.post(CONSULTATION_API, {
-        service: "chadhava",
+      const payload = {
         name: name.trim(),
         phone: phone.trim(),
-        message: message.trim(),
-      });
+        number: phone.trim(),
+        mobile: phone.trim(),
+        subject: "Personalized Chadhava Recommendation",
+        message: message.trim() || "Request for personalized chadhava recommendation",
+        service: "chadhava",
+      };
+      let res = await apiService.post(CONSULTATION_API, payload).catch(() => null);
+      if (!res || !res.status) {
+        res = await apiService.post("https://admin.vaidikguru.com/user_api/add_contact_us", payload).catch(() => null);
+      }
+      if (!res || !res.status) {
+        res = await apiService.post("/user_api/new_consultation_add", payload).catch(() => null);
+      }
       if (res?.status) {
         setResult({ ok: true, msg: "Thanks! Our team will reach out to you shortly." });
       } else {
@@ -420,6 +432,7 @@ const SidebarContent = ({ filters, setFilters, onApply, searchVal, setSearchVal,
 
 /* ═══════════════════════ MAIN PAGE ═══════════════════════ */
 const ChadhavaListing = () => {
+  useSEO(SEO.chadhava);
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);

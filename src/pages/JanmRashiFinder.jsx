@@ -4,6 +4,8 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import ScrollTop from '../components/common/ScrollTop';
 import { useNavigate } from "react-router-dom";
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -67,6 +69,7 @@ const FaqItem = ({ num, q, a }) => {
 };
 
 const JanmaRashiFinder = () => {
+    useSEO(SEO.janmRashi);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);

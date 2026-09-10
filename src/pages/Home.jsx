@@ -17,12 +17,15 @@ import Footer from '../components/layout/Footer';
 import ScrollTop from '../components/common/ScrollTop';
 import LoginModal from '../components/common/LoginModal';
 import AuthService from '../services/authServices';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 import './home.css';
 import MobileBottomNav from '../components/layout/MobileNavbar';
 import AppPromoBanner from '../components/home_comp/AppPromoBanner';
 
 
 const Home = () => {
+	useSEO(SEO.home);
 	const [showSideMenu, setShowSideMenu] = useState(false);
 	const [showMobileMenu, setShowMobileMenu] = useState(false);
 	const [showSearch, setShowSearch] = useState(false);

@@ -282,8 +282,13 @@ const ChatCallingScreen = () => {
       startFirebaseFallback(serverChannelId);
     })();
 
+    // NOTE: deliberately no history.pushState here. It used to push a duplicate
+    // entry for this same URL, so the later navigate(..., { replace: true })
+    // into the call screen replaced only that duplicate and left the original
+    // "calling" entry underneath — browser Back from a live call then landed
+    // back here and re-fired callInitiate. The popstate listener below still
+    // cancels a pending call if the user backs out while it's ringing.
     const onPop = () => { cancel(); };
-    window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', onPop);
 
     return () => {

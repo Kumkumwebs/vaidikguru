@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
 import UserDetailsModal from "../common/ChadhavaUserDetailsModel";
 import ScrollToTop from "./ScrollToTop";
@@ -9,6 +9,7 @@ import PopupSearch from "../layout/PopupSearch";
 import MobileMenu from "../layout/MobileMenu";
 import Header from "../layout/Header";
 import apiService from "../../services/apiServices";
+import ChadhavaService from "../../services/chadhavaServices";
 import { useStorage } from '../../context/StorageContext';
 import "../sections/Chadhavacartpage.css";
 
@@ -38,6 +39,7 @@ const handleImgError = (e) => {
 
 const ChadhavaCartPage = () => {
 	const navigate = useNavigate();
+	const location = useLocation();
 	const [paymentMode, setPaymentMode] = useState("razorpay");
 	const [errorMessage, seterrorMessage] = useState("");
 	const {
@@ -53,6 +55,7 @@ const ChadhavaCartPage = () => {
 	const [showSearch, setShowSearch] = useState(false);
 
 	const [cartResponse, setCartResponse] = useState(null);
+	const [loading, setLoading] = useState(true);
 	const [mergedCart, setMergedCart] = useState([]);
 	const [walletBalance, setWalletBalance] = useState(0);
 	const [userDetails, setUserDetails] = useState(
@@ -65,48 +68,195 @@ const ChadhavaCartPage = () => {
 	const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
 	const [couponCode, setCouponCode] = useState('');
 	const [appliedDiscount, setAppliedDiscount] = useState(0);
+	const [couponError, setCouponError] = useState('');
 
 	const fetchCartFromServer = useCallback(async () => {
 		try {
+			const targetId = location.state?.chadhavaId || contextActiveChadhavaId || sessionStorage.getItem('activeChadhavaId');
 			const response = await apiService.postBearer('/puja/getChadhavaCart', {});
-			if (response && response.status === true && response.data.length > 0) {
-				const rawData = response.data[0];
+			
+			let rawData = null;
+			if (response && response.status === true && Array.isArray(response.data) && response.data.length > 0) {
+				if (targetId) {
+					rawData = response.data.find(item => {
+						const itemChadhavaId = item.chadhava_id?._id || item.chadhava_id || item._id;
+						return String(itemChadhavaId) === String(targetId);
+					});
+				}
+				// If targetId was given but not found in existing backend cart array, OR if no targetId was given
+				if (!rawData) {
+					const lastItem = response.data[response.data.length - 1];
+					if (!targetId || String(lastItem.chadhava_id?._id || lastItem.chadhava_id) === String(targetId)) {
+						rawData = lastItem;
+					}
+				}
+			}
+
+			// If targetId exists but backend cart array didn't have it, attempt to add targetId to cart and fetch item details
+			if (!rawData && targetId) {
+				try {
+					await apiService.postBearer('/puja/ChadhavaaddToCart', {
+						chadhava_id: targetId,
+						addons_selected: [],
+						prasad_selected: [],
+					});
+					const retryRes = await apiService.postBearer('/puja/getChadhavaCart', {});
+					if (retryRes && retryRes.status === true && Array.isArray(retryRes.data) && retryRes.data.length > 0) {
+						rawData = retryRes.data.find(item => {
+							const itemChadhavaId = item.chadhava_id?._id || item.chadhava_id || item._id;
+							return String(itemChadhavaId) === String(targetId);
+						}) || retryRes.data[retryRes.data.length - 1];
+					}
+				} catch (e) {
+					console.error('Failed to sync target Chadhava to cart:', e);
+				}
+
+				// If still not in cart array, fetch single Chadhava details directly from ChadhavaService
+				if (!rawData) {
+					try {
+						const singleRes = await ChadhavaService.getChadhavaListById(targetId);
+						if (singleRes && singleRes.status) {
+							const record = singleRes.chadhava || (Array.isArray(singleRes.data) ? singleRes.data[0] : singleRes.data) || singleRes.result;
+							if (record) {
+								rawData = {
+									chadhava_id: record,
+									addons_selected: [],
+									prasad_selected: [],
+									total_chadhava_amount: Number(record.price || record.chadhavaPrice || 0),
+									grand_total: Number(record.price || record.chadhavaPrice || 0),
+								};
+							}
+						}
+					} catch (e) {
+						console.error('Failed to fetch single Chadhava details:', e);
+					}
+				}
+			}
+
+			if (!rawData && response && response.status === true && Array.isArray(response.data) && response.data.length > 0) {
+				rawData = response.data[response.data.length - 1];
+			}
+
+			if (rawData) {
+				let fullChadhava = typeof rawData.chadhava_id === 'object' ? rawData.chadhava_id : null;
+				const cId = fullChadhava?._id || rawData.chadhava_id || targetId;
+
+				if (cId) {
+					try {
+						const singleRes = await ChadhavaService.getChadhavaListById(cId);
+						if (singleRes && singleRes.status) {
+							const record = singleRes.chadhava || (Array.isArray(singleRes.data) ? singleRes.data[0] : singleRes.data) || singleRes.result;
+							if (record) {
+								fullChadhava = { ...record, ...fullChadhava };
+							}
+						}
+					} catch (e) {
+						console.error('Failed to fetch master Chadhava details:', e);
+					}
+				}
+
+				if (fullChadhava) {
+					rawData = { ...rawData, chadhava_id: fullChadhava };
+				}
 				setCartResponse(rawData);
-				const masterAddons = rawData.chadhava_id.addons || [];
-				const masterPrasad = rawData.chadhava_id.prasad || [];
 
-				const addons = (rawData.addons_selected || []).map(sel => {
-					const d = masterAddons.find(m => m._id === sel.addon_id);
+				const masterAddons = rawData.chadhava_id?.addons || [];
+				const masterPrasad = rawData.chadhava_id?.prasad || [];
+
+				let addons = (rawData.addons_selected || []).map(sel => {
+					const addonObj = typeof sel.addon_id === 'object' ? sel.addon_id : null;
+					const selId = addonObj?._id || addonObj?.id || (typeof sel.addon_id === 'string' ? sel.addon_id : null) || sel._id || sel.id;
+					const d = masterAddons.find(m => String(m._id || m.id) === String(selId)) || addonObj || {};
+					const price = Number(
+						d?.pamount ?? d?.price ?? d?.amount ??
+						addonObj?.pamount ?? addonObj?.price ?? addonObj?.amount ??
+						sel.price ?? sel.pamount ?? sel.amount ?? 0
+					);
 					return {
 						...sel,
+						addon_id: selId,
 						type: 'addon',
-						name: d?.pname,
-						image: d?.pimage,
-						price: d?.pamount,
+						name: d?.pname || d?.name || d?.title || sel.name || 'Addon',
+						image: d?.pimage || d?.image || sel.image,
+						price: price,
+						qty: Number(sel.qty || sel.quantity || 1),
 					};
 				});
 
-				const prasads = (rawData.prasad_selected || []).map(sel => {
-					const d = masterPrasad.find(m => m._id === sel.prasad_id);
+				let prasads = (rawData.prasad_selected || []).map(sel => {
+					const prasadObj = typeof sel.prasad_id === 'object' ? sel.prasad_id : null;
+					const selId = prasadObj?._id || prasadObj?.id || (typeof sel.prasad_id === 'string' ? sel.prasad_id : null) || sel._id || sel.id;
+					const d = masterPrasad.find(m => String(m._id || m.id) === String(selId)) || prasadObj || {};
+					const price = Number(
+						d?.amount ?? d?.price ?? d?.pamount ??
+						prasadObj?.amount ?? prasadObj?.price ?? prasadObj?.pamount ??
+						sel.price ?? sel.amount ?? sel.pamount ?? 0
+					);
 					return {
 						...sel,
+						prasad_id: selId,
 						type: 'prasad',
-						name: d?.name,
-						image: d?.image,
-						price: d?.amount,
+						name: d?.name || d?.title || sel.name || 'Prasad',
+						image: d?.image || sel.image,
+						price: price,
+						qty: Number(sel.qty || sel.quantity || 1),
 					};
 				});
+
+				const allMasterAddons = [...masterAddons, ...(location.state?.chadhava?.addons || [])];
+				const allMasterPrasad = [...masterPrasad, ...(location.state?.chadhava?.prasad || [])];
+
+				// Fallback to location.state if API returned empty addons/prasads
+				if (addons.length === 0 && location.state?.addonQtys && Object.keys(location.state.addonQtys).length > 0) {
+					Object.entries(location.state.addonQtys).forEach(([aId, qty]) => {
+						if (qty > 0 && aId !== '[object Object]') {
+							const d = allMasterAddons.find(m => String(m._id || m.id) === String(aId));
+							if (d) {
+								addons.push({
+									addon_id: aId,
+									type: 'addon',
+									name: d.pname || d.name || 'Addon',
+									image: d.pimage || d.image,
+									price: Number(d.pamount ?? d.price ?? d.amount ?? 0),
+									qty: Number(qty),
+								});
+							}
+						}
+					});
+				}
+
+				if (prasads.length === 0 && location.state?.prasadQtys && Object.keys(location.state.prasadQtys).length > 0) {
+					Object.entries(location.state.prasadQtys).forEach(([pId, qty]) => {
+						if (qty > 0 && pId !== '[object Object]') {
+							const d = allMasterPrasad.find(m => String(m._id || m.id) === String(pId));
+							if (d) {
+								prasads.push({
+									prasad_id: pId,
+									type: 'prasad',
+									name: d.name || 'Prasad',
+									image: d.image,
+									price: Number(d.amount ?? d.price ?? d.pamount ?? 0),
+									qty: Number(qty),
+								});
+							}
+						}
+					});
+				}
 
 				setMergedCart([...addons, ...prasads]);
-				setActiveChadhavaId(rawData.chadhava_id._id);
+				if (rawData.chadhava_id?._id) {
+					setActiveChadhavaId(rawData.chadhava_id._id);
+				}
 			} else {
 				setCartResponse(null);
 				setMergedCart([]);
 			}
 		} catch (error) {
 			console.error('Cart fetch error:', error);
+		} finally {
+			setLoading(false);
 		}
-	}, []);
+	}, [location.state, contextActiveChadhavaId, setActiveChadhavaId]);
 	const fetchWalletBalance = useCallback(async () => {
 		try {
 			const res = await apiService.getBearer('/user_api/get_profile');
@@ -147,9 +297,10 @@ const ChadhavaCartPage = () => {
 			})
 			.filter(i => i.qty > 0);
 		setMergedCart(tempCart);
+		const activeId = cartResponse?.chadhava_id?._id || location.state?.chadhavaId || contextActiveChadhavaId;
 		try {
 			const payload = {
-				chadhava_id: contextActiveChadhavaId,
+				chadhava_id: activeId,
 				addons_selected: tempCart
 					.filter(i => i.type === 'addon')
 					.map(i => ({ addon_id: i.addon_id, qty: i.qty })),
@@ -168,10 +319,12 @@ const ChadhavaCartPage = () => {
 	};
 
 	const handlePayNow = async () => {
-		if (!userDetails.name) return setIsEditModalOpen(true);
+		const nameToUse = userDetails?.name || contextDevoteeDetails?.name || 'Devotee';
+		const whatsappToUse = userDetails?.whatsapp || contextDevoteeDetails?.whatsapp || '';
+		const activeId = cartResponse?.chadhava_id?._id || location.state?.chadhavaId || contextActiveChadhavaId;
 		try {
 			const payload = {
-				chadhava_id: contextActiveChadhavaId,
+				chadhava_id: activeId,
 				addons_selected: mergedCart
 					.filter(i => i.type === 'addon')
 					.map(i => ({ addon_id: i.addon_id, qty: i.qty })),
@@ -179,7 +332,7 @@ const ChadhavaCartPage = () => {
 					.filter(i => i.type === 'prasad')
 					.map(i => ({ prasad_id: i.prasad_id, qty: i.qty })),
 				payment_mode: paymentMode,
-				userDetails: { name: userDetails.name, whatsapp: userDetails.whatsapp },
+				userDetails: { name: nameToUse, whatsapp: whatsappToUse },
 			};
 			const res = await apiService.postBearer(
 				'/puja/createChadhavaBooking',
@@ -211,8 +364,8 @@ const ChadhavaCartPage = () => {
 							window.location.replace(redirectTarget);
 						},
 						prefill: {
-							name: userDetails.name,
-							contact: userDetails.whatsapp,
+							name: nameToUse,
+							contact: whatsappToUse,
 						},
 						theme: {
 							color: "#7B1F3A",
@@ -230,8 +383,16 @@ const ChadhavaCartPage = () => {
 					rzp.open();
 					return;
 				}
-				// For other payment modes, directly redirect to Chadhava history
+				// For other payment modes (e.g. Wallet), update payment status via API and redirect
 				else {
+					const bookingId = res.orderId || res.order_id || res.id || res.chadhava_booking_id || res.booking?._id || res.results?._id;
+					if (bookingId) {
+						try {
+							await apiService.getBearer(`/puja/chadhava_payment_status/${bookingId}`);
+						} catch (err) {
+							console.error("Failed to update wallet payment status:", err);
+						}
+					}
 					try { fetchWalletBalance(); } catch (err) { console.error(err); }
 					window.location.replace('/my_chadhava_booking');
 				}
@@ -262,11 +423,16 @@ const ChadhavaCartPage = () => {
 
 
 	const applyCoupon = () => {
-		if (couponCode.toUpperCase() === 'FIRST100') {
+		if (!couponCode || !couponCode.trim()) {
+			setCouponError('Please enter a coupon code.');
+			return;
+		}
+		if (couponCode.trim().toUpperCase() === 'FIRST100') {
 			setAppliedDiscount(100);
+			setCouponError('');
 			setIsCouponModalOpen(false);
 		} else {
-			alert('Invalid Coupon Code');
+			setCouponError('Invalid Coupon Code');
 		}
 	};
 
@@ -417,8 +583,32 @@ const ChadhavaCartPage = () => {
 
 	const formatINR = (n) => (Number(n) || 0).toLocaleString('en-IN');
 
-	const subtotal = cartResponse?.grand_total || 0;
-	const totalAmount = subtotal - appliedDiscount + 10;
+	const mainChadhavaPrice = Number(
+		cartResponse?.chadhava_id?.price ??
+		cartResponse?.chadhava_id?.offer_price ??
+		cartResponse?.chadhava_id?.chadhavaPrice ??
+		cartResponse?.chadhava_id?.amount ??
+		cartResponse?.chadhava_id?.chadhava_price ??
+		cartResponse?.chadhava_id?.pamount ??
+		(cartResponse?.total_chadhava_amount > 0 ? cartResponse?.total_chadhava_amount : null) ??
+		(cartResponse?.chadhava_amount > 0 ? cartResponse?.chadhava_amount : null) ??
+		0
+	);
+
+	const itemsCalculatedSum = mergedCart.reduce((sum, item) => {
+		const itemPrice = Number(item.price) || 0;
+		const itemQty = Number(item.qty) || 1;
+		return sum + (itemPrice * itemQty);
+	}, 0);
+
+	const calculatedTotal = mainChadhavaPrice + itemsCalculatedSum;
+
+	const subtotal = calculatedTotal > 0
+		? calculatedTotal
+		: Number(cartResponse?.grand_total || cartResponse?.total_amount || 0);
+
+	const platformFee = Number(cartResponse?.platform_fee ?? cartResponse?.platformFee ?? 10);
+	const totalAmount = Math.max(0, subtotal - appliedDiscount + platformFee);
 
 	return (
 			<div className="main-wrapper bg-white">
@@ -450,7 +640,14 @@ const ChadhavaCartPage = () => {
 			</div>
 
 			<div className="container cc-body">
-				{!cartResponse ? (
+				{loading ? (
+					<div className="text-center py-5 my-5">
+						<div className="spinner-border text-warning" role="status" style={{ width: '3rem', height: '3rem', color: '#ff6b00' }}>
+							<span className="visually-hidden">Loading...</span>
+						</div>
+						<h5 className="mt-3 text-muted fw-semibold">Loading your sacred offerings...</h5>
+					</div>
+				) : !cartResponse ? (
 					<EmptyCartView />
 				) : (
 					<>
@@ -480,16 +677,16 @@ const ChadhavaCartPage = () => {
 
 								<div className="cc-offering-card">
 									<img
-										src={cartResponse.chadhava_id.chadhavaImage}
+										src={cartResponse.chadhava_id?.chadhavaImage || cartResponse.chadhava_id?.image}
 										alt=""
 										onError={handleImgError}
 									/>
 									<div className="cc-offering-info">
-										<h6>{cartResponse.chadhava_id.title}</h6>
+										<h6>{cartResponse.chadhava_id?.title || cartResponse.chadhava_id?.name || "Chadhava Offering"}</h6>
 									</div>
-									{/* <div className="cc-offering-price">
-										₹{formatINR(cartResponse.total_chadhava_amount)}
-									</div> */}
+									<div className="cc-offering-price">
+										₹{formatINR(mainChadhavaPrice)}
+									</div>
 								</div>
 
 								{mergedCart.map((item, idx) => (
@@ -544,13 +741,25 @@ const ChadhavaCartPage = () => {
 										</div>
 
 										<div className="cc-summary-row">
+											<span>Chadhava Amount</span>
+											<span>₹{formatINR(mainChadhavaPrice)}</span>
+										</div>
+										{mergedCart.map((item, idx) => (
+											<div key={idx} className="cc-summary-row" style={{ fontSize: '13px', color: '#666' }}>
+												<span>{item.name} {item.qty > 1 ? `(x${item.qty})` : ''}</span>
+												<span>₹{formatINR(Number(item.price) * Number(item.qty || 1))}</span>
+											</div>
+										))}
+										<div className="cc-summary-row" style={{ fontWeight: 600 }}>
 											<span>Subtotal</span>
 											<span>₹{formatINR(subtotal)}</span>
 										</div>
-										<div className="cc-summary-row">
-											<span>Platform Fee</span>
-											<span>₹10</span>
-										</div>
+										{platformFee > 0 && (
+											<div className="cc-summary-row">
+												<span>Platform Fee</span>
+												<span>₹{formatINR(platformFee)}</span>
+											</div>
+										)}
 										{appliedDiscount > 0 && (
 											<div className="cc-summary-row discount">
 												<span>Coupon Discount</span>
@@ -635,28 +844,101 @@ const ChadhavaCartPage = () => {
 						onClick={() => setIsCouponModalOpen(false)}
 					>
 						<motion.div
-							initial={{ scale: 0.9, opacity: 0 }}
-							animate={{ scale: 1, opacity: 1 }}
-							exit={{ scale: 0.9, opacity: 0 }}
-							className="diviniq-modal-card p-4"
+							initial={{ scale: 0.9, opacity: 0, y: 20 }}
+							animate={{ scale: 1, opacity: 1, y: 0 }}
+							exit={{ scale: 0.9, opacity: 0, y: 20 }}
+							className="diviniq-modal-card p-4 text-center position-relative"
+							style={{ maxWidth: '420px', height: 'auto', background: '#ffffff', color: '#1f1320' }}
 							onClick={e => e.stopPropagation()}
 						>
-							<div className="modal-accent-line mx-auto mb-3"></div>
-							<h4 className="fw-bold text-center mb-4">Apply Coupon</h4>
-							<div className="form-group mb-4">
+							<button
+								type="button"
+								className="diviniq-close-btn"
+								onClick={() => setIsCouponModalOpen(false)}
+								aria-label="Close"
+							>
+								<i className="fas fa-times"></i>
+							</button>
+
+							<div
+								className="d-flex align-items-center justify-content-center mx-auto mb-3"
+								style={{
+									width: '56px',
+									height: '56px',
+									borderRadius: '50%',
+									background: 'rgba(123, 31, 58, 0.1)',
+									color: '#7B1F3A',
+									fontSize: '22px',
+								}}
+							>
+								<i className="fas fa-tags"></i>
+							</div>
+
+							<h4 className="fw-bold mb-1" style={{ color: '#7B1F3A', fontFamily: 'Cormorant Garamond, serif', fontSize: '24px' }}>
+								Apply Coupon
+							</h4>
+							<p className="small mb-4" style={{ color: '#4a3b32', fontSize: '13.5px' }}>
+								Enter your coupon code to receive discounts on your sacred offerings.
+							</p>
+
+							<div className="form-group mb-2">
 								<input
 									type="text"
-									className="form-control text-center py-3 rounded-pill"
+									className={`form-control text-center py-3 rounded-pill fw-bold text-uppercase ${couponError ? 'is-invalid' : ''}`}
+									style={{
+										letterSpacing: '2px',
+										borderColor: couponError ? '#dc3545' : '#d7c8b0',
+										fontSize: '15px',
+										color: '#1f1320',
+										background: '#fdf8f2',
+									}}
 									placeholder="Enter Code (e.g. FIRST100)"
 									value={couponCode}
-									onChange={e => setCouponCode(e.target.value)}
+									onChange={e => {
+										setCouponCode(e.target.value);
+										if (couponError) setCouponError('');
+									}}
 								/>
 							</div>
+
+							{couponError && (
+								<motion.div
+									initial={{ opacity: 0, y: -5 }}
+									animate={{ opacity: 1, y: 0 }}
+									className="text-danger small fw-bold mb-3 d-flex align-items-center justify-content-center gap-1"
+								>
+									<i className="fas fa-exclamation-circle"></i> {couponError}
+								</motion.div>
+							)}
+
+							{/* Quick Coupon Badge */}
+							<div className="d-flex align-items-center justify-content-center gap-2 mb-4">
+								<span className="small fw-semibold" style={{ color: '#4a3b32' }}>Available:</span>
+								<button
+									type="button"
+									className="btn btn-sm fw-bold rounded-pill px-3 py-1"
+									style={{
+										fontSize: '12px',
+										border: '1.5px dashed #7B1F3A',
+										background: '#FFF8ED',
+										color: '#7B1F3A',
+									}}
+									onClick={() => {
+										setCouponCode('FIRST100');
+										setCouponError('');
+									}}
+								>
+									<i className="fas fa-ticket-alt me-1 text-danger"></i> FIRST100
+								</button>
+							</div>
+
 							<button
-								className="th-btn w-100 rounded-pill"
+								type="button"
+								className="cc-pay-btn mt-0 w-100"
+								style={{ borderRadius: '999px', padding: '14px' }}
 								onClick={applyCoupon}
 							>
-								Apply Code
+								Apply Code <i className="fas fa-arrow-right ms-1"></i>
 							</button>
 						</motion.div>
 					</div>

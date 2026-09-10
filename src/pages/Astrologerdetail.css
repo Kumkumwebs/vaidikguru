@@ -79,15 +79,15 @@
 
 /* ── GALLERY WITH ARROWS ── */
 .ad-gallery-wrap { position:relative; }
-.ad-gallery { display:flex; gap:8px; overflow:hidden; scroll-behavior:smooth; }
-.ad-gal-img { width:72px; height:72px; min-width:72px; border-radius:10px; object-fit:cover; object-position:center top; cursor:pointer; border:2px solid transparent; transition:all .2s; display:block; }
-.ad-gal-img:hover { border-color:#7c1d40; transform:scale(1.04); }
+.ad-gallery { display:flex; gap:10px; overflow:hidden; scroll-behavior:smooth; }
+.ad-gal-img { width:90px; height:150px; min-width:90px; border-radius:12px; object-fit:cover; object-position:center top; cursor:pointer; border:2px solid transparent; transition:all .2s; display:block; }
+.ad-gal-img:hover { border-color:#7c1d40; transform:scale(1.03); }
 .ad-gal-arrow {
   position:absolute; top:50%; transform:translateY(-50%);
-  width:24px; height:24px; border-radius:50%;
+  width:26px; height:26px; border-radius:50%;
   background:rgba(255,255,255,.95); border:1px solid #e5e7eb;
   display:flex; align-items:center; justify-content:center;
-  font-size:10px; color:#374151; cursor:pointer;
+  font-size:11px; color:#374151; cursor:pointer;
   box-shadow:0 2px 8px rgba(0,0,0,.12);
   transition:all .18s; z-index:2;
 }
@@ -96,9 +96,9 @@
 .ad-gal-arrow.right { right:-12px; }
 
 /* Video */
-.ad-vid-wrap { position:relative; border-radius:12px; overflow:hidden; background:#111; cursor:pointer; }
-.ad-vid-wrap img { width:100%; height:100%; object-fit:cover; display:block; opacity:.78; }
-.ad-vid-play { position:absolute; top:57%; left:50%; transform:translate(-50%,-50%); width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,.92); display:flex; align-items:center; justify-content:center; font-size:16px; color:#7c1d40; border:none; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.22); }
+.ad-vid-wrap { position:relative; border-radius:12px; overflow:hidden; background:#111; cursor:pointer; height: 220px; }
+.ad-vid-wrap img { width:100%; height:100%; object-fit:cover; object-position:center 20%; display:block; opacity:.88; }
+.ad-vid-play { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,.92); display:flex; align-items:center; justify-content:center; font-size:18px; color:#7c1d40; border:none; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.22); }
 .ad-vid-lbl { font-size:11px; color:#6b7280; margin-top:6px; text-align:center; }
 
 /* ── CONSULTATION PROCESS ── */
@@ -183,7 +183,42 @@
 @keyframes adpulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
 .ad-avail-txt { font-size:13px; font-weight:700; color:#16a34a; }
 .ad-avail-txt.busy { color:#d97706; }
-.ad-resp-time { font-size:12px; color:#6b7280; margin-bottom:18px; }
+.ad-resp-time { font-size:12px; color:#4b5563; font-weight:500; margin-bottom:14px; }
+
+/* ── BUSY QUEUE WAIT CARDS ── */
+.ad-wait-row { display: flex; gap: 8px; margin-bottom: 12px; width: 100%; }
+.ad-wait-card {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
+  padding: 10px 10px; background: #fff7ed; border: 1.5px solid #fde68a;
+  border-radius: 10px; transition: all .2s ease;
+}
+.ad-wait-card i { font-size: 16px; color: #d97706; flex-shrink: 0; }
+.ad-wait-lbl { font-size: 12.5px; font-weight: 700; color: #92400e; line-height: 1.2; }
+.ad-wait-val { font-size: 11px; font-weight: 600; color: #b45309; margin-top: 1px; white-space: nowrap; }
+
+/* ── PER-MINUTE RATES (chat / call / video) ── */
+.ad-rates { display:flex; gap:6px; margin-bottom:16px; }
+.ad-rate {
+  flex:1; min-width:0; text-align:center; line-height:1.3;
+  background:#fdf7f9; border:1px solid #f3d9e3; border-radius:10px; padding:7px 3px;
+}
+.ad-rate i    { display:block; font-size:11px; color:#7c1d40; margin-bottom:3px; }
+.ad-rate b    { display:block; font-size:13.5px; font-weight:800; color:#111827; }
+.ad-rate span { display:block; font-size:9.5px; font-weight:600; color:#9ca3af; white-space:nowrap; }
+.ad-rate.off  { opacity:.42; }
+
+/* Video call button */
+.ad-btn-video {
+  width:100%; padding:13px 16px 11px; border-radius:12px;
+  background:linear-gradient(135deg,#521721 0%,#7c1d40 100%); color:#fff; border:none;
+  cursor:pointer; margin-bottom:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  transform:none !important; box-shadow:0 4px 14px rgba(82,23,33,.25) !important; transition:all .18s;
+  text-decoration:none;
+}
+.ad-btn-video:hover { opacity:.92; color:#fff; }
+.ad-btn-video-main { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; }
+.ad-btn-video-sub  { font-size:11px; opacity:.85; }
 .ad-btn-chat { width:100%; padding:14px 16px 12px; border-radius:12px; background:linear-gradient(135deg,#6b1a3a 0%,#9b2355 55%,#7c1d40 100%); color:#fff; border:none; cursor:pointer; margin-bottom:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; transform:none !important; box-shadow:0 4px 14px rgba(107,26,58,.3) !important; transition:opacity .18s; }
 .ad-btn-chat:hover { opacity:.92; }
 .ad-btn-chat.busy { background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%) !important; box-shadow:0 4px 14px rgba(217,119,6,.3) !important; }
@@ -236,7 +271,7 @@
 .ad-gifts-card { background:#fff; border-radius:16px; border:1px solid #f3d9e3; padding:16px; box-shadow:0 2px 14px rgba(124,29,64,.07); }
 .ad-gifts-title { font-size:14px; font-weight:800; color:#111827; margin-bottom:12px; display:flex; align-items:center; gap:7px; }
 .ad-gifts-title i { color:#d97706; }
-.ad-gift-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:86px; }
+.ad-gift-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
 .ad-gift-item { text-align:center; padding:8px 4px; border-radius:9px; border:1.5px solid transparent; cursor:pointer; transition:all .18s; }
 .ad-gift-item:hover { border-color:#f3d9e3; background:#fdf4f7; }
 .ad-gift-img { width:50px; height:50px; object-fit:cover; border-radius:9px; margin-bottom:4px; }
@@ -346,49 +381,144 @@
   .ad-mobile-cta-bar {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 14px;
-    z-index: 500;
+    left: 10px;
+    right: 10px;
+    bottom: 12px;
+    z-index: 999;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(243, 217, 227, 0.9);
+    border-radius: 999px;
+    padding: 6px 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
   }
+
+  .ad-mobile-status-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-left: 4px;
+  }
+  .ad-mobile-status-dot.online {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+  }
+  .ad-mobile-status-dot.busy {
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+  }
+  .ad-mobile-status-dot.offline {
+    background: #9ca3af;
+  }
+
   .ad-mobile-chat-btn,
   .ad-mobile-call-btn {
     flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    height: 52px;
-    border-radius: 30px;
-    font-size: 14.5px;
+    gap: 6px;
+    height: 44px;
+    border-radius: 999px;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    border: none;
-    box-shadow: 0 6px 18px rgba(0,0,0,.18);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: none !important;
+    text-decoration: none;
   }
+  .ad-mobile-chat-btn span,
+  .ad-mobile-call-btn span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Chat button: White pill with orange border */
   .ad-mobile-chat-btn {
-    position: relative;
-    background: #fff;
-    color: #FF6F00;
-    border: 1.5px solid #FF6F00;
-    margin-left: 14px;
+    background: #ffffff;
+    color: #ea580c;
+    border: 2px solid #ea580c;
+    box-shadow: 0 3px 10px rgba(234, 88, 12, 0.15);
   }
-  .ad-mobile-chat-btn::before {
-    content: '';
-    position: absolute;
-    left: -14px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #f59e0b;
+  .ad-mobile-chat-btn i {
+    color: #ea580c;
+    font-size: 14px;
+    flex-shrink: 0;
   }
+  .ad-mobile-chat-btn:hover {
+    background: #fff7ed;
+    color: #c2410c;
+    border-color: #c2410c;
+    box-shadow: 0 6px 18px rgba(234, 88, 12, 0.3);
+    transform: translateY(-2px) !important;
+  }
+  .ad-mobile-chat-btn:active {
+    transform: translateY(0) !important;
+  }
+
+  /* Call button: Solid dark maroon pill */
   .ad-mobile-call-btn {
-    background: linear-gradient(135deg, #521721, #B8493C);
-    color: #fff;
+    background: linear-gradient(135deg, #7c1d40, #521721);
+    color: #ffffff;
+    border: 2px solid transparent;
+    box-shadow: 0 3px 10px rgba(82, 23, 33, 0.22);
   }
+  .ad-mobile-call-btn i {
+    color: #ffffff;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .ad-mobile-call-btn:hover {
+    background: linear-gradient(135deg, #9b2355, #6b1a3a);
+    box-shadow: 0 6px 18px rgba(82, 23, 33, 0.4);
+    transform: translateY(-2px) !important;
+  }
+  .ad-mobile-call-btn:active {
+    transform: translateY(0) !important;
+  }
+
+  /* Video button: Dark maroon square */
+  .ad-mobile-video-btn {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #521721, #7c1d40);
+    color: #f59e0b;
+    font-size: 15px;
+    box-shadow: 0 3px 10px rgba(82, 23, 33, 0.22);
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ad-mobile-video-btn i {
+    color: #f59e0b;
+  }
+  .ad-mobile-video-btn:hover {
+    background: linear-gradient(135deg, #6b1a3a, #9b2355);
+    box-shadow: 0 6px 18px rgba(82, 23, 33, 0.4);
+    transform: translateY(-2px) scale(1.06) !important;
+  }
+  .ad-mobile-video-btn:active {
+    transform: translateY(0) scale(0.96) !important;
+  }
+
   .ad-page { padding-bottom: 80px; }
+}
+
+@media (max-width: 480px) {
+  .ad-mobile-cta-bar { left: 8px; right: 8px; bottom: 10px; padding: 5px 6px; gap: 5px; }
+  .ad-mobile-chat-btn, .ad-mobile-call-btn { height: 40px; font-size: 12px; gap: 4px; }
+  .ad-mobile-video-btn { width: 40px; height: 40px; font-size: 14px; flex-shrink: 0; }
+  .ad-mobile-status-dot { width: 11px; height: 11px; margin-left: 2px; }
 }

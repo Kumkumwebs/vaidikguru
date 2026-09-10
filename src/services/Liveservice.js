@@ -165,9 +165,12 @@ export async function lastCallList() {
  * mp3 uses the mp3 endpoint first (server expects the .mp3 extension there).
  */
 export async function uploadChatFile(file, { isAudio = false } = {}) {
+  const fileName = file.name || (isAudio ? 'audio.mp3' : 'chat_image.jpg');
+
   const tryEndpoint = async (path) => {
     const fd = new FormData();
-    fd.append('image', file);
+    fd.append('image', file, fileName);
+    fd.append('file', file, fileName);
     return apiService.postMultipart(path, fd);
   };
 
@@ -177,8 +180,8 @@ export async function uploadChatFile(file, { isAudio = false } = {}) {
       data = await tryEndpoint(ENDPOINTS.upload_file);
     }
     if (data?.status === true && data?.results) return data.results;
-  } catch {
-    /* fall through */
+  } catch (err) {
+    console.error('[uploadChatFile] upload failed:', err?.response?.data || err.message);
   }
   return null;
 }

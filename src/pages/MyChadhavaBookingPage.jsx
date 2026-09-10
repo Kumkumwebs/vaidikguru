@@ -53,13 +53,25 @@ const ChadhavaBookingListPage = () => {
     navigate(`/my-chadhava-booking/${item._id}`, { state: { booking: item } });
   };
 
-  const getStatusClass = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'success': return 'success';
-      case 'pending': return 'pending';
-      case 'failed': return 'failed';
-      default: return 'default';
+  const getItemStatus = (item) => {
+    const s = item.payment_status?.toLowerCase();
+    const m = item.payment_mode?.toLowerCase();
+    if (s === 'success' || s === 'paid' || s === 'completed' || m === 'wallet') {
+      return 'Success';
     }
+    if (s === 'failed') return 'Failed';
+    return item.payment_status || 'Pending';
+  };
+
+  const getStatusClass = (status, mode) => {
+    const s = status?.toLowerCase();
+    const m = mode?.toLowerCase();
+    if (s === 'success' || s === 'paid' || s === 'completed' || m === 'wallet') {
+      return 'success';
+    }
+    if (s === 'pending') return 'pending';
+    if (s === 'failed') return 'failed';
+    return 'default';
   };
 
   const filteredBookings = useMemo(() => {
@@ -67,7 +79,7 @@ const ChadhavaBookingListPage = () => {
 
     if (statusFilter !== "all") {
       list = list.filter(
-        (item) => item.payment_status?.toLowerCase() === statusFilter
+        (item) => getItemStatus(item).toLowerCase() === statusFilter
       );
     }
 
@@ -85,9 +97,9 @@ const ChadhavaBookingListPage = () => {
   const statusCounts = useMemo(() => {
     const counts = { success: 0, pending: 0 };
     bookings.forEach((item) => {
-      const s = item.payment_status?.toLowerCase();
-      if (s === 'success') counts.success += 1;
-      if (s === 'pending') counts.pending += 1;
+      const st = getItemStatus(item).toLowerCase();
+      if (st === 'success') counts.success += 1;
+      else if (st === 'pending') counts.pending += 1;
     });
     return counts;
   }, [bookings]);
@@ -210,7 +222,8 @@ const ChadhavaBookingListPage = () => {
           /* --- GRID VIEW --- */
           <div className="row g-4 py-20">
             {filteredBookings.map((item) => {
-              const statusClass = getStatusClass(item.payment_status);
+              const displaySt = getItemStatus(item);
+              const statusClass = getStatusClass(displaySt, item.payment_mode);
               return (
                 <div key={item._id} className="col-xl-4 col-md-6">
                   <div className="cb-card">
@@ -235,7 +248,7 @@ const ChadhavaBookingListPage = () => {
                           </h6>
                         </div>
                         <div className={`cb-status ${statusClass}`}>
-                          {item.payment_status}
+                          {displaySt}
                         </div>
                       </div>
 

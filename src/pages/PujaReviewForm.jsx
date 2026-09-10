@@ -205,8 +205,37 @@ const PujaFillForm = () => {
 	const { state } = useLocation();
 	const navigate = useNavigate();
 	const { devoteeDetails, refreshProfile } = useStorage();
-const pujaMasterData = state?.pujaData;
-	const selectedPackage = state?.selectedPackage;
+	const pujaMasterData = state?.pujaData || (() => {
+		try { return JSON.parse(sessionStorage.getItem("activePujaData") || "null"); } catch { return null; }
+	})();
+	const selectedPackage = state?.selectedPackage || (() => {
+		try { return JSON.parse(sessionStorage.getItem("activeSelectedPackage") || "null"); } catch { return null; }
+	})();
+	const stateTempleAddonsQty = state?.templeAddonsQty !== undefined
+		? state.templeAddonsQty
+		: (() => {
+			try { return JSON.parse(sessionStorage.getItem("activeTempleAddonsQty") || "undefined"); } catch { return undefined; }
+		})();
+	const stateHomeAddonsQty = state?.homeAddonsQty !== undefined
+		? state.homeAddonsQty
+		: (() => {
+			try { return JSON.parse(sessionStorage.getItem("activeHomeAddonsQty") || "undefined"); } catch { return undefined; }
+		})();
+
+	useEffect(() => {
+		if (state?.pujaData) {
+			try { sessionStorage.setItem("activePujaData", JSON.stringify(state.pujaData)); } catch (_) {}
+		}
+		if (state?.selectedPackage) {
+			try { sessionStorage.setItem("activeSelectedPackage", JSON.stringify(state.selectedPackage)); } catch (_) {}
+		}
+		if (state?.templeAddonsQty) {
+			try { sessionStorage.setItem("activeTempleAddonsQty", JSON.stringify(state.templeAddonsQty)); } catch (_) {}
+		}
+		if (state?.homeAddonsQty) {
+			try { sessionStorage.setItem("activeHomeAddonsQty", JSON.stringify(state.homeAddonsQty)); } catch (_) {}
+		}
+	}, [state]);
 
 	const [cart, setCart] = useState(null);
 	const [cartError, setCartError] = useState(false);
@@ -216,7 +245,7 @@ const pujaMasterData = state?.pujaData;
 	const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 	const [bookingStatus, setBookingStatus] = useState(null);
 	const [walletBalance, setWalletBalance] = useState(0);
-const [aashirwadOption, setAashirwadOption] = useState("Yes");
+	const [aashirwadOption, setAashirwadOption] = useState("Yes");
 	const [showSideMenu, setShowSideMenu] = useState(false);
 	const [showMobileMenu, setShowMobileMenu] = useState(false);
 	const [showSearch, setShowSearch] = useState(false);
@@ -233,20 +262,62 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 	const stopPolling = () => { if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; } };
 	useEffect(() => () => stopPolling(), []);
 
-
-
-
 	useEffect(() => {
 		const fetchCart = async () => {
+			let validServerCart = null;
 			try {
 				const res = await apiService.postBearer('/puja/getPujaCart', {});
-				if (res?.status && res.data) {
-					setCart(res.data);
-				} else {
-					setCartError(true);
+				if (res?.status && res.data && (res.data._id || res.data.puja_id || res.data.package_id || res.data.package)) {
+					validServerCart = res.data;
 				}
 			} catch (e) {
 				console.error('Cart fetch error', e);
+			}
+
+			if (validServerCart) {
+				setCart(validServerCart);
+				setCartError(false);
+				return;
+			}
+
+			const pData = pujaMasterData;
+			const pPkg = selectedPackage;
+
+			if (pData && pPkg) {
+				try {
+					const tAddons = stateTempleAddonsQty ? Object.entries(stateTempleAddonsQty).filter(([_, q]) => q > 0).map(([addon_id, qty]) => ({ addon_id, qty })) : [];
+					const hAddons = stateHomeAddonsQty ? Object.entries(stateHomeAddonsQty).filter(([_, q]) => q > 0).map(([addon_id, qty]) => ({ addon_id, qty })) : [];
+
+					const payload = {
+						puja_id: pData._id || pData.id,
+						package_id: pPkg._id || pPkg.id,
+						addons_selected: tAddons,
+						home_addons_selected: hAddons,
+						is_home_delivery_required: hAddons.length > 0,
+						userDetails: { name: devoteeDetails?.name || "Devotee" },
+					};
+					const addRes = await apiService.postBearer("/puja/pujaaddToCart", payload);
+					if (addRes?.status && addRes.data) {
+						setCart(addRes.data);
+						setCartError(false);
+						return;
+					}
+				} catch (err) {
+					console.error("Auto sync cart error:", err);
+				}
+
+				setCart({
+					_id: "temp_cart_" + (pData._id || "1"),
+					puja_id: pData._id || pData.id,
+					pujaDetails: pData,
+					package: pPkg,
+					base_total: Number(pPkg.packagePrice || 0),
+					grand_total: Number(pPkg.packagePrice || 0),
+					addons_selected: [],
+					home_addons_selected: []
+				});
+				setCartError(false);
+			} else {
 				setCartError(true);
 			}
 		};
@@ -295,8 +366,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 	const addonSource = pujaAddons.length > 0 ? pujaAddons : (pujaMasterData?.addons || []);
 	const homeAddonSource = pujaHomeAddons.length > 0 ? pujaHomeAddons : (pujaMasterData?.homeDeliveryAddons || []);
 
-	const stateTempleAddonsQty = state?.templeAddonsQty;
-	const stateHomeAddonsQty = state?.homeAddonsQty;
+
 
 	const rawTempleSelected = stateTempleAddonsQty !== undefined
 		? Object.entries(stateTempleAddonsQty).filter(([_, qty]) => qty > 0).map(([addon_id, qty]) => ({ addon_id, qty }))
@@ -459,6 +529,14 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 					rzp.open();
 				} else {
 					// Instant direct redirect for Wallet payment mode
+					const bookingId = response.orderId || response.order_id || response.id || response.booking?._id;
+					if (bookingId) {
+						try {
+							await apiService.getBearer(`/puja/puja_payment_status/${bookingId}`);
+						} catch (err) {
+							console.error("Wallet puja payment status update error:", err);
+						}
+					}
 					try { refreshProfile?.(); } catch (err) { console.error(err); }
 					window.location.replace(window.location.origin + "/my_puja_booking");
 				}
@@ -1440,7 +1518,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 							</div>
 							<div style={{ marginTop: 12, display: "flex", gap: 10 }}>
 								<a
-									href="https://wa.me/917311104573"
+									href="https://wa.me/918881110520"
 									target="_blank"
 									rel="noreferrer"
 									style={{ flex: 1, padding: "8px 12px", background: "#25d366", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
@@ -1448,7 +1526,7 @@ const [aashirwadOption, setAashirwadOption] = useState("Yes");
 									<i className="fab fa-whatsapp" style={{ fontSize: 14 }} /> WhatsApp Us
 								</a>
 								<a
-									href="tel:+917311104573"
+									href="tel:+918881110520"
 									style={{ flex: 1, padding: "8px 12px", background: "#9B1C1C", color: "#fff", borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
 								>
 									<i className="fas fa-phone-alt" style={{ fontSize: 12 }} /> Call Support

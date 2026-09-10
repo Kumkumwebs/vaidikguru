@@ -7,6 +7,8 @@ import MobileMenu from '../components/layout/MobileMenu';
 import PopupSearch from '../components/layout/PopupSearch';
 import AuthService from '../services/authServices';
 import apiService from '../services/apiServices';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 import './BlogList.css';
 
 // Mapping table of backend category IDs to clean frontend names
@@ -55,6 +57,7 @@ const fixImgHost = (url) => {
 const ITEMS_PER_PAGE = 9;
 
 const BlogList = () => {
+  useSEO(SEO.blog);
   const navigate = useNavigate();
 
   const [showSideMenu, setShowSideMenu] = useState(false);

@@ -5,13 +5,13 @@ import { useChat } from '../context/ChatContext';
 import { useAudioCall } from '../context/AudioCallContext';
 import { agoraManager } from '../services/Agoramanager.';
 import apiService from '../services/apiServices';
-import { lastCallList, fetchAgoraToken } from '../services/liveService';
+import { lastCallList, fetchAgoraToken, getWalletBalance } from '../services/liveService';
 // import NewAppDownloadModal from '../components/common/NewAppDownloadModel'; // adjust this path if it lives elsewhere in your project
 
 // Broadened to match the same "still active" values used elsewhere in this
 // codebase (ChatCallingScreen's ACCEPTED_VALUES), on top of the exact
 // "accept_astro" string your backend actually returns.
-const ACCEPTED_STATUSES = ['accept_astro', 'accepted', 'ongoing', 'active'];
+const ACCEPTED_STATUSES = ['accept_astro', 'accepted', 'ongoing', 'active', 'accept', 'start', 'initiated', 'connected', 'busy'];
 
 // FIX: previously used `data2.difference ? X : 300` — a truthy check, which
 // treats a perfectly valid 0 (call just started a second ago) the same as
@@ -117,49 +117,37 @@ const RestoreOngoingSession = () => {
         const callType = String(data2.call_type || '').toLowerCase();
         const channelId = String(data2.channel_id || '');
 
-        if (!channelId || !ACCEPTED_STATUSES.includes(status)) {
+        const isAudio = !callType || callType.includes('audio') || callType.includes('call') || callType.includes('voice');
+        const isChat = callType.includes('chat');
+        const isAccepted = ACCEPTED_STATUSES.includes(status) || status.includes('accept') || status.includes('ongoi') || status.includes('activ');
+
+        if (!channelId || !isAccepted) {
           console.log('[RestoreOngoingSession] no active session to restore, status:', status);
           return;
         }
 
-        // If the user is refreshing WHILE already sitting on the page that
-        // owns this session, let that page recover itself (AudioCall.jsx has
-        // its own "no router state? ask the backend" fallback). Restoring
-        // here too would race with the page's own effect — whichever runs
-        // last wins, and it could incorrectly minimize a page the user is
-        // actively looking at.
         const path = window.location.pathname;
-        if (callType === 'audio' && path.startsWith('/consultation/call/')) {
+        if (isAudio && path.startsWith('/consultation/call/')) {
           console.log('[RestoreOngoingSession] already on the audio call page — letting it self-recover.');
           return;
         }
-        if (callType === 'chat' && path.startsWith('/consultation/chat/')) {
+        if (isChat && path.startsWith('/consultation/chat/')) {
           console.log('[RestoreOngoingSession] already on the chat page — letting it self-recover.');
           return;
         }
 
-        // FIX: data2.total_amount is a recorded transaction debit amount
-        // (often "0" mid-call, since no per-minute debit has posted yet —
-        // billing ticks aren't implemented server-side), NOT the user's
-        // actual wallet balance. Since this is what populates
-        // AudioCallContext.callInfo.wallet, every later read of it —
-        // including "resume from the minimized bar" — was inheriting this
-        // wrong 0. Fetch the real balance instead, same call
-        // Astrologerdetail.jsx and AudioCall.jsx's own refresh path make.
         const rate = String(data2.call_rate || '5');
         let wallet = String(data2.total_amount || '0');
         try {
-          const profile = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_profile');
-          wallet = String(profile?.results?.wallet ?? profile?.results_web?.wallet ?? profile?.wallet ?? wallet);
+          const w = await getWalletBalance();
+          if (w > 0) wallet = String(w);
         } catch (err) {
           console.error('[RestoreOngoingSession] failed to fetch real wallet balance:', err);
         }
-        // Fallback if Firebase has no CallSession node yet — "difference" is
-        // elapsed seconds already (see the backend's last_call_list route),
-        // so it's a reasonable seed until the real read below corrects it.
+
         const fallbackSeconds = resolveElapsedSeconds(data2);
 
-        if (callType === 'chat') {
+        if (isChat) {
           if (chatCtxRef.current.chatActive) {
             console.log('[RestoreOngoingSession] chat already active in this session, skipping');
             return;
@@ -177,7 +165,7 @@ const RestoreOngoingSession = () => {
           console.log('[RestoreOngoingSession] restoring chat, seconds:', accurate ?? fallbackSeconds);
           chatCtxRef.current.startChatTimer(info, accurate ?? fallbackSeconds);
 
-        } else if (callType === 'audio') {
+        } else if (isAudio) {
           if (audioCtxRef.current.callInfo?.channelId === channelId) {
             console.log('[RestoreOngoingSession] audio already active in this session, skipping');
             return;

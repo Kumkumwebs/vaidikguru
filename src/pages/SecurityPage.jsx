@@ -7,8 +7,11 @@ import MobileMenu from "../components/layout/MobileMenu";
 import PopupSearch from "../components/layout/PopupSearch";
 import SideMenu from "../components/layout/SideMenu";
 import ScrollTop from "../components/common/ScrollTop";
+import { useSEO } from "../hooks/seoHook";
+import { SEO } from "../config/seoConfig";
 
 function SecurityPolicy() {
+    useSEO(SEO.security);
     const [showSideMenu, setShowSideMenu] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [showSearch, setShowSearch] = useState(false);

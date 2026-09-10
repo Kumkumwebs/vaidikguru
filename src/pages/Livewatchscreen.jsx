@@ -14,7 +14,7 @@
  *     exists there — no separate ./agoraToken file needed)
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import { createPortal } from "react-dom";
@@ -27,7 +27,9 @@ import {
 
 import { fetchAgoraToken } from "../services/liveService";
 import apiService from "../services/apiServices";
-import { recordGiftTransaction } from "../services/giftService";
+import { recordGiftTransaction, notifyAstrologerGiftInFirebase } from "../services/giftService";
+import LoginOTPModal from "../components/accounts/LoginOTPModel";
+import storageService from "../services/storageServices";
 
 import "./LiveAstrologer.css";
 
@@ -196,7 +198,7 @@ function AppModal({ onClose }) {
           <p className="lw-app-modal-desc">
             Audio & video calls with astrologers are available on our mobile app.
           </p>
-          <a href="https://play.google.com/store/apps/details?id=com.astrogurujii"
+          <a href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
             target="_blank" rel="noopener noreferrer" className="w-100">
             <div className="lw-playstore-btn">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
@@ -216,7 +218,7 @@ function AppModal({ onClose }) {
 }
 
 // ─── Gift Modal ───────────────────────────────────────────────────────────────
-function GiftModal({ gifts, astroName, astroId, onClose }) {
+function GiftModal({ gifts, astroName, astroId, channelId, onClose }) {
   const [sel, setSel] = useState(null);
   const [sending, setSending] = useState(false);
   const [imgFailed, setImgFailed] = useState({});
@@ -236,6 +238,7 @@ function GiftModal({ gifts, astroName, astroId, onClose }) {
         type: "normal",
       });
       recordGiftTransaction({ gift, astroName, astroId, amount: gift.price });
+      notifyAstrologerGiftInFirebase({ gift, astroId, astroName, channelId });
     } catch (e) {
       console.warn("[GiftModal] Gift transaction warning:", e);
     } finally {
@@ -558,7 +561,17 @@ export default function LiveWatchScreen() {
   const { liveId } = useParams();
   const { state } = useLocation();
 
-  const s = state || {};
+  const s = useMemo(() => {
+    if (state) {
+      try { sessionStorage.setItem(`live_state_${liveId}`, JSON.stringify(state)); } catch { }
+      return state;
+    }
+    try {
+      const cached = sessionStorage.getItem(`live_state_${liveId}`);
+      if (cached) return JSON.parse(cached);
+    } catch { }
+    return {};
+  }, [state, liveId]);
   const channelId = s.channel_id || liveId || "";
   const astroId = s.astro_id || "";
   const astroName = s.astro_name || "Astrologer";
@@ -576,9 +589,19 @@ export default function LiveWatchScreen() {
   const [waitElapsed, setWaitElapsed] = useState(0);
   const [gifts, setGifts] = useState(STATIC_GIFTS);
   const [showGifts, setShowGifts] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showApp, setShowApp] = useState(false);
   const [giftToast, setGiftToast] = useState(null);
   const [isMaximized, setIsMaximized] = useState(false);
+
+  const handleGiftClick = () => {
+    const token = storageService.getToken() || localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
+    setShowGifts(true);
+  };
   const astroKey = String(astroId || channelId || s.astro_name || "").trim();
   const [followed, setFollowed] = useState(false);
 
@@ -857,6 +880,7 @@ export default function LiveWatchScreen() {
 
       if (mapped.length > 0) {
         setOtherLives(mapped);
+        return mapped;
       } else {
         // Fallback: build other live streams from active online astrologers (excluding current)
         let onlineList = [];
@@ -881,9 +905,11 @@ export default function LiveWatchScreen() {
         }));
 
         setOtherLives(fallbackOther);
+        return fallbackOther;
       }
     } catch (err) {
       console.error("[LiveWatchScreen] fetchOtherLives failed:", err);
+      return [];
     } finally {
       setLoadingLives(false);
     }
@@ -1007,16 +1033,6 @@ export default function LiveWatchScreen() {
     setShowGifts(false);
     if (!result || !channelId) return;
     const g = result.gift;
-    const rawImg = gImg(g);
-    const giftImgUrl = rawImg && isRealApiUrl(rawImg) ? resolveImg(rawImg) : "";
-    const msgRef = push(ref(db, `GroupLive/${channelId}`));
-    const payload = {
-      name: myName(), message: `Sent a gift: ${gName(g)}`, from: myId(),
-      user_img: myImg(),
-      date_time: Date.now(), is_system: false, isGift: true,
-      giftName: gName(g), giftEmoji: gEmoji(g), giftImg: giftImgUrl, message_id: msgRef.key,
-    };
-    set(msgRef, payload).catch(() => { });
     setGiftToast(`${gEmoji(g)} ${gName(g)} sent!`);
     setTimeout(() => setGiftToast(null), 3000);
   };
@@ -1104,9 +1120,9 @@ export default function LiveWatchScreen() {
       <div className="row g-0 lw-body-row gap-4 gap-lg-0">
 
         {/* ── VIDEO COLUMN ────────────────────────────────────────────────── */}
-        <div className={`col-12 lw-col-video ${isMaximized ? "" : "col-lg-7 mb-3"}`}>
+        <div className={`col-12 lw-col-video ${isMaximized ? "" : "col-lg-7"}`}>
 
-          <div className="lw-video-wrap h-100">
+          <div className="lw-video-wrap">
             <div ref={videoRef} className="lw-video-el" />
             <div className={`lw-placeholder${hasVideo ? " hidden" : ""}`}>
               <VideoPlaceholder name={astroName} img={astroImage} title={liveTitle} />
@@ -1168,8 +1184,8 @@ export default function LiveWatchScreen() {
 
         {/* ── CHAT PANEL ─────────────────────────────────────────────────── */}
         {!isMaximized && (
-          <div className="col-12 col-lg-4 lw-col-chat pt-5 px-lg-0 px-4">
-            <div className="lw-chat-header mt-2">
+          <div className="col-12 col-lg-4 lw-col-chat">
+            <div className="lw-chat-header">
               <p className="lw-chat-header-title mb-0">Chat</p>
               <div className="lw-chat-viewers">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1226,7 +1242,7 @@ export default function LiveWatchScreen() {
         {!isMaximized && (
           <div className="col-lg-auto col-12 lw-col-side">
             <div className="d-lg-block d-flex justify-content-between gap-2 w-100 px-lg-0 px-5">
-              <SideBtn color={DQ_SAFFRON} label="Gift" onClick={() => setShowGifts(true)}
+              <SideBtn color={DQ_SAFFRON} label="Gift" onClick={handleGiftClick}
                 icon={<svg className="text-white" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M20 12v10H4V12" /><path d="M22 7H2v5h20V7z" /><path d="M12 22V7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" /></svg>} />
               <SideBtn color={DQ_SUCCESS} label="Call Host" onClick={() => setShowApp(true)}
                 icon={<svg className="text-white" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 1.27h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>} />
@@ -1242,8 +1258,16 @@ export default function LiveWatchScreen() {
       </div>
 
       {/* ── Modals ── */}
-      {showGifts && <GiftModal gifts={gifts} astroName={astroName} astroId={astroId} onClose={onGiftSent} />}
+      {showGifts && <GiftModal gifts={gifts} astroName={astroName} astroId={astroId} channelId={channelId} onClose={onGiftSent} />}
       {showApp && <AppModal onClose={() => setShowApp(false)} />}
+      <LoginOTPModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={() => {
+          setShowLoginModal(false);
+          setShowGifts(true);
+        }}
+      />
       {showLeavePopup && (
         <LeavePopup
           loadingLives={loadingLives}

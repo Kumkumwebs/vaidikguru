@@ -63,6 +63,36 @@ export const getAstroStatus = (astro) => {
   return { status: 'offline', isBusy: false, isOnline: false, label: 'Offline' };
 };
 
+/**
+ * Queue wait for a busy astrologer. The API spells it `watting_time` and sends
+ * SECONDS (e.g. 700 → "12 min"). A busy astrologer with 0 means the backend has
+ * no estimate yet — not "no wait" — so callers fall back to a generic label.
+ */
+export const getAstroWaitTime = (astro) => {
+  if (!astro) return 0;
+  const a = unwrapAstro(astro);
+  const raw = a.watting_time ?? a.waiting_time ?? a.wait_time ?? 0;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+export const formatWaitTime = (seconds) => {
+  const s = Number(seconds) || 0;
+  if (s <= 0) return '';
+  if (s < 60) return `${Math.round(s)} sec`;
+  const mins = Math.round(s / 60);
+  if (mins < 60) return `${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return rem ? `${hrs}h ${rem}m` : `${hrs}h`;
+};
+
+/** Label a busy astrologer's chat/call buttons should carry. */
+export const getWaitLabel = (astro) => {
+  const t = formatWaitTime(getAstroWaitTime(astro));
+  return t ? `Wait ~${t}` : 'In a session';
+};
+
 export const getAstroRole = (astro) => {
   if (!astro) return '';
   const a = unwrapAstro(astro);

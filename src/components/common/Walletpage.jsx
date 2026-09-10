@@ -135,14 +135,7 @@ export default function WalletPage() {
             setError(null);
 
             let profileRes = await apiService.getBearer("/user_api/get_profile").catch(() => null);
-            if (!profileRes || (!profileRes.status && !profileRes.results)) {
-                profileRes = await apiService.getBearer("https://admin.vaidikguru.com/user_api/get_profile").catch(() => null);
-            }
-
             let txnRes = await apiService.postBearer("/user_api/transaction").catch(() => null);
-            if (!txnRes) {
-                txnRes = await apiService.postBearer("https://admin.vaidikguru.com/user_api/transaction").catch(() => null);
-            }
 
             const bal = extractWalletAmount(profileRes, user);
             setWallet(bal);

@@ -10,14 +10,31 @@ import sitemap from 'vite-plugin-sitemap';
 // All routes on your site — update this list as you add pages
 const SITE_ROUTES = [
   '/',
+  '/about_us',
   '/puja',
   '/chadhava',
-  '/astrology',
-  '/darshan',
-  '/horoscope',
+  '/astrologer',
+  '/live-astrologer',
   '/panchang',
-  '/about',
-  '/contact',
+  '/horoscope',
+  '/astrology_calculator_hub',
+  '/nakshatra_finder',
+  '/janm_rashi_finder',
+  '/mangal_dosh_calculator',
+  '/love_calculator',
+  '/friendship_calculator',
+  '/destiny_number_calculator',
+  '/mobile_numerology_calculator',
+  '/contact_us',
+  '/faqs',
+  '/blog',
+  '/help',
+  '/astrologer_registration',
+  '/privacy_policy',
+  '/terms_of_use',
+  '/cancellation_refund_policy',
+  '/careers',
+  '/security'
 ];
 
 export default defineConfig({

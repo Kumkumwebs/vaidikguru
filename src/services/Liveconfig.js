@@ -66,12 +66,24 @@ export const getToken = () => {
 // the key(s) to whatever DivinIq persists at login.
 export const getUserId = () => {
   try {
-    return (
+    const direct = (
       localStorage.getItem('user_id') ||
       localStorage.getItem('userId') ||
       localStorage.getItem('id') ||
+      sessionStorage.getItem('user_id') ||
+      sessionStorage.getItem('userId') ||
+      sessionStorage.getItem('id') ||
       ''
     );
+    if (direct) return String(direct);
+
+    const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const uid = parsed?._id || parsed?.id || parsed?.user_id || parsed?.uid;
+      if (uid) return String(uid);
+    }
+    return '';
   } catch {
     return '';
   }
@@ -79,11 +91,21 @@ export const getUserId = () => {
 
 export const getUserName = () => {
   try {
-    return (
+    const direct = (
       localStorage.getItem('user_name') ||
       localStorage.getItem('name') ||
-      'User'
+      sessionStorage.getItem('user_name') ||
+      sessionStorage.getItem('name') ||
+      ''
     );
+    if (direct) return String(direct);
+
+    const raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed?.name || parsed?.full_name || parsed?.username || 'User';
+    }
+    return 'User';
   } catch {
     return 'User';
   }

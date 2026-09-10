@@ -92,6 +92,10 @@ const PujaUserDetailsModal = ({
         navigate("/chadhava_review_booking");
       }
     } else {
+      try {
+        if (puja) sessionStorage.setItem("activePujaData", JSON.stringify(puja));
+        if (selectedPackage) sessionStorage.setItem("activeSelectedPackage", JSON.stringify(selectedPackage));
+      } catch (_) {}
       if (window.location.pathname.includes("puja_review_booking")) {
         window.location.reload();
       } else {

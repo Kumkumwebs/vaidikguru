@@ -370,4 +370,55 @@
   .ac-ctrls { gap: 10px; }
   .ac-cico { width: 40px; height: 40px; }
   .ac-cb.end .ac-cico { width: 52px; height: 52px; }
+
+  /* Mobile fix for top badges and call title overlap */
+  .ac-enc {
+    top: 8px;
+    left: 8px;
+    padding: 5px 8px;
+    gap: 5px;
+    border-radius: 8px;
+  }
+  .ac-enc-s { display: none; }
+  .ac-infobtn {
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    font-size: 10.5px;
+  }
+  .ac-calltop {
+    margin-top: 46px;
+  }
+  .ac-calllbl { font-size: 15px; }
+  .ac-timer { font-size: 26px; }
+}
+
+@media (max-width: 480px) {
+  .ac-callcard {
+    padding: 8px 10px 10px;
+  }
+  .ac-enc {
+    top: 8px;
+    left: 8px;
+    padding: 4px 8px;
+  }
+  .ac-enc i { font-size: 11px; }
+  .ac-enc-t { font-size: 10px; }
+  .ac-infobtn {
+    top: 8px;
+    right: 8px;
+    padding: 3px 9px;
+    font-size: 10px;
+  }
+  .ac-calltop {
+    margin-top: 44px;
+  }
+  .ac-calllbl { font-size: 14px; gap: 5px; }
+  .ac-timer { font-size: 24px; }
+  .ac-av { width: 92px; height: 92px; }
+  .ac-avinit { font-size: 30px; }
+  .ac-namerow { margin-top: 5px; }
+  .ac-name { font-size: 14.5px; }
+  .ac-skills { gap: 3px; }
+  .ac-spill { padding: 2px 7px; font-size: 9.5px; }
 }

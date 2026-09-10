@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import apiService from '../../services/apiServices';
 import storageService from '../../services/storageServices';
 import LoginOTPModal from '../accounts/LoginOTPModel';
-import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroChatPrice, getAstroCallPrice, getAstroRole, getAstroStatus } from '../../services/astroHelpers';
+import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroChatPrice, getAstroCallPrice, getAstroRole, getAstroStatus, getWaitLabel } from '../../services/astroHelpers';
 
 const TeamSection = ({ astrologer }) => {
 	const [list, setList] = useState(() => (Array.isArray(astrologer) && astrologer.length ? astrologer : []));
@@ -38,7 +38,7 @@ const TeamSection = ({ astrologer }) => {
 
 	const handleAction = (astro, type) => {
 		const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
-		if (!token && (type === 'chat' || type === 'call')) {
+		if (!token && (type === 'chat' || type === 'call' || type === 'notify')) {
 			setShowLoginModal(true);
 			return;
 		}
@@ -109,9 +109,15 @@ const AstrologerCard = ({ astro, onChat }) => {
 	const role = getAstroRole(astro);
 	const { isBusy, isOnline } = getAstroStatus(astro);
 	const dotCls = isBusy ? 'db' : isOnline ? 'dn' : 'do';
+	const waitLabel = getWaitLabel(astro);
 
 	const handleNotifyClick = async (e) => {
 		e.stopPropagation();
+		const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+		if (!token) {
+			if (onChat) onChat(astro, 'notify');
+			return;
+		}
 		setNotified(!notified);
 		const astroId = String(astro?.id || astro?._id || '');
 		if (astroId) {
@@ -178,10 +184,15 @@ const AstrologerCard = ({ astro, onChat }) => {
 			</div>
 			<div className="al-actions">
 				{isBusy ? (
-					<button className={`al-notify-btn${notified ? ' active' : ''}`} onClick={handleNotifyClick}>
-						<i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
-						<span>{notified ? 'Notified' : 'Notify Me'}</span>
-					</button>
+					<div className="al-wait-row">
+						<button className={`al-wait-btn${notified ? ' on' : ''}`} onClick={handleNotifyClick} title={`Busy · ${waitLabel}`}>
+							<i className={notified ? 'fas fa-check-circle' : 'fas fa-comment-dots'} />
+							<span>{notified ? 'Notified' : waitLabel}</span>
+						</button>
+						<button className={`al-wait-call${notified ? ' on' : ''}`} onClick={handleNotifyClick} title={`Busy · Call · ${waitLabel}`}>
+							<i className={notified ? 'fas fa-check-circle' : 'fas fa-phone'} />
+						</button>
+					</div>
 				) : isOnline ? (
 					<>
 						<button className="al-chat" onClick={(e) => { e.stopPropagation(); onChat(astro, 'chat'); }}>

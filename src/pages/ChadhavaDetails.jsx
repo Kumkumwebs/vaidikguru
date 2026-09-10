@@ -253,7 +253,7 @@ const DEFAULT_REVIEWS = [
 const ChadhavaDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isLoggedIn } = useStorage();
+  const { isLoggedIn, setActiveChadhavaId } = useStorage();
 
   const [chadhava, setChadhava] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -366,6 +366,9 @@ const ChadhavaDetails = () => {
         if (res?.status) {
           const record = res.chadhava || (Array.isArray(res.data) ? res.data[0] : res.data) || res.result || res;
           setChadhava(record || null);
+          if (record?._id) {
+            setActiveChadhavaId(record._id);
+          }
           if (!record) setError(true);
         } else {
           setError(true);
@@ -389,13 +392,20 @@ const ChadhavaDetails = () => {
         if (!isMounted) return;
         if (res?.status && Array.isArray(res.data) && res.data.length > 0) {
           const rawData = res.data[0];
-          if (rawData.chadhava_id?._id === chadhava?._id) {
+          const rawChadhavaId = rawData.chadhava_id?._id || rawData.chadhava_id;
+          if (String(rawChadhavaId) === String(chadhava?._id)) {
             const aQ = {};
-            (rawData.addons_selected || []).forEach(sel => { aQ[sel.addon_id] = sel.qty; });
+            (rawData.addons_selected || []).forEach(sel => {
+              const aId = typeof sel.addon_id === 'object' ? (sel.addon_id?._id || sel.addon_id?.id) : sel.addon_id;
+              if (aId && String(aId) !== '[object Object]') aQ[String(aId)] = sel.qty || 1;
+            });
             setAddonQtys(aQ);
 
             const pQ = {};
-            (rawData.prasad_selected || []).forEach(sel => { pQ[sel.prasad_id] = sel.qty; });
+            (rawData.prasad_selected || []).forEach(sel => {
+              const pId = typeof sel.prasad_id === 'object' ? (sel.prasad_id?._id || sel.prasad_id?.id) : sel.prasad_id;
+              if (pId && String(pId) !== '[object Object]') pQ[String(pId)] = sel.qty || 1;
+            });
             setPrasadQtys(pQ);
           }
         }
@@ -450,12 +460,34 @@ const ChadhavaDetails = () => {
     return () => observer.disconnect();
   }, [chadhava]);
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
+    if (!chadhava?._id) return;
+    setActiveChadhavaId(chadhava._id);
+    const cleanAddons = Object.entries(addonQtys)
+      .filter(([addon_id, qty]) => qty > 0 && addon_id !== '[object Object]')
+      .map(([addon_id, qty]) => ({ addon_id, qty }));
+    const cleanPrasad = Object.entries(prasadQtys)
+      .filter(([prasad_id, qty]) => qty > 0 && prasad_id !== '[object Object]')
+      .map(([prasad_id, qty]) => ({ prasad_id, qty }));
+
+    try {
+      const payload = {
+        chadhava_id: chadhava._id,
+        addons_selected: cleanAddons,
+        prasad_selected: cleanPrasad,
+      };
+      await apiService.postBearer('https://admin.vaidikguru.com/puja/ChadhavaaddToCart', payload);
+    } catch (err) {
+      console.error('Add to cart error during proceed:', err);
+    }
     navigate('/chadhava_review_booking', {
       state: {
         chadhavaId: chadhava._id,
-        addonIds: Object.keys(addonQtys),
-        prasadIds: Object.keys(prasadQtys),
+        chadhava: chadhava,
+        addonIds: cleanAddons.map(a => a.addon_id),
+        prasadIds: cleanPrasad.map(p => p.prasad_id),
+        addonQtys,
+        prasadQtys,
       },
     });
   };

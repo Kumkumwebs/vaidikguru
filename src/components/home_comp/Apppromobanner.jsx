@@ -26,7 +26,7 @@ import React, { useState, useEffect, useRef } from 'react';
  *   <Header ... />
  */
 
-const APP_LINK = 'https://play.google.com/store/apps/details?id=com.vaidikguru.app';
+const APP_LINK = 'https://play.google.com/store/apps/details?id=com.app.vaidikguru';
 
 const ASSETS = {
 	background: '/assets/img/homeapp/bannerhome.png',

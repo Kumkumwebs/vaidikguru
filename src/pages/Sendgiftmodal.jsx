@@ -3,10 +3,11 @@ import { createPortal } from "react-dom";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import apiService from '../services/apiServices';
 import { useStorage } from '../context/StorageContext';
-import { recordGiftTransaction } from '../services/giftService';
+import { recordGiftTransaction, notifyAstrologerGiftInFirebase } from '../services/giftService';
 
 // Bound to the DivinIQ backend (reference used admin.vaidikguru.com)
 const API = "https://admin.vaidikguru.com";
+
 
 const fixImgHost = (url) => {
   if (!url) return '';
@@ -163,6 +164,8 @@ export function SendGiftModal({
   astrologerImage,
   gifts: giftsProp,
   showChatCallActions = true,   // pass false when opened from an already-active chat/call screen
+  channelId,
+  onGiftSent,
 }) {
   const params = useParams();
   const navigate = useNavigate();
@@ -171,7 +174,7 @@ export function SendGiftModal({
 
   // Route-aware fallbacks so it works at /send_gift/:id AND as an inline modal
   const open = isOpen === undefined ? true : isOpen;
-  const astroId = astrologerId ?? params.id ?? params.astrologerId ?? "";
+  const astroId = (astrologerId && String(astrologerId).trim()) || params.id || params.astrologerId || location.state?.astrologer_id || location.state?.astrologerId || "";
   const astroName = astrologerName || location.state?.astrologerName || "Astrologer";
   const close = onClose ?? (() => navigate(-1));
 
@@ -202,9 +205,9 @@ export function SendGiftModal({
     console.log('[SendGiftModal] no giftsProp — fetching get_gifts directly');
     const fetchGifts = async () => {
       try {
-        let res = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts').catch(() => null);
+        let res = await apiService.getBearer('/user_api/get_gifts').catch(() => null);
         if (!res || (!res.data && !res.results && !res.record && !Array.isArray(res))) {
-          res = await apiService.getBearer('/user_api/get_gifts').catch(() => null);
+          res = await apiService.getBearer('https://admin.vaidikguru.com/user_api/get_gifts').catch(() => null);
         }
         console.log('[SendGiftModal] get_gifts response:', res);
         const raw = res?.data ?? res?.results ?? res?.record ?? (Array.isArray(res) ? res : []);
@@ -242,27 +245,30 @@ export function SendGiftModal({
     const gift = gifts[sel];
     setSending(true);
     setError("");
-    console.log("[SendGift] payload:", { to: astroId, giftId: gift._id, amount: gift.price, priceType: typeof gift.price, giftTitle: gift.title, giftIndex: sel, totalGiftsShown: gifts.length });
+    const payload = {
+      to: String(astroId),
+      astro_id: String(astroId),
+      astrologer_id: String(astroId),
+      giftId: String(gift._id),
+      gift_id: String(gift._id),
+      amount: Number(gift.price),
+      type: "normal",
+    };
+    console.log("[SendGift] payload:", { ...payload, giftTitle: gift.title, giftIndex: sel, totalGiftsShown: gifts.length });
     try {
-      const res = await apiService.postBearer(
-        '/user_api/gift_transaction',
-        {
-          to: String(astroId),
-          astro_id: String(astroId),
-          astrologer_id: String(astroId),
-          giftId: String(gift._id),
-          gift_id: String(gift._id),
-          amount: Number(gift.price),
-          type: "normal",
-        }
-      );
+      let res = await apiService.postBearer('/user_api/gift_transaction', payload).catch(() => null);
+      if (!res || res.status === false) {
+        res = await apiService.postBearer('https://admin.vaidikguru.com/user_api/gift_transaction', payload);
+      }
       console.log("[SendGift] response:", res);
       if (res?.status === false) {
         setError(res?.message || "Could not send the gift. Please try again.");
       } else {
         setSentGift(gift); // show success popup
         recordGiftTransaction({ gift, astroName, astroId, amount: gift.price });
+        notifyAstrologerGiftInFirebase({ gift, astroId, astroName, channelId });
         refreshProfile?.(); // sync wallet balance immediately across the app
+        onGiftSent?.({ gift, res });
       }
     } catch (err) {
       console.error("[SendGift] error:", err?.response?.data || err.message);

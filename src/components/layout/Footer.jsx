@@ -94,7 +94,7 @@ const Footer = () => {
                                     <span className="fw-bold">App Store</span>
                                 </div>
                             </a>
-                            <a href="https://play.google.com/store/apps/details?id=com.vaidikguru.app" className="app-btn-elite my-2 my-md-0">
+                            <a href="https://play.google.com/store/apps/details?id=com.app.vaidikguru" target="_blank" rel="noreferrer" className="app-btn-elite my-2 my-md-0">
                                 <i className="fab fa-google-play fs-4 text-warning"></i>
                                 <div className="text-start">
                                     <small className="d-block opacity-50" style={{ fontSize: '9px' }}>GET IT ON</small>

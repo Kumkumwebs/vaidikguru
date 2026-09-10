@@ -11,6 +11,8 @@ import ScrollTop from "../components/common/ScrollTop";
 import MobileBottomNav from "../components/layout/MobileNavbar";
 import LiveCard from "../components/sections/Livecard";
 import apiService from "../services/apiServices";
+import { useSEO } from "../hooks/seoHook";
+import { SEO } from "../config/seoConfig";
 
 import "./LiveAstrologer.css";
 
@@ -71,6 +73,7 @@ const DEFAULT_FILTERS = {
 };
 
 export default function LiveAstrologersPage() {
+  useSEO(SEO.liveAstrologers);
   const [liveList, setLiveList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

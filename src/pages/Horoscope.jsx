@@ -13,6 +13,8 @@ import MobileMenu from '../components/layout/MobileMenu';
 import PopupSearch from '../components/layout/PopupSearch';
 import SideMenu from '../components/layout/SideMenu';
 import ScrollTop from '../components/common/ScrollTop';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 
 /* ── Zodiac static data ── */
 const ELEMENT_ICON = { Fire: <Flame size={16} />, Earth: <Mountain size={16} />, Air: <Wind size={16} />, Water: <Droplet size={16} /> };
@@ -232,6 +234,7 @@ const StarRow = ({ count }) => (
 );
 
 const HoroscopePage = () => {
+    useSEO(SEO.horoscope);
     const [showSideMenu, setShowSideMenu] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [showSearch, setShowSearch] = useState(false);

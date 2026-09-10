@@ -11,11 +11,13 @@ import apiService from '../services/apiServices';
 import NewAppDownloadModal from '../components/common/NewAppDownloadModel';
 import LoginOTPModal from '../components/accounts/LoginOTPModel';
 import storageService from '../services/storageServices';
-import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroChatPrice, getAstroCallPrice, getAstroRole, getAstroStatus } from '../services/astroHelpers';
+import { getAstroPrice, getAstroRating, getAstroReviewCount, getAstroChatPrice, getAstroCallPrice, getAstroRole, getAstroStatus, getWaitLabel } from '../services/astroHelpers';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 import './AstrologerList.css';
 import MobileBottomNav from '../components/layout/MobileNavbar';
 
-const CONSULTATION_API = "/user_api/new_consultation_add";
+const CONSULTATION_API = "/user_api/add_contact_us";
 
 /* helpers */
 const COLORS = ['#7c3aed','#059669','#dc2626','#d97706','#2563eb','#db2777'];
@@ -24,6 +26,18 @@ const avColor  = (n='') => COLORS[(n.charCodeAt(0)||0) % COLORS.length];
 // API still returns some image URLs hosted on the old domain — rewrite to the current one.
 const fixImgHost = (url) =>
   typeof url === 'string' ? url.replace('admin.astrogurujii.com', 'admin.vaidikguru.com') : url;
+
+/* per-minute rates straight from astrologer_list — offer price wins when set */
+const rate = (base, offer) => {
+  const o = Number(offer);
+  if (offer !== '' && offer !== null && offer !== undefined && !Number.isNaN(o) && o > 0) return o;
+  const b = Number(base);
+  return Number.isNaN(b) || b <= 0 ? null : b;
+};
+const getVideoPrice = (a) => rate(a?.per_min_video_call, a?.per_min_video_call_offer);
+const getVoicePrice = (a) => rate(a?.per_min_voice_call, a?.per_min_voice_call_offer);
+const getChatPrice  = (a) => rate(a?.per_min_chat,       a?.per_min_chat_offer);
+const isOn = (v) => String(v || '').toLowerCase() === 'on';
 
 const getName = (entry) => {
   if (!entry) return "";
@@ -101,9 +115,15 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
   const role = getAstroRole(astro);
   const { isBusy, isOnline } = getAstroStatus(astro);
   const dotCls = isBusy ? 'db' : isOnline ? 'dn' : 'do';
+  const waitLabel = getWaitLabel(astro);
 
   const handleNotifyClick = (e) => {
     e.stopPropagation();
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      if (onNotify) onNotify(astro, !notified);
+      return;
+    }
     const nextState = !notified;
     setNotified(nextState);
     if (onNotify) {
@@ -144,16 +164,38 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
           <span>{Number(getAstroRating(astro)).toFixed(1)}</span>
           <span className="al-rev">({getAstroReviewCount(astro)})</span>
         </div>
-        {getAstroChatPrice(astro) !== null ? (
-          <div className="al-price">₹{getAstroChatPrice(astro)}/min</div>
+        {getChatPrice(astro) !== null ? (
+          <div className="al-price">₹{getChatPrice(astro)}/min</div>
         ) : null}
+      </div>
+
+      {/* per-minute rates: chat / voice / video */}
+      <div className="al-rates">
+        {[
+          { ic: 'fas fa-comment-dots', lbl: 'Chat',  amt: getChatPrice(astro),  on: isOn(astro.is_chat_online) },
+          { ic: 'fas fa-phone',        lbl: 'Call',  amt: getVoicePrice(astro), on: isOn(astro.is_voice_online) },
+          { ic: 'fas fa-video',        lbl: 'Video', amt: getVideoPrice(astro), on: isOn(astro.is_video_online) },
+        ].map((r) => (
+          <div key={r.lbl} className={`al-rate${r.on && r.amt !== null ? '' : ' off'}`}>
+            <i className={r.ic} />
+            <b>{r.amt !== null ? `₹${r.amt}` : '—'}</b>
+            <span>{r.lbl}/min</span>
+          </div>
+        ))}
       </div>
       <div className="al-actions">
         {isBusy ? (
-          <button className={`al-notify-btn${notified ? ' active' : ''}`} onClick={handleNotifyClick}>
-            <i className={notified ? "fas fa-check-circle" : "fas fa-bell"} />
-            <span>{notified ? 'Notified' : 'Notify Me'}</span>
-          </button>
+          <div className="al-wait-row">
+            {/* Busy: chat and call both show the queue wait. Tapping either
+                registers the notify-me request rather than starting a session. */}
+            <button className={`al-wait-btn${notified ? ' on' : ''}`} onClick={handleNotifyClick} title={`Busy · ${waitLabel}`}>
+              <i className={notified ? 'fas fa-check-circle' : 'fas fa-comment-dots'} />
+              <span>{notified ? 'Notified' : waitLabel}</span>
+            </button>
+            <button className={`al-wait-call${notified ? ' on' : ''}`} onClick={handleNotifyClick} title={`Busy · Call · ${waitLabel}`}>
+              <i className={notified ? 'fas fa-check-circle' : 'fas fa-phone'} />
+            </button>
+          </div>
         ) : isOnline ? (
           <>
             <button className="al-chat" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'chat'); }}>
@@ -162,6 +204,16 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
             <button className="al-call" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'call'); }} title={`Call (₹${getAstroCallPrice(astro)}/min)`}>
               <i className="fas fa-phone" />
             </button>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="al-video"
+              onClick={(e)=>{ e.stopPropagation(); }}
+              title={`Video Call${getVideoPrice(astro) !== null ? ` (₹${getVideoPrice(astro)}/min)` : ''} - Download App`}
+            >
+              <i className="fas fa-video" />
+            </a>
           </>
         ) : (
           <button className="al-notify-btn disabled" style={{ opacity: 0.65, cursor: 'not-allowed', background: '#9ca3af' }} onClick={(e) => e.stopPropagation()}>
@@ -212,12 +264,22 @@ const RecommendationModal = ({ isOpen, onClose }) => {
     setSubmitting(true);
     setResult(null);
     try {
-      const res = await apiService.post(CONSULTATION_API, {
-        service: "consultation",
+      const payload = {
         name: name.trim(),
         phone: phone.trim(),
-        message: message.trim(),
-      });
+        number: phone.trim(),
+        mobile: phone.trim(),
+        subject: "Free Astrologer Recommendation",
+        message: message.trim() || "Request for astrologer recommendation",
+        service: "consultation",
+      };
+      let res = await apiService.post(CONSULTATION_API, payload).catch(() => null);
+      if (!res || !res.status) {
+        res = await apiService.post("https://admin.vaidikguru.com/user_api/add_contact_us", payload).catch(() => null);
+      }
+      if (!res || !res.status) {
+        res = await apiService.post("/user_api/new_consultation_add", payload).catch(() => null);
+      }
       if (res?.status) {
         setResult({ ok: true, msg: "Thanks! Our team will reach out to you shortly." });
       } else {
@@ -453,6 +515,7 @@ const SidebarContent = ({ filters, setFilters, onApply, specOptions = [], langua
 
 /* ═══════════════════════════ MAIN PAGE ═══════════════════════════ */
 const AstrologerList = () => {
+  useSEO(SEO.astrology);
   const navigate = useNavigate();
   const [astrologers,   setAstrologers]   = useState([]);
   const [loading,       setLoading]       = useState(true);
@@ -485,6 +548,11 @@ const AstrologerList = () => {
   }, []);
 
   const handleNotify = useCallback(async (astro, isNotified) => {
+    const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      setShowLoginModal(true);
+      return;
+    }
     const astroId = String(astro?.id || astro?._id || '');
     if (astroId) {
       try {
@@ -852,11 +920,13 @@ const AstrologerList = () => {
                             <div key={a.id||i} className="col-6 col-md-4">
                               <AstrologerCard astro={a} onNotify={handleNotify} onChat={(astro, type) => {
                                 const token = storageService.getToken() || localStorage.getItem('token') || sessionStorage.getItem('token');
-                                if (!token && (type === 'chat' || type === 'call')) {
+                                if (!token && (type === 'chat' || type === 'call' || type === 'video')) {
                                   setShowLoginModal(true);
                                   return;
                                 }
-                                if (type === 'call') {
+                                if (type === 'video') {
+                                  window.open("https://play.google.com/store/apps/details?id=com.app.vaidikguru", "_blank", "noopener,noreferrer");
+                                } else if (type === 'call') {
                                   navigate(`/astrologer/${astro.id || astro._id}?action=call`);
                                 } else if (type === 'chat') {
                                   navigate(`/astrologer/${astro.id || astro._id}?action=chat`);

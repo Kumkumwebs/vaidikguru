@@ -28,8 +28,11 @@ import MobileMenu from "../components/layout/MobileMenu";
 import PopupSearch from "../components/layout/PopupSearch";
 import SideMenu from "../components/layout/SideMenu";
 import ScrollTop from "../components/common/ScrollTop";
+import { useSEO } from "../hooks/seoHook";
+import { SEO } from "../config/seoConfig";
 
 export default function DiviniQContactPage() {
+    useSEO(SEO.contact);
     const [showSideMenu, setShowSideMenu] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
@@ -111,7 +114,7 @@ export default function DiviniQContactPage() {
                             <div className="pp-sidebar__icon"><Phone size={20} /></div>
                             <div>
                                 <p className="pp-sidebar__label">Speak to Us</p>
-                                <p className="pp-sidebar__value">+91 7615976021</p>
+                                <p className="pp-sidebar__value">+91  8881110520</p>
                                 <p className="pp-sidebar__hint">Mon – Sat: 9AM – 8PM</p>
                             </div>
                         </div>
@@ -254,7 +257,7 @@ export default function DiviniQContactPage() {
                             </div>
                             <div className="pp-app-strip__badges">
 
-                                <a href="https://play.google.com/store"
+                                <a href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="pp-app-badge"
@@ -474,7 +477,6 @@ export default function DiviniQContactPage() {
           padding: 48px 52px;
           box-shadow: 0 4px 24px rgba(60,20,40,0.06);
         }
-        .pp-heading { font-size: 30px; font-weight: 800; color: var(--pp-maroon); margin: 0 0 14px; line-height: 1.2; }
         .pp-heading__accent { color: #c2185b; }
         .pp-prose { font-size: 15px; line-height: 1.8; color: var(--pp-muted); max-width: 420px; }
 
@@ -508,11 +510,12 @@ export default function DiviniQContactPage() {
           background: #fbf6f4;
           border: 1px solid var(--pp-line);
           border-radius: 20px;
-          padding: 32px;
+          padding: 32px 28px;
           align-self: start;
         }
-        .pp-form-title { font-size: 19px; font-weight: 700; color: var(--pp-maroon); text-align: center; margin: 0 0 4px; }
-        .pp-form-sub { font-size: 12.5px; color: var(--pp-muted); text-align: center; margin: 0 0 24px; }
+        .pp-heading { font-size: 30px; font-weight: 800; color: #2b0f23 !important; margin: 0 0 14px; line-height: 1.35 !important; }
+        .pp-form-title { font-size: 20px; font-weight: 700; color: #2b0f23 !important; text-align: center; margin: 0 0 4px; line-height: 1.35 !important; }
+        .pp-form-sub { font-size: 13px; color: #6b6070 !important; text-align: center; margin: 0 0 24px; }
 
         .pp-form { display: flex; flex-direction: column; gap: 14px; }
         .pp-form-row { display: flex; gap: 14px; flex-wrap: wrap; }
@@ -522,17 +525,37 @@ export default function DiviniQContactPage() {
           display: flex;
           align-items: center;
           gap: 10px;
-          background: #fff;
-          border: 1px solid var(--pp-line);
+          background: #ffffff;
+          border: 1.5px solid #e5dbdf;
           border-radius: 12px;
           padding: 13px 16px;
-          color: var(--pp-muted);
+          color: #6b6070;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .pp-input-wrap:focus-within {
+          border-color: #c9882a;
+          box-shadow: 0 0 0 3px rgba(201, 136, 42, 0.15);
+        }
+        .pp-input-wrap svg {
+          color: #8c7b89 !important;
+          flex-shrink: 0;
         }
         .pp-input-wrap--textarea { align-items: flex-start; }
         .pp-input-wrap input, .pp-input-wrap textarea {
           border: none; outline: none; background: transparent;
-          font-family: 'Poppins', sans-serif; font-size: 14px; color: var(--pp-ink);
+          font-family: 'Poppins', sans-serif; font-size: 14px; color: #1a1118 !important;
           width: 100%; resize: vertical;
+        }
+        .pp-input-wrap input::placeholder,
+        .pp-input-wrap textarea::placeholder {
+          color: #7d6e7b !important;
+          opacity: 1 !important;
+          font-weight: 400;
+        }
+        .pp-input-wrap input::-webkit-input-placeholder,
+        .pp-input-wrap textarea::-webkit-input-placeholder {
+          color: #7d6e7b !important;
+          opacity: 1 !important;
         }
         .pp-form-submit { width: 100%; padding: 15px; margin-top: 6px; }
 

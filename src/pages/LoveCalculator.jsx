@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import ScrollTop from '../components/common/ScrollTop';
+import { useSEO } from '../hooks/seoHook';
+import { SEO } from '../config/seoConfig';
 
 const pad = (n) => String(n).padStart(2, '0');
 
@@ -42,6 +44,7 @@ const LoveFaqItem = ({ num, q, a }) => {
 };
 
 const LoveCalculator = () => {
+    useSEO(SEO.loveCalculator);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
 
@@ -84,19 +87,19 @@ const LoveCalculator = () => {
     };
 
     return (
-        <div className="main-wrapper bg-white">
+        <div className="main-wrapper bg-white" style={{ paddingTop: 0, marginTop: 0 }}>
             <Header />
 
             {/* CELESTIAL HERO BANNER — image + maroon gradient overlay, standalone rounded card */}
-            <div className="container pt-40">
+            <div className="container py-3 py-md-4">
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                     className="position-relative overflow-hidden rounded-25 d-flex align-items-center justify-content-center text-center"
                     style={{
-                        minHeight: '300px',
-                        padding: '70px 30px',
+                        minHeight: '220px',
+                        padding: '45px 24px',
                         backgroundImage:
                             "linear-gradient(100deg, #2c0a17 0%, #3d0f21 46%, rgba(61,15,33,.55) 68%, rgba(61,15,33,0) 100%), url('/assets/img/images/profile-hero-banner.jpeg')",
                         backgroundSize: 'cover',
@@ -105,18 +108,18 @@ const LoveCalculator = () => {
                 >
                     <div className="position-relative" style={{ zIndex: 2, maxWidth: '640px' }}>
                         <span
-                            className="d-block mb-3 fw-semibold"
+                            className="d-block mb-2 fw-semibold"
                             style={{ color: '#f5bc5e', fontSize: '13px', letterSpacing: '3px', textTransform: 'uppercase' }}
                         >
                             Vedic Guna Milan
                         </span>
-                        <h1 className="text-white mb-3" style={{ fontSize: '3rem', lineHeight: 1.1 }}>
+                        <h1 className="text-white mb-2" style={{ fontSize: '2.5rem', lineHeight: 1.1 }}>
                             Vedic Love <span style={{ color: '#f0a530' }}>Finder</span>
                         </h1>
-                        <p className="mb-0" style={{ color: '#e7d9dd' }}>
+                        <p className="mb-0" style={{ color: '#e7d9dd', fontSize: '14.5px' }}>
                             Calculate your relationship strength based on the ancient 36 Guna system of Indian Vedic Astrology.
                         </p>
-                        <div className="mx-auto mt-4" style={{ width: '64px', height: '3px', background: '#f0a530', borderRadius: '2px' }} />
+                        <div className="mx-auto mt-3" style={{ width: '64px', height: '3px', background: '#f0a530', borderRadius: '2px' }} />
                     </div>
                 </motion.div>
             </div>

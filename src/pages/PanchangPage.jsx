@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sun, Moon, Calendar, ChevronLeft, ChevronRight, MapPin, Clock,
   AlertTriangle, Compass, Sparkles, Flower2, Crown, Star, Wind, Sunrise, ArrowUp, ChevronDown
@@ -9,6 +9,8 @@ import Footer from "../components/layout/Footer";
 import MobileMenu from "../components/layout/MobileMenu";
 import PopupSearch from "../components/layout/PopupSearch";
 import SideMenu from "../components/layout/SideMenu";
+import { useSEO } from "../hooks/seoHook";
+import { SEO } from "../config/seoConfig";
 
 // ==========================================
 // HIGH-FIDELITY VECTOR GRAPHICS (VEDIC DESIGN)
@@ -34,10 +36,12 @@ const Kalash = ({ size = 125, className = "" }) => {
 // DYNAMIC PANCHANG DATA GENERATION
 // ==========================================
 
-const getPanchangData = (offset) => {
+const safeMod = (n, m) => ((n % m) + m) % m;
+
+const getPanchangData = (targetDate) => {
   const baseDate = new Date(2026, 0, 4); // Saturday, January 04, 2026
-  const targetDate = new Date(baseDate);
-  targetDate.setDate(baseDate.getDate() + offset);
+  const diffTime = targetDate.getTime() - baseDate.getTime();
+  const offset = Math.round(diffTime / (1000 * 3600 * 24));
 
   const formattedDate = targetDate.toLocaleDateString("en-US", {
     weekday: "long",
@@ -80,10 +84,10 @@ const getPanchangData = (offset) => {
     { name: "Vanija", sub: "Till 02:40 PM" },
   ];
 
-  const tithiIdx = Math.abs(offset) % tithis.length;
-  const nakIdx = Math.abs(offset) % nakshatras.length;
-  const yogaIdx = Math.abs(offset) % yogas.length;
-  const karIdx = Math.abs(offset) % karanas.length;
+  const tithiIdx = safeMod(offset, tithis.length);
+  const nakIdx = safeMod(offset, nakshatras.length);
+  const yogaIdx = safeMod(offset, yogas.length);
+  const karIdx = safeMod(offset, karanas.length);
 
   const t = tithis[tithiIdx];
   const n = nakshatras[nakIdx];
@@ -789,12 +793,40 @@ const STYLES = `
 `;
 
 export default function PanchangPage() {
-  const [dayOffset, setDayOffset] = useState(0);
+  useSEO(SEO.panchang);
+  const [selectedDate, setSelectedDate] = useState(() => new Date(2026, 0, 4));
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isStylesReady, setIsStylesReady] = useState(false);
+  const dateInputRef = useRef(null);
+
+  const handleOpenCalendar = () => {
+    if (dateInputRef.current) {
+      if (typeof dateInputRef.current.showPicker === "function") {
+        dateInputRef.current.showPicker();
+      } else {
+        dateInputRef.current.click();
+      }
+    }
+  };
+
+  const formatDateForInput = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleDateInputChange = (e) => {
+    if (e.target.value) {
+      const [y, m, d] = e.target.value.split("-").map(Number);
+      if (y && m && d) {
+        setSelectedDate(new Date(y, m - 1, d));
+      }
+    }
+  };
 
   // Dynamic Tailwind loader
   useEffect(() => {
@@ -836,7 +868,7 @@ export default function PanchangPage() {
     };
   }, []);
 
-  const d = getPanchangData(dayOffset);
+  const d = getPanchangData(selectedDate);
 
   if (!isStylesReady) {
     return (
@@ -929,32 +961,60 @@ export default function PanchangPage() {
       <section className="max-w-6xl mx-auto px-4 md:px-6 mb-6">
         <div className="bg-white rounded-2xl border border-[#EDE6D8] p-4 md:px-8 py-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
 
+          {/* Hidden native date picker */}
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={formatDateForInput(selectedDate)}
+            onChange={handleDateInputChange}
+            style={{
+              position: "absolute",
+              opacity: 0,
+              width: 0,
+              height: 0,
+              pointerEvents: "none",
+              zIndex: -1,
+            }}
+          />
+
           {/* Date Selector */}
           <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
             <button
-              onClick={() => setDayOffset(d => d - 1)}
+              onClick={() => setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() - 1))}
               className="w-10 h-10 rounded-full flex items-center justify-center border border-[#EDE6D8] bg-white hover:bg-[#FBF3E3] transition-colors"
               aria-label="Previous Day"
+              title="Previous Day"
             >
               <ChevronLeft size={18} className="text-gray-700" />
             </button>
             <div className="h-8 w-px bg-[#EDE6D8] hidden sm:block"></div>
 
-            <div className="flex items-center gap-3 text-center md:text-left">
-              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 border border-orange-100">
+            <button
+              type="button"
+              onClick={handleOpenCalendar}
+              className="flex items-center gap-3 text-center md:text-left bg-transparent border-0 p-0 cursor-pointer group text-left"
+              title="Click to view calendar / select date"
+            >
+              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 border border-orange-100 group-hover:bg-orange-100 group-hover:border-orange-300 transition-all">
                 <Calendar size={18} />
               </div>
               <div>
-                <h2 className="dq-date-label text-base md:text-lg font-bold text-gray-800 tracking-tight">{d.dateLabel}</h2>
+                <div className="flex items-center gap-1.5">
+                  <h2 className="dq-date-label text-base md:text-lg font-bold text-gray-800 tracking-tight group-hover:text-orange-600 transition-colors">
+                    {d.dateLabel}
+                  </h2>
+                  <ChevronDown size={16} className="text-orange-500 group-hover:translate-y-0.5 transition-transform" />
+                </div>
                 <p className="text-xs text-orange-600 font-semibold">{d.tithiSub}</p>
               </div>
-            </div>
+            </button>
 
             <div className="h-8 w-px bg-[#EDE6D8] hidden sm:block"></div>
             <button
-              onClick={() => setDayOffset(d => d + 1)}
+              onClick={() => setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() + 1))}
               className="w-10 h-10 rounded-full flex items-center justify-center border border-[#EDE6D8] bg-white hover:bg-[#FBF3E3] transition-colors"
               aria-label="Next Day"
+              title="Next Day"
             >
               <ChevronRight size={18} className="text-gray-700" />
             </button>
@@ -1120,7 +1180,7 @@ export default function PanchangPage() {
               ))}
             </div>
 
-            <button className="dq-upcoming-btn">
+            <button className="dq-upcoming-btn" onClick={handleOpenCalendar} type="button" title="Open Calendar">
               <Calendar size={15} /> View Full Calendar
             </button>
           </div>

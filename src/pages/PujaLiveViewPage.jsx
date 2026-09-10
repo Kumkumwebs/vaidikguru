@@ -4,6 +4,8 @@ import apiService from "../services/apiServices";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ScrollToTop from "../components/common/ScrollToTop";
+import { useSEO } from "../hooks/seoHook";
+import { SEO } from "../config/seoConfig";
 import "./PujaLiveViewPage.css";
 
 // Ritual sequence shown in the timeline card. This is a UI-only simulation —
@@ -34,6 +36,10 @@ const REGISTER_PROMPT_DELAY_MS = 2 * 60 * 1000; // 2 minutes
 
 const PujaLiveViewPage = () => {
   const { id } = useParams();
+  useSEO({
+    ...SEO.pujaLive,
+    canonical: id ? `/puja-live/${id}` : '/darshan',
+  });
   const location = useLocation();
   const navigate = useNavigate();
 

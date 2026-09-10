@@ -3,10 +3,6 @@ import axios from 'axios';
 const api = axios.create({
 	baseURL: '',
 	timeout: 30000,
-	headers: {
-		'Cache-Control': 'no-cache, no-store, must-revalidate',
-		Pragma: 'no-cache',
-	},
 });
 
 const getAuthHeaders = () => {

@@ -1,4 +1,4 @@
- // src/pages/Orders.jsx
+// src/pages/Orders.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
@@ -168,7 +168,36 @@ const OrdersPage = () => {
                 }
             }
 
-            const merged = mergeGiftTransactions(apiList);
+            // Fetch server-side gift transactions via GET /user_api/gift_transaction
+            let giftJson = await apiService.getBearer('/user_api/gift_transaction').catch(() => null);
+            if (!giftJson) {
+                giftJson = await apiService.getBearer('https://admin.vaidikguru.com/user_api/gift_transaction').catch(() => null);
+            }
+
+            let giftList = [];
+            if (giftJson) {
+                let rawGiftArr = [];
+                if (Array.isArray(giftJson.data)) rawGiftArr = giftJson.data;
+                else if (Array.isArray(giftJson.results)) rawGiftArr = giftJson.results;
+                else if (Array.isArray(giftJson.record)) rawGiftArr = giftJson.record;
+                else if (Array.isArray(giftJson.records)) rawGiftArr = giftJson.records;
+                else if (Array.isArray(giftJson.transactions)) rawGiftArr = giftJson.transactions;
+                else if (Array.isArray(giftJson.result?.data)) rawGiftArr = giftJson.result.data;
+                else if (Array.isArray(giftJson.result)) rawGiftArr = giftJson.result;
+                else if (Array.isArray(giftJson)) rawGiftArr = giftJson;
+
+                giftList = rawGiftArr.map((g, idx) => ({
+                    ...g,
+                    id: g.id || g._id || g.order_id || g.transaction_id || `gift_api_${idx}_${g.gift_id || ''}`,
+                    is_gift_api: true,
+                    category: 'Gift',
+                    type: g.type || 'gift',
+                    transaction_type: g.transaction_type || 'gift',
+                }));
+            }
+
+            const combinedApi = [...apiList, ...giftList];
+            const merged = mergeGiftTransactions(combinedApi);
             const mapped = merged.map(mapApiTransaction);
             setApiTransactions(mapped);
 

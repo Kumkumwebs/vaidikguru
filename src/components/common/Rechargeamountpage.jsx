@@ -73,7 +73,7 @@ export default function RechargeAmountPage() {
             </span>
           </p>
           <h1 className="recharge-amount-title">
-            Divin<span className="recharge-amount-title__accent">IQ</span>{" "}
+            Vaidik<span className="recharge-amount-title__accent">Guru</span>{" "}
             Recharge Wallet
           </h1>
           <p className="recharge-amount-subtitle">
