@@ -340,16 +340,60 @@ const PujaBookingDetailsPage = () => {
 
             <div className="pbd-card pbd-help-card">
               <h5 className="pbd-card-title">Help &amp; Support</h5>
+
+              {/* Phone Support */}
               <div className="pbd-help-row">
                 <i className="fas fa-phone-alt"></i>
+
                 <div>
-                  <strong>080-711-74417</strong>
-                  <span>You can call us from 10:30 AM - 7:30 PM</span>
+                  <a
+                    href="tel:+918881110520"
+                    style={{
+                      textDecoration: "none",
+                      color: "inherit",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <strong>+91 8881110520</strong>
+                  </a>
+
+                  <span>
+                    You can call us from 10:30 AM - 7:30 PM
+                  </span>
                 </div>
               </div>
+
+              {/* Help Actions */}
               <div className="pbd-help-actions">
-                <button className="pbd-help-btn"><i className="fas fa-envelope"></i> Email us</button>
-                <button className="pbd-help-btn whatsapp"><i className="fab fa-whatsapp"></i> WhatsApp us</button>
+
+                {/* Email Support */}
+                <a
+                  href="mailto:support@vaidikguru.com"
+                  className="pbd-help-btn"
+                  style={{
+                    textDecoration: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <i className="fas fa-envelope"></i>
+                  <span>Email us</span>
+                </a>
+
+                {/* WhatsApp Support */}
+                <a
+                  href="https://wa.me/918881110520"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pbd-help-btn whatsapp"
+                  style={{
+                    textDecoration: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <i className="fab fa-whatsapp"></i>
+                  <span>WhatsApp us</span>
+                </a>
+
               </div>
             </div>
           </div>

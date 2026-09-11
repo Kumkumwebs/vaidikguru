@@ -15,6 +15,7 @@ import { useSEO } from "../hooks/seoHook";
 import { SEO } from "../config/seoConfig";
 import "./PujaListing.css";
 import MobileBottomNav from "../components/layout/MobileNavbar";
+import Canonical from "../components/common/canonical";
 
 // NOTE: verify this exact path against your backend router mount point —
 // the route handler you shared is `router.post("/new_consultation_add", ...)`,
@@ -89,6 +90,7 @@ const PujaCard = ({ item, index, onView }) => {
     .join(" • ");
 
   return (
+    <>
     <motion.div
       className="pj-card"
       initial={{ opacity: 0, y: 14 }}
@@ -157,6 +159,7 @@ const PujaCard = ({ item, index, onView }) => {
         </button>
       </div>
     </motion.div>
+    </>
   );
 };
 
@@ -353,6 +356,7 @@ const RecommendCard = ({ onOpen }) => (
       ))}
     </div>
   </div>
+  
 );
 
 /* ── Sidebar ── */
@@ -775,6 +779,7 @@ const PujaListing = () => {
   );
 
   return (
+    <><Canonical />
     <div className="main-wrapper" style={{ paddingTop: 0, marginTop: 0 }}>
       
       <SideMenu isOpen={showSideMenu} onClose={() => setShowSideMenu(false)} />
@@ -1020,6 +1025,7 @@ const PujaListing = () => {
       {/* ── Card overrides: shorter cards + hover effects + mobile polish ── */}
    
     </div>
+    </>
   );
 };
 

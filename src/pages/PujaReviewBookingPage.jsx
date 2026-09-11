@@ -191,7 +191,7 @@ const PujaReviewBookingPage = () => {
       if (selectedPackage) sessionStorage.setItem("activeSelectedPackage", JSON.stringify(selectedPackage));
       if (templeAddonsQty) sessionStorage.setItem("activeTempleAddonsQty", JSON.stringify(templeAddonsQty));
       if (homeAddonsQty) sessionStorage.setItem("activeHomeAddonsQty", JSON.stringify(homeAddonsQty));
-    } catch (_) {}
+    } catch (_) { }
     navigate("/puja_fill_form", {
       state: {
         pujaData: puja,
@@ -753,27 +753,68 @@ const PujaReviewBookingPage = () => {
 
         {/* NEED HELP */}
         <div className="prb-help-section">
-        <div className="prb-help-left">
-          <div className="prb-help-main-icon"><i className="fa-solid fa-headset"></i></div>
-          <div><h5>Need Help?</h5><p>We are here to help you at every step</p></div>
+          <div className="prb-help-left">
+            <div className="prb-help-main-icon"><i className="fa-solid fa-headset"></i></div>
+            <div><h5>Need Help?</h5><p>We are here to help you at every step</p></div>
+          </div>
+          <div className="prb-help-right">
+
+            {/* Call Support */}
+            <a
+              href="tel:+918881110520"
+              className="prb-help-item"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              <div className="prb-help-icon prb-help-purple">
+                <i className="fa-solid fa-phone"></i>
+              </div>
+
+              <div>
+                <span>Call Support</span>
+                <strong>+91 8881110520</strong>
+              </div>
+            </a>
+
+            <div className="prb-help-divider"></div>
+
+            {/* WhatsApp */}
+            <a
+              href="https://wa.me/918881110520"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="prb-help-item"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              <div className="prb-help-icon prb-help-green">
+                <i className="fa-brands fa-whatsapp"></i>
+              </div>
+
+              <div>
+                <span>WhatsApp</span>
+                <strong>Chat with us</strong>
+              </div>
+            </a>
+
+            <div className="prb-help-divider"></div>
+
+            {/* Email */}
+            <a
+              href="mailto:support@vaidikguru.com"
+              className="prb-help-item"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              <div className="prb-help-icon prb-help-yellow">
+                <i className="fa-solid fa-envelope"></i>
+              </div>
+
+              <div>
+                <span>Email Us</span>
+                <strong>support@vaidikguru.com</strong>
+              </div>
+            </a>
+
+          </div>
         </div>
-        <div className="prb-help-right">
-          <div className="prb-help-item">
-            <div className="prb-help-icon prb-help-purple"><i className="fa-solid fa-phone"></i></div>
-            <div><span>Call Support</span><strong>+91 8881110520</strong></div>
-          </div>
-          <div className="prb-help-divider"></div>
-          <div className="prb-help-item">
-            <div className="prb-help-icon prb-help-green"><i className="fa-brands fa-whatsapp"></i></div>
-            <div><span>WhatsApp</span><strong>Chat with us</strong></div>
-          </div>
-          <div className="prb-help-divider"></div>
-          <div className="prb-help-item">
-            <div className="prb-help-icon prb-help-yellow"><i className="fa-solid fa-envelope"></i></div>
-            <div><span>Email Us</span><strong>support@vaidikguru.com</strong></div>
-          </div>
-        </div>
-      </div>
       </div>
 
       {/* PAYMENT FOOTER */}
@@ -794,7 +835,7 @@ const PujaReviewBookingPage = () => {
         </div>
       </div>
 
-         {/* SYNCING TOAST */}
+      {/* SYNCING TOAST */}
       {isSyncing && (
         <div className="prb-sync-toast">
           <i className="fa-solid fa-rotate fa-spin" /> Syncing Selection…

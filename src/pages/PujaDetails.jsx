@@ -1247,7 +1247,6 @@ const PujaDetails = () => {
                 }}>
                   {/* TOP ICON CIRCLE — hidden on mobile via CSS */}
                   <div className="pd-pkg-icon-circle" style={{
-                    marginTop: "-1px",
                     width: 54,
                     height: 54,
                     borderRadius: "50%",

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-	baseURL: '',
+	baseURL: 'https://admin.vaidikguru.com',
 	timeout: 30000,
 });
 

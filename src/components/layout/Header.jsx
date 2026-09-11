@@ -12,7 +12,7 @@ const Header = ({ onMenuToggle, onSideMenuToggle, onSearchToggle }) => {
 	const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isLangOpen, setIsLangOpen] = useState(false);
-const { activeLang, setLanguage, LANGUAGES } = useLanguage();
+	const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 	const { user, isLoggedIn, clearStorage } = useStorage();
 	const dropdownRef = useRef(null);
 	const langRef = useRef(null);
@@ -493,182 +493,163 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 																{user.number || user.phone}
 															</p>
 														</div>
-
 														<div className={styles.menuList}>
+
+															{/* 1. Notification */}
+															<Link
+																to="/notification"
+																className={styles.menuItem}
+																onClick={() => setIsDropdownOpen(false)}
+															>
+																<div className={styles.menuItemLeft}>
+																	<i className={`fas fa-star ${styles.menuIcon}`}></i>
+																	Notification
+																</div>
+																<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
+															</Link>
+
+															{/* 2. My Profile */}
 															<Link
 																to="/profile"
 																className={styles.menuItem}
 																onClick={() => setIsDropdownOpen(false)}
 															>
 																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-user ${styles.menuIcon}`}
-																	></i>
+																	<i className={`fas fa-user ${styles.menuIcon}`}></i>
 																	My profile
 																</div>
-																<i
-																	className={`fas fa-chevron-right ${styles.chevron}`}
-																></i>
+																<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
 															</Link>
 
+															{/* 3. My Wallet */}
 															<Link
 																to="/wallet"
 																className={styles.menuItem}
 																onClick={() => setIsDropdownOpen(false)}
 															>
 																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-wallet ${styles.menuIcon}`}
-																	></i>
+																	<i className={`fas fa-wallet ${styles.menuIcon}`}></i>
 																	My Wallet
 																</div>
-																<i
-																	className={`fas fa-chevron-right ${styles.chevron}`}
-																></i>
-															</Link>
-															
-
-															<Link
-																to="/my_puja_booking"
-																className={styles.menuItem}
-																onClick={() => setIsDropdownOpen(false)}
-															>
-																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-calendar-alt ${styles.menuIcon}`}
-																	></i>
-																	My Puja Bookings
-																</div>
-																<i
-																	className={`fas fa-chevron-right ${styles.chevron}`}
-																></i>
+																<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
 															</Link>
 
-															<Link
-																to="/my_chadhava_booking"
-																className={styles.menuItem}
-																onClick={() => setIsDropdownOpen(false)}
-															>
-																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-hand-holding-heart ${styles.menuIcon}`}
-																	></i>
-																	My Chadhava Bookings
-																</div>
-																<i
-																	className={`fas fa-chevron-right ${styles.chevron}`}
-																></i>
-															</Link>
+															{/* 4. My Orders */}
 															<Link
 																to="/orders"
 																className={styles.menuItem}
 																onClick={() => setIsDropdownOpen(false)}
 															>
 																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-wallet ${styles.menuIcon}`}
-																	></i>
+																	<i className={`fas fa-wallet ${styles.menuIcon}`}></i>
 																	My Orders
 																</div>
-																<i
-																	className={`fas fa-chevron-right ${styles.chevron}`}
-																></i>
+																<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
 															</Link>
 
+															{/* 5. My Puja Bookings */}
+															<Link
+																to="/my_puja_booking"
+																className={styles.menuItem}
+																onClick={() => setIsDropdownOpen(false)}
+															>
+																<div className={styles.menuItemLeft}>
+																	<i className={`fas fa-calendar-alt ${styles.menuIcon}`}></i>
+																	My Puja Bookings
+																</div>
+																<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
+															</Link>
+
+															{/* 6. My Chadhava Bookings */}
+															<Link
+																to="/my_chadhava_booking"
+																className={styles.menuItem}
+																onClick={() => setIsDropdownOpen(false)}
+															>
+																<div className={styles.menuItemLeft}>
+																	<i className={`fas fa-hand-holding-heart ${styles.menuIcon}`}></i>
+																	My Chadhava Bookings
+																</div>
+																<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
+															</Link>
+
+															{/* 7. Astro Mall Bookings */}
+															<Link
+																to="/astro_mall_booking"
+																className={styles.menuItem}
+																onClick={() => setIsDropdownOpen(false)}
+															>
+																<div className={styles.menuItemLeft}>
+																	<i className={`fas fa-shopping-bag ${styles.menuIcon}`}></i>
+																	Astro Mall Bookings
+																</div>
+																<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
+															</Link>
+
+															{/* 8. Book a Puja - New */}
 															<Link
 																to="/puja"
 																className={styles.menuItem}
 																onClick={() => setIsDropdownOpen(false)}
 															>
 																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-om ${styles.menuIcon}`}
-																	></i>
+																	<i className={`fas fa-om ${styles.menuIcon}`}></i>
 																	Book a Puja
 																</div>
-																<div
-																	style={{
-																		display: 'flex',
-																		alignItems: 'center',
-																	}}
-																>
+																<div style={{ display: 'flex', alignItems: 'center' }}>
 																	<span className={styles.badgeNew}>New</span>
-																	<i
-																		className={`fas fa-chevron-right ${styles.chevron}`}
-																	></i>
+																	<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
 																</div>
 															</Link>
 
+															{/* 9. Book a Chadhava - New */}
 															<Link
 																to="/chadhava"
 																className={styles.menuItem}
 																onClick={() => setIsDropdownOpen(false)}
 															>
 																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-gift ${styles.menuIcon}`}
-																	></i>
+																	<i className={`fas fa-gift ${styles.menuIcon}`}></i>
 																	Book a Chadhava
 																</div>
-																<div
-																	style={{
-																		display: 'flex',
-																		alignItems: 'center',
-																	}}
-																>
+																<div style={{ display: 'flex', alignItems: 'center' }}>
 																	<span className={styles.badgeNew}>New</span>
-																	<i
-																		className={`fas fa-chevron-right ${styles.chevron}`}
-																	></i>
+																	<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
 																</div>
 															</Link>
+
+															{/* 10. Astro Mall - New */}
 															<Link
 																to="https://vaidikguru.store.com"
 																className={styles.menuItem}
 																onClick={() => setIsDropdownOpen(false)}
 															>
 																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-wallet ${styles.menuIcon}`}
-																	></i>
+																	<i className={`fas fa-wallet ${styles.menuIcon}`}></i>
 																	Astro Mall
 																</div>
-																<i
-																	className={`fas fa-chevron-right ${styles.chevron}`}
-																></i>
+																<div style={{ display: 'flex', alignItems: 'center' }}>
+																	<span className={styles.badgeNew}>New</span>
+																	<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
+																</div>
 															</Link>
 
+															{/* 11. Astro Tools - New */}
 															<Link
 																to="/astrology_calculator_hub"
 																className={styles.menuItem}
 																onClick={() => setIsDropdownOpen(false)}
 															>
 																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-star ${styles.menuIcon}`}
-																	></i>
+																	<i className={`fas fa-star ${styles.menuIcon}`}></i>
 																	Astro Tools
 																</div>
-																<i
-																	className={`fas fa-chevron-right ${styles.chevron}`}
-																></i>
+																<div style={{ display: 'flex', alignItems: 'center' }}>
+																	<span className={styles.badgeNew}>New</span>
+																	<i className={`fas fa-chevron-right ${styles.chevron}`}></i>
+																</div>
 															</Link>
 
-																<Link
-																to="/notification"
-																className={styles.menuItem}
-																onClick={() => setIsDropdownOpen(false)}
-															>
-																<div className={styles.menuItemLeft}>
-																	<i
-																		className={`fas fa-star ${styles.menuIcon}`}
-																	></i>
-																	Notification
-																</div>
-																<i
-																	className={`fas fa-chevron-right ${styles.chevron}`}
-																></i>
-															</Link>
 														</div>
 
 														{/* Help Section */}
@@ -707,20 +688,20 @@ const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 											</div>
 										) : (
 											<button
-  onClick={() => setIsModalOpen(true)}
-  className="th-btn style3 rounded-circle p-0 d-flex align-items-center justify-content-center"
-  style={{
-    width: '45px',
-    height: '45px',
-    borderRadius: '50%',
-  }}
->
-  <img
-    src={isLoggedIn ? "/assets/img/icon/user-active.svg" : "/assets/img/icon/user.svg"}
-    alt={isLoggedIn ? "My Account" : "Login"}
-    style={{ width: '20px', height: '20px' }}
-  />
-</button>
+												onClick={() => setIsModalOpen(true)}
+												className="th-btn style3 rounded-circle p-0 d-flex align-items-center justify-content-center"
+												style={{
+													width: '45px',
+													height: '45px',
+													borderRadius: '50%',
+												}}
+											>
+												<img
+													src={isLoggedIn ? "/assets/img/icon/user-active.svg" : "/assets/img/icon/user.svg"}
+													alt={isLoggedIn ? "My Account" : "Login"}
+													style={{ width: '20px', height: '20px' }}
+												/>
+											</button>
 										)}
 									</div>
 								</div>

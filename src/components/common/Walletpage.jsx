@@ -53,9 +53,9 @@ const mapWalletTransaction = (t) => {
     const desc = (t.description || '').trim();
     const astroName = (t.astro_name || '').trim();
     const pujaName = (t.puja_name || '').trim();
-    
+
     const isCredit = amountType === 'credit' || rawType === 'admin' || rawType === 'bank' || desc.toLowerCase().includes('recharge') || desc.toLowerCase().includes('credit');
-    
+
     let message = desc;
     if (!message) {
         if (rawType === 'gift' || desc.toLowerCase().includes('gift')) {
@@ -72,7 +72,7 @@ const mapWalletTransaction = (t) => {
             message = isCredit ? "Wallet Recharge" : "Wallet Transaction";
         }
     }
-    
+
     const rawDate = (t.transaction_date || t.created_at || '').trim();
     let dateStr = "Recent";
     if (rawDate) {
@@ -152,11 +152,34 @@ export default function WalletPage() {
             }
 
             const merged = mergeGiftTransactions(apiList);
-            setTransactions(merged.map(mapWalletTransaction));
+
+            // Show ONLY wallet recharge transactions.
+            // Exclude gift, chat, call, puja, chadhava and other debit transactions.
+            const rechargeTransactions = merged.filter((t) => {
+                const description = String(t.description || '').toLowerCase();
+                const type = String(t.type || t.category || '').toLowerCase();
+                const amountType = String(t.amount_type || '').toLowerCase();
+
+                return (
+                    description.includes('recharge') ||
+                    description.includes('wallet recharge') ||
+                    description.includes('wallet topup') ||
+                    description.includes('top up') ||
+                    type === 'recharge' ||
+                    type === 'wallet_recharge' ||
+                    type === 'topup' ||
+                    (amountType === 'credit' && (
+                        type === 'admin' ||
+                        type === 'bank'
+                    ))
+                );
+            });
+
+            setTransactions(rechargeTransactions.map(mapWalletTransaction));
         } catch (e) {
             console.error("Wallet data fetch error:", e);
             setError("Unable to load your wallet balance right now.");
-        } finally {
+        } finally { 
             setLoading(false);
         }
     };

@@ -36,7 +36,7 @@ const ChadhavaBookingDetailsPage = () => {
 
   const [booking, setBooking] = useState(location.state?.booking || null);
   const [loading, setLoading] = useState(!location.state?.booking);
-   const [openFaq, setOpenFaq] = useState(null);
+  const [openFaq, setOpenFaq] = useState(null);
   const [isAppModalOpen, setIsAppModalOpen] = useState(false);
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -171,7 +171,7 @@ const ChadhavaBookingDetailsPage = () => {
     }
   };
 
- return (
+  return (
     <div className="main-wrapper bg-light">
       <ScrollToTop />
       <SideMenu isOpen={showSideMenu} onClose={() => setShowSideMenu(false)} />
@@ -380,16 +380,48 @@ const ChadhavaBookingDetailsPage = () => {
 
             <div className="cbd-card cbd-help-card">
               <h5 className="cbd-card-title">Help &amp; Support</h5>
+
               <div className="cbd-help-row">
                 <i className="fas fa-phone-alt"></i>
+
                 <div>
-                  <strong>080-711-74417</strong>
+                  <a
+                    href="tel:+918881110520"
+                    style={{
+                      textDecoration: "none",
+                      color: "inherit",
+                      display: "block",
+                    }}
+                  >
+                    <strong>+91 8881110520</strong>
+                  </a>
+
                   <span>You can call us from 10:30 AM - 7:30 PM</span>
                 </div>
               </div>
+
               <div className="cbd-help-actions">
-                <button className="cbd-help-btn"><i className="fas fa-envelope"></i> Email us</button>
-                <button className="cbd-help-btn whatsapp"><i className="fab fa-whatsapp"></i> WhatsApp us</button>
+                {/* Email Support */}
+                <a
+                  href="mailto:support@vaidikguru.com"
+                  className="cbd-help-btn"
+                  style={{ textDecoration: "none" }}
+                >
+                  <i className="fas fa-envelope"></i>
+                  Email us
+                </a>
+
+                {/* WhatsApp Support */}
+                <a
+                  href="https://wa.me/918881110520"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cbd-help-btn whatsapp"
+                  style={{ textDecoration: "none" }}
+                >
+                  <i className="fab fa-whatsapp"></i>
+                  WhatsApp us
+                </a>
               </div>
             </div>
           </div>

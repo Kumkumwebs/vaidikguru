@@ -1096,3 +1096,64 @@
      bottom bar covers this same action everywhere on mobile */
   .prb-pay-btn { display: none; }
 }
+/* =========================================
+   HELP & SUPPORT - CLICK FIX
+========================================= */
+
+.prb-help-section {
+  position: relative;
+  z-index: 20;
+}
+
+.prb-help-left {
+  position: relative;
+  z-index: 21;
+}
+
+.cbd-help-card {
+  position: relative;
+  z-index: 22;
+  pointer-events: auto !important;
+}
+
+.cbd-help-row {
+  position: relative;
+  z-index: 23;
+}
+
+.help-phone-link {
+  position: relative;
+  z-index: 30;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.cbd-help-actions {
+  position: relative;
+  z-index: 30;
+  pointer-events: auto !important;
+}
+
+.cbd-help-btn {
+  position: relative;
+  z-index: 31;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  text-decoration: none !important;
+}
+
+.cbd-help-btn:hover {
+  text-decoration: none !important;
+}
+
+.cbd-help-btn.whatsapp {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}

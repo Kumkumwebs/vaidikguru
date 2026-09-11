@@ -31,11 +31,13 @@ export default function RateConsultationModal({ onClose, onSkip, onSubmit }) {
 
   const activeRating = hoverRating || rating;
 
-  const toggleTag = (tag) => {
-    setTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  };
+const toggleTag = (tag) => {
+  setTags((prev) =>
+    prev.includes(tag)
+      ? prev.filter((t) => t !== tag)
+      : [...prev, tag]
+  );
+};
 
   return (
     <div className="modal-overlay">
@@ -105,11 +107,36 @@ export default function RateConsultationModal({ onClose, onSkip, onSubmit }) {
             className="review-textarea"
             placeholder="Share your experience..."
             maxLength={300}
-            value={review}
-            onChange={(e) => setReview(e.target.value)}
+            value={
+              tags.length > 0
+                ? `${tags.join(', ')}${review ? ` - ${review}` : ''}`
+                : review
+            }
+            onChange={(e) => {
+              const value = e.target.value;
+
+              const tagText = tags.join(', ');
+
+              if (tagText && value.startsWith(tagText)) {
+                const userReview = value
+                  .slice(tagText.length)
+                  .replace(/^\s*-\s*/, '');
+
+                setReview(userReview);
+              } else if (!tagText) {
+                setReview(value);
+              }
+            }}
             style={{ resize: 'none' }}
           />
-          <span className="char-count">{review.length}/300</span>
+
+          <span className="char-count">
+            {(
+              tags.length > 0
+                ? `${tags.join(', ')}${review ? ` - ${review}` : ''}`
+                : review
+            ).length}/300
+          </span>
         </div>
 
         <div className="tag-row">

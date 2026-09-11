@@ -693,48 +693,35 @@ const ChatConsultation = () => {
      drops EVERY listener on a path, which is what the old off(sessionRef) was
      doing to the CallSession start-time and remote-end listeners. */
   useEffect(() => {
+  setAstroTyping(false);
+
+  if (!gid || !astrologer_id) return;
+
+  const astroId = String(astrologer_id);
+  const typingRef = ref(db, `Typing/${gid}/${astroId}`);
+
+  const handler = (snap) => {
+    const value = snap.val();
+
+    console.debug(
+      '[typing] astrologer:',
+      astroId,
+      'value:',
+      value
+    );
+
+    setAstroTyping(value === true);
+  };
+
+  onValue(typingRef, handler, (err) => {
+    console.error('[typing] listener error:', err);
+  });
+
+  return () => {
+    off(typingRef, 'value', handler);
     setAstroTyping(false);
-    if (!gid) return;
-
-    const meId = String(userId || '');
-    const astroId = String(astrologer_id || '');
-    const typingRef = ref(db, `Typing/${gid}`);
-
-    const decide = (val) => {
-      if (val == null) return false;
-      if (typeof val !== 'object') return isTypingValue(val);
-      // Preferred: the astrologer's own node.
-      if (Object.prototype.hasOwnProperty.call(val, astroId)) return isTypingValue(val[astroId]);
-      // Fallback: anything under this gid that isn't OUR flag was written by
-      // the other side, whatever key they chose. Requires a known meId so we
-      // can never mistake our own flag for theirs.
-      if (!meId) return false;
-      return Object.entries(val).some(([k, v]) => String(k) !== meId && isTypingValue(v));
-    };
-
-    const handler = (snap) => {
-      const raw = snap.val();
-      console.debug('[typing] Typing/%s =', gid, raw); // keep until verified, then delete
-      const typing = decide(raw);
-
-      if (astroTypingTimeoutRef.current) clearTimeout(astroTypingTimeoutRef.current);
-      astroTypingTimeoutRef.current = null;
-      setAstroTyping(typing);
-
-      if (typing) {
-        astroTypingTimeoutRef.current = setTimeout(() => setAstroTyping(false), TYPING_STALE_MS);
-      }
-    };
-
-    onValue(typingRef, handler, (err) =>
-      console.error('[typing] listener REJECTED — check Firebase rules on /Typing:', err));
-
-    return () => {
-      if (astroTypingTimeoutRef.current) clearTimeout(astroTypingTimeoutRef.current);
-      off(typingRef, 'value', handler);
-      setAstroTyping(false);
-    };
-  }, [gid, userId, astrologer_id]);
+  };
+}, [gid, astrologer_id]);
 
 // API still returns gift images hosted on the old domain — rewrite to the current one.
 const fixImgHost = (url) =>
