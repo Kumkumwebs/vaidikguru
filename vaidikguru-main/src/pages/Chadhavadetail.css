@@ -1,0 +1,918 @@
+/* ═══════════════════════════════════════════════
+   ChadhavaDetail.css — DiviniQ Chadhava Page
+   ═══════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;color:#333;background:#fff;font-size:14px}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+
+/* ═══════════════════════════════════════
+   BREADCRUMB
+   ═══════════════════════════════════════ */
+.cd-bc{
+  padding:9px 56px;font-size:12px;color:#888;
+  background:#fff;border-bottom:1px solid #f0e8e0;
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px;
+}
+.cd-bc a{color:#888}
+.cd-bc a:hover{color:#7b1a3a}
+.cd-bc span{color:#555}
+
+/* ═══════════════════════════════════════
+   HERO — two-column grid
+   ═══════════════════════════════════════ */
+.cd-hero{
+    display:grid;
+    grid-template-columns: 1fr 430px;
+    gap:30px;
+    padding:20px;
+    min-height:500px;
+    position:relative;
+    z-index:4;
+    border-radius:20px;
+    overflow:hidden;
+    background-size:cover;
+    background-position:center center;
+    background-repeat:no-repeat;
+}
+/* ── Hero LEFT ── */
+.cd-hero-left{
+    position:relative;
+    min-height:580px;
+    overflow:hidden;
+}
+
+.cd-hero-bg-overlay{
+    position:absolute;
+    inset:0;
+    z-index:2;
+}
+
+.cd-hero-body{
+    position:relative;
+    z-index:5;
+    padding:60px 1px 103px 482px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+}
+
+.cd-hero-deity-img{
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:320px;
+    height:auto;
+    z-index:1;
+    object-fit:contain;
+}
+
+.cd-auspicious{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;color:#c87a3a;letter-spacing:0.8px;
+}
+.cd-auspicious i{font-size:11px}
+
+.cd-hero-h1{
+    font-size:34px;
+    line-height:1.2;
+    font-weight:800;
+    color:#7b1a3a;
+    max-width:520px;
+}
+.cd-hero-h1 em{
+    display:block;
+    font-size:58px;
+    color:#d08a37;
+    font-style:italic;
+    line-height:1;
+    margin-top:8px;
+}
+
+.cd-hero-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cd-meta-item{display:flex;align-items:center;gap:4px;font-size:11.5px;color:#666}
+.cd-meta-item i{color:#f5a623;font-size:11px}
+.cd-meta-sep{color:#ddd;font-size:12px}
+
+.cd-features{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:380px}
+.cd-feat{display:flex;align-items:center;gap:8px;font-size:12px;color:#555}
+.cd-feat i{font-size:14px;color:#e87a2e;width:18px;flex-shrink:0}
+
+/* Gallery strip */
+.cd-gallery{
+    display:flex;
+    gap:10px;
+    margin-top:30px;
+    justify-content:flex-start;
+    align-items:flex-start;
+    width:100%;
+    margin-left:-210px;
+    padding-left:0;
+    position:relative;
+    z-index:6;
+}
+.cd-gal-img{
+    width:95px;
+    height:75px;
+    border-radius:10px;
+    object-fit:cover;
+    border:3px solid #fff;
+    position:relative;
+    z-index:6;
+}
+.cd-gal-more{
+    width:95px;
+    height:75px;
+    color:#fff;
+    text-align:center;
+    border-radius:10px;
+    background:rgba(0,0,0,.55);
+    position:relative;
+    z-index:6;
+    pointer-events:auto;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+.cd-gal-more .gm-num{font-size:17px;font-weight:700;line-height:1.1}
+.cd-gal-more .gm-lbl{font-size:9.5px;font-weight:500}
+
+/* ── Hero RIGHT — plain image, no card chrome ── */
+.cd-hero-right{
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:580px;          /* explicit height — matches .cd-hero-left's
+                               min-height:580px so both grid columns are
+                               the same height and the image has a real
+                               box to size itself against */
+}
+.cd-card-plain-img{
+    width:auto;
+    height:100%;
+    max-width:100%;
+    object-fit:contain;    /* scales the whole image to fit the 580px box
+                               without cropping, preserving its own aspect ratio */
+    border-radius:20px;
+    display:block;
+}
+
+/* ── Mobile-only full-width swipeable hero carousel ──
+   Hidden by default on desktop/tablet — only appears under the 768px
+   media query below, sitting ABOVE the hero banner (breadcrumb → this
+   carousel → hero). One full-width slide per view with dot indicators. */
+.cd-hero-mobile-carousel{
+    display:none;
+}
+@media(max-width:768px){
+  .cd-hero-mobile-carousel{
+    display:block;
+    position:relative;
+    width:100%;
+  }
+  .cd-hero-mobile-track{
+    display:flex;
+    width:100%;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .cd-hero-mobile-track::-webkit-scrollbar{ display:none; }
+  .cd-hero-mobile-slide{
+    width:100%;
+    flex:0 0 100%;
+    max-width:100%;
+    height:340px;              /* fixed height so every slide is identical */
+    min-height:340px;
+    max-height:340px;
+    object-fit:cover;          /* fills the box, crops instead of distorting */
+    object-position:center;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;   /* prevents skipping past a slide on fast swipes */
+    background:#f5ede0;
+    display:block;
+  }
+  .cd-hero-mobile-dots{
+    position:absolute;
+    bottom:14px;
+    left:0;
+    right:0;
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    z-index:2;
+  }
+  .cd-hero-mobile-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.55);
+    transition:width 0.2s,background 0.2s;
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+  .cd-hero-mobile-dot.active{
+    width:18px;
+    border-radius:4px;
+    background:#fff;
+  }
+}
+
+@media(max-width:480px){
+  .cd-hero-mobile-slide{
+    height:260px;
+    min-height:155px;
+    max-height:260px;
+  }
+}
+
+/* ═══════════════════════════════════════
+   TRUST STRIP
+   ═══════════════════════════════════════ */
+.cd-trust{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  background:#fffaf5;
+  border-top:1px solid #f0e0cc;border-bottom:1px solid #f0e0cc;
+  padding:14px 56px;
+  margin: 0px 60px;
+  border-radius: 18px;
+  z-index: 3;
+  margin-top: 0px;
+  position: relative;
+  overflow: hidden;
+}
+.cd-trust-item{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 16px;
+}
+.cd-trust-item+.cd-trust-item{border-left:1px solid #f0e0cc}
+.cd-trust-ico{
+  width:40px;height:40px;border-radius:50%;
+  background:#fef8f3;border:1px solid #f0d8c8;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.cd-trust-ico i{font-size:17px;color:#e87a2e}
+.cd-trust-title{font-size:12.5px;font-weight:700;color:#222}
+.cd-trust-sub{font-size:11px;color:#888;margin-top:1px;line-height:1.4}
+
+/* ═══════════════════════════════════════
+   ADD-ONS
+   ═══════════════════════════════════════ */
+.cd-addons{padding:24px 56px;background:#fff}
+.cd-addons-head{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+}
+.cd-addons-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:16px;font-weight:700;color:#222;
+}
+.cd-addons-title i{color:#e87a2e;font-size:15px}
+.cd-view-all{font-size:12.5px;font-weight:600;color:#7b1a3a}
+
+.cd-addons-scroll{position:relative;padding:0 18px}
+.cd-addons-arr{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:32px;height:32px;border-radius:50%;
+  background:#fff;border:1px solid #eee;
+  box-shadow:0 2px 8px rgba(0,0,0,0.12);
+  display:flex;align-items:center;justify-content:center;
+  z-index:2;cursor:pointer;
+}
+.cd-addons-arr.left{left:0}
+.cd-addons-arr.right{right:0}
+.cd-addons-arr i{font-size:12px;color:#555}
+
+.cd-addons-row{
+  display:flex;gap:12px;
+  overflow-x:auto;scroll-behavior:smooth;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+  -webkit-overflow-scrolling:touch;
+  cursor:grab;
+  user-select:none;
+}
+.cd-addons-row::-webkit-scrollbar{ display:none; }
+.cd-addons-row.cd-dragging{
+  cursor:grabbing;
+  scroll-behavior:auto;
+}
+
+.cd-addon-card{
+  border:1px solid #f0e0cc;border-radius:10px;
+  overflow:hidden;background:#fff;
+  display:flex;flex-direction:column;
+  transition:box-shadow 0.2s;
+  width:220px;min-width:220px;flex-shrink:0;
+}
+.cd-addon-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1)}
+.cd-addon-img{
+  width:220px;height:120px;
+  min-width:220px;min-height:120px;
+  max-width:220px;max-height:120px;
+  object-fit:cover;
+  background:#f5e8d8;display:block;flex-shrink:0;
+}
+.cd-addon-body{padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.cd-addon-name{font-size:12.5px;font-weight:700;color:#222;line-height:1.3}
+.cd-addon-sub{font-size:11px;color:#888;line-height:1.4}
+.cd-addon-price{
+  font-size:13px;font-weight:700;color:#7b1a3a;
+  display:flex;align-items:center;gap:4px;
+}
+.cd-add-btn{
+  margin-top:auto;padding:6px;
+  border:1.5px solid #7b1a3a;color:#7b1a3a;
+  background:#fff;border-radius:6px;
+  font-size:12px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  transition:background 0.15s;
+}
+.cd-add-btn:hover{background:#fef8f3}
+.cd-add-btn i{font-size:10px}
+
+/* ═══════════════════════════════════════
+   INCLUDED + HOW IT WORKS
+   ═══════════════════════════════════════ */
+.cd-inc-how{
+  display:grid;grid-template-columns:1fr 1fr;
+  padding:28px 56px;
+  border-top:1px solid #f0e8e0;
+  background:#fffcf8;
+}
+.cd-inc-sec{padding-right:32px}
+.cd-how-sec{padding-left:32px;border-left:1px solid #f0e8e0}
+
+.cd-isec-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:15px;font-weight:700;color:#222;margin-bottom:18px;
+}
+.cd-isec-title i{color:#e87a2e;font-size:15px}
+
+.cd-inc-row{display:flex;align-items:flex-start;gap:8px;flex-wrap:nowrap}
+.cd-inc-item{
+  display:flex;flex-direction:column;align-items:center;
+  gap:6px;flex:1;text-align:center;
+}
+.cd-inc-ico{
+  width:48px;height:48px;border-radius:10px;
+  background:#fef8f3;border:1px solid #f0ddc8;
+  display:flex;align-items:center;justify-content:center;
+}
+.cd-inc-ico i{font-size:22px;color:#e87a2e}
+.cd-inc-name{font-size:11.5px;font-weight:700;color:#222}
+.cd-inc-sub{font-size:10px;color:#888;line-height:1.3}
+
+.cd-how-steps{
+  display:flex;align-items:flex-start;
+  position:relative;
+}
+.cd-how-steps::before{
+  content:'';position:absolute;top:18px;left:18px;right:18px;height:2px;
+  background:repeating-linear-gradient(
+    to right,#f0d0b0 0,#f0d0b0 6px,transparent 6px,transparent 12px
+  );
+  z-index:0;
+}
+.cd-how-step{
+  display:flex;flex-direction:column;align-items:center;
+  flex:1;gap:6px;position:relative;z-index:1;text-align:center;
+}
+.cd-step-circle{
+  width:36px;height:36px;border-radius:50%;
+  border:2px solid #e87a2e;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#e87a2e;
+}
+.cd-step-label{font-size:10.5px;font-weight:700;color:#222;line-height:1.3}
+
+/* ═══════════════════════════════════════
+   ABOUT + VIDEO
+   ═══════════════════════════════════════ */
+.cd-about-video{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:36px;padding:32px 56px;
+  border-top:1px solid #f0e8e0;
+}
+.cd-about-wrap{position:relative}
+.cd-about-title{font-size:18px;font-weight:800;color:#7b1a3a;margin-bottom:12px}
+.cd-about-text{font-size:13px;color:#555;line-height:1.75;margin-bottom:14px}
+.cd-about-list{display:flex;flex-direction:column;gap:9px}
+.cd-about-item{
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:13px;color:#444;
+}
+.cd-about-item i{color:#e87a2e;font-size:13px;flex-shrink:0;margin-top:2px}
+.cd-about-om{
+  font-size:72px;color:#f0d8c0;
+  position:absolute;right:16px;bottom:-8px;
+  opacity:0.55;font-family:serif;pointer-events:none;line-height:1;
+}
+
+.cd-video-title{font-size:16px;font-weight:700;color:#222;margin-bottom:12px}
+.cd-video-wrap{
+  position:relative;border-radius:14px;overflow:hidden;
+  background:#1a0c04;box-shadow:0 4px 20px rgba(0,0,0,0.2);
+}
+.cd-video-thumb{
+  width:100%;height:240px;
+  object-fit:cover;display:block;
+}
+.cd-video-play{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:56px;height:56px;border-radius:50%;
+  background:rgba(255,255,255,0.92);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,0.35);
+  transition:transform 0.2s;
+}
+.cd-video-play:hover{transform:translate(-50%,-50%) scale(1.08)}
+.cd-video-play i{font-size:22px;color:#7b1a3a;margin-left:3px}
+.cd-video-dur{
+  position:absolute;bottom:10px;right:12px;
+  background:rgba(0,0,0,0.62);color:#fff;
+  font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;
+}
+
+/* ═══════════════════════════════════════
+   REVIEWS + STATS
+   ═══════════════════════════════════════ */
+.cd-reviews-sec{padding:32px 56px;border-top:1px solid #f0e8e0}
+.cd-rev-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:4px;
+}
+.cd-rev-htitle{
+  display:flex;align-items:center;gap:8px;
+  font-size:17px;font-weight:700;color:#7b1a3a;
+}
+.cd-rev-htitle i{color:#f5a623}
+.cd-rev-hsub{font-size:12px;color:#888;margin-bottom:16px}
+
+.cd-rev-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:24px;
+  align-items:start;
+}
+
+.cd-rev-left{ display:flex;flex-direction:column;gap:0;min-width:0 }
+
+.cd-rev-slider{
+  width:100%;
+  overflow:hidden;
+  border-radius:12px;
+}
+.cd-rev-track{
+  display:flex;
+  width:100%;
+  transition:transform 0.4s ease;
+  will-change:transform;
+}
+.cd-rev-slide{
+  width:100%;
+  min-width:100%;
+  flex-shrink:0;
+  box-sizing:border-box;
+}
+
+.cd-rev-card{
+  background:#fff;border:1px solid #f0e8e0;border-radius:12px;
+  padding:18px;
+  display:flex;
+  flex-direction:row;
+  gap:14px;
+  align-items:flex-start;
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+.cd-rev-card-body{
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  display:flex;flex-direction:column;gap:10px;
+}
+.cd-rev-stars{display:flex;gap:2px;align-items:center}
+.cd-rev-stars i{font-size:14px;color:#f5a623}
+.cd-rev-stars span{font-size:13px;font-weight:700;color:#333;margin-left:5px}
+.cd-rev-text{font-size:12.5px;color:#555;line-height:1.65}
+.cd-rev-user{display:flex;align-items:center;gap:10px}
+.cd-rev-av{
+  width:38px;height:38px;border-radius:50%;
+  object-fit:cover;background:#f0e8e0;flex-shrink:0;
+}
+.cd-rev-name{font-size:13px;font-weight:700;color:#222}
+.cd-rev-loc{font-size:11px;color:#888}
+
+.cd-rev-img{
+  width:110px;height:120px;
+  object-fit:cover;border-radius:10px;
+  flex-shrink:0;background:#f0d0a0;display:block;
+}
+
+.cd-rev-dots{
+  display:flex;gap:6px;justify-content:center;margin-top:14px;
+}
+.cd-rev-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#e0d0c8;cursor:pointer;transition:background 0.2s;
+}
+.cd-rev-dot.active{background:#7b1a3a;width:20px;border-radius:4px}
+
+.cd-rev-right{
+  display:flex;flex-direction:column;gap:14px;
+  min-width:0;
+}
+
+.cd-stats-row{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+.cd-stat-cell{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px 8px;gap:8px;
+  background:#fff;border:1px solid #f0e8e0;border-radius:12px;
+}
+.cd-stat-ico{font-size:26px;color:#7b1a3a}
+.cd-stat-num{
+  font-size:18px;font-weight:800;color:#222;line-height:1;
+  display:flex;align-items:center;gap:3px;
+}
+.cd-stat-star{color:#f5a623;font-size:16px}
+.cd-stat-lbl{font-size:11px;color:#888;text-align:center}
+
+.cd-trusted-bar{
+  text-align:center;padding:14px 16px;
+  font-size:12.5px;color:#7b1a3a;font-weight:600;
+  background:#fef8f3;border:1px solid #f0e0cc;border-radius:10px;
+}
+
+/* ═══════════════════════════════════════
+   SIMILAR CHADHAVA
+   ═══════════════════════════════════════ */
+.cd-similar{
+  padding:32px 56px;border-top:1px solid #f0e8e0;
+  position:relative;background:#fffcf8;
+}
+.cd-sim-arr{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:32px;height:32px;border-radius:50%;
+  background:#fff;border:1px solid #eee;
+  box-shadow:0 2px 8px rgba(0,0,0,0.12);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:2;
+  transition:opacity 0.2s;
+}
+.cd-sim-arr.left{left:16px}
+.cd-sim-arr.right{right:16px}
+.cd-sim-arr i{font-size:12px;color:#555}
+
+.cd-sim-scroll{
+  overflow:hidden;
+  width:100%;
+}
+.cd-sim-track{
+  display:flex;
+  width:100%;
+  gap:14px;
+  transition:transform 0.35s ease;
+  will-change:transform;
+}
+.cd-sim-card{
+  width:calc(25% - 11px);
+  min-width:calc(25% - 11px);
+  flex-shrink:0;
+  box-sizing:border-box;
+  border:1px solid #f0e0cc;border-radius:10px;overflow:hidden;
+  background:#fff;display:flex;align-items:center;gap:10px;
+  padding:10px;transition:box-shadow 0.2s;
+}
+.cd-sim-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1)}
+.cd-sim-img{
+  width:72px;height:82px;border-radius:8px;
+  object-fit:cover;flex-shrink:0;background:#f0e8e0;
+}
+.cd-sim-name{font-size:12.5px;font-weight:700;color:#222;margin-bottom:4px;line-height:1.3}
+.cd-sim-price{font-size:13.5px;font-weight:800;color:#7b1a3a;margin-bottom:4px}
+.cd-sim-stars{display:flex;align-items:center;gap:2px}
+.cd-sim-stars i{font-size:11px;color:#f5a623}
+.cd-sim-stars span{font-size:11px;color:#888;margin-left:2px}
+
+/* ═══════════════════════════════════════
+   FAQ
+   ═══════════════════════════════════════ */
+.cd-faq{padding:32px 56px 40px;border-top:1px solid #f0e8e0}
+.cd-faq-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:0 32px;margin-top:8px;
+}
+.cd-faq-item{border-bottom:1px solid #f0e8e0;cursor:pointer;transition:background 0.15s}
+.cd-faq-item:hover{background:#fef8f3}
+.cd-faq-q{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 8px;font-size:12.5px;color:#333;
+}
+.cd-faq-num{font-size:13px;font-weight:700;color:#e87a2e;width:22px;flex-shrink:0}
+.cd-faq-text{flex:1;font-weight:500;line-height:1.4}
+.cd-faq-icon{
+  width:22px;height:22px;border-radius:50%;
+  border:1.5px solid #ddd;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.cd-faq-icon i{font-size:9px;color:#888}
+.cd-faq-ans{font-size:12px;color:#777;padding:0 8px 12px 40px;line-height:1.65}
+
+/* ═══════════════════════════════════════
+   CTA — bg_last.png background
+   ═══════════════════════════════════════ */
+.cd-cta{
+  position:relative;overflow:hidden;
+  padding:32px 56px;
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+  background:
+    url('/assets/img/chadawa_detail/bg_last.png') center/cover no-repeat;
+}
+.cd-cta::before{
+  content:'';
+  position:absolute;inset:0;
+  z-index:0;
+}
+.cd-cta > *{position:relative;z-index:1}
+
+.cd-cta-diya{
+  position:absolute;bottom:0;width:90px;height:80px;
+  object-fit:contain;opacity:0.75;z-index:1;
+}
+.cd-cta-diya.left{left:0}
+.cd-cta-diya.right{right:340px}
+
+.cd-cta-text .t1{
+  font-size:17px;font-weight:700;color:#fff;line-height:1.4; margin-left: 135px;
+}
+.cd-cta-text .t2{font-size:13.5px;color:rgba(255,255,255,0.78);margin-top:4px; margin-left: 135px}
+
+.cd-cta-btn{
+  display:flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#c0392b 0%,#7b1a3a 100%);
+  color:#fff;border:none;border-radius:8px;
+  padding:14px 26px;font-size:14px;font-weight:700;
+  white-space:nowrap;flex-shrink:0;
+  box-shadow:0 4px 18px rgba(192,57,43,0.45);
+  transition:opacity 0.2s,transform 0.15s;
+  margin-right: 50px;
+}
+.cd-cta-btn:hover{opacity:0.9;transform:translateY(-1px)}
+.cd-cta-btn i{font-size:13px;}
+
+/* ═══════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════ */
+.cd-footer{background:#160812;padding:36px 56px 18px}
+.cd-ft-top{
+  display:grid;
+  grid-template-columns:1.4fr 1fr 1fr 1fr 1.2fr;
+  gap:28px;margin-bottom:24px;
+}
+.cd-ft-brand .cd-logo{display:flex;align-items:center;gap:4px;margin-bottom:10px}
+.cd-logo-star{font-size:22px;color:#e87a2e}
+.cd-logo-text{font-size:20px;font-weight:700;color:#fff}
+.cd-logo-text em{color:#e87a2e;font-style:normal}
+.cd-ft-brand p{font-size:11.5px;color:rgba(255,255,255,0.5);line-height:1.65;margin-bottom:12px}
+.cd-social{display:flex;gap:8px}
+.cd-social a{
+  width:30px;height:30px;border-radius:6px;
+  background:rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,0.6);font-size:13px;
+}
+.cd-social a:hover{background:#7b1a3a;color:#fff}
+.cd-ft-col h5{
+  font-size:10.5px;font-weight:700;color:#fff;
+  letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px;
+}
+.cd-ft-col ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.cd-ft-col ul li a{font-size:12px;color:rgba(255,255,255,0.5)}
+.cd-ft-col ul li a:hover{color:#f5d88a}
+.cd-app-btns{display:flex;flex-direction:column;gap:7px}
+.cd-app-btn{
+  display:flex;align-items:center;gap:9px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.13);
+  border-radius:8px;padding:8px 12px;text-decoration:none;
+}
+.cd-app-btn i{font-size:20px;color:#fff;flex-shrink:0}
+.cd-app-sm{font-size:8.5px;color:rgba(255,255,255,0.55)}
+.cd-app-lg{font-size:12.5px;font-weight:700;color:#fff}
+.cd-ft-bottom{
+  border-top:1px solid rgba(255,255,255,0.08);
+  padding-top:14px;text-align:center;
+  font-size:11px;color:rgba(255,255,255,0.35);
+}
+
+/* ─── SECTION LABEL ─── */
+.cd-sec-label{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-size:15px;font-weight:800;color:#7b1a3a;margin-bottom:18px;
+}
+.cd-sec-label i{font-size:12px;color:#e87a2e}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════ */
+
+/* ─ 1100px ─ */
+@media(max-width:1100px){
+  .cd-bc,
+  .cd-trust,
+  .cd-addons,
+  .cd-inc-how,
+  .cd-about-video,
+  .cd-reviews-sec,
+  .cd-similar,
+  .cd-faq,
+  .cd-cta,
+  .cd-footer{ padding-left:24px;padding-right:24px }
+
+  .cd-hero{ grid-template-columns:1fr 320px }
+  .cd-hero-h1{ font-size:28px }
+  .cd-hero-h1 em{ font-size:32px }
+
+  .cd-sim-grid{ grid-template-columns:repeat(2,1fr) }
+  .cd-ft-top{ grid-template-columns:1fr 1fr;gap:20px }
+  .cd-rev-layout{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) }
+  .cd-stats-row{ grid-template-columns:repeat(2,1fr) }
+}
+
+/* ─ 900px ─ */
+@media(max-width:900px){
+  .cd-hero{ grid-template-columns:1fr 290px }
+  .cd-hero-deity-img{ width:50% }
+  .cd-hero-h1{ font-size:24px }
+  .cd-hero-h1 em{ font-size:28px }
+
+  .cd-inc-how{ padding:20px 24px }
+  .cd-inc-sec{ padding-right:20px }
+  .cd-how-sec{ padding-left:20px }
+
+  .cd-about-video{ gap:24px }
+}
+
+/* ─ 768px ─ */
+@media(max-width:768px){
+  .cd-hero{ grid-template-columns:1fr; background-image:none !important }
+  .cd-hero-left{ min-height:380px }
+  .cd-hero-deity-img{ width:55%;height:100% }
+  .cd-hero-right{
+    border-left:none;border-top:1px solid #f0e0cc;
+  }
+  .cd-hero-h1{ font-size:22px;max-width:100% }
+  .cd-hero-h1 em{ font-size:26px }
+  .cd-hero-body{ padding:18px 20px }
+
+  .cd-gallery{
+    position:static;
+    margin-top:16px;
+    flex-wrap:nowrap;
+    gap:8px;
+    width:100%;
+  }
+
+  /* Equal-width tiles that stretch to fill the full row width (instead
+     of a fixed small px size), so the thumbnails + "View X+" box scale
+     nicely across different phone widths and never look cramped. */
+  .cd-gal-img{
+    flex:1 1 0;
+    width:auto;
+    height:90px;
+    min-width:0;
+  }
+  .cd-gal-more{
+    flex:1 1 0;
+    width:auto;
+    height:90px;
+    min-width:0;
+  }
+  .cd-gal-more .gm-num{ font-size:16px; }
+  .cd-gal-more .gm-lbl{ font-size:9.5px; }
+
+  /* "View X+ Photos" tile was cramped/hard to tap on mobile — give it
+     a bit more room and slightly larger text so it reads clearly. */
+  .cd-gal-more{
+    width:110px;
+    height:85px;
+  }
+  .cd-gal-more .gm-num{ font-size:18px; }
+  .cd-gal-more .gm-lbl{ font-size:10.5px; }
+
+  .cd-trust{ grid-template-columns:1fr 1fr;padding:12px 16px }
+  .cd-trust-item{ border-left:none !important;border-bottom:1px solid #f0e0cc;padding:10px 8px }
+  .cd-trust-item:nth-child(odd){ border-right:1px solid #f0e0cc }
+  .cd-trust-item:nth-last-child(-n+2){ border-bottom:none }
+
+  .cd-addons{ padding:20px 16px }
+  .cd-addon-card{ width:180px;min-width:180px }
+  .cd-addon-img{ width:180px;height:110px;min-width:180px;min-height:110px;max-width:180px;max-height:110px }
+
+  .cd-inc-how{ grid-template-columns:1fr;padding:20px 16px;gap:20px }
+  .cd-inc-sec{ padding-right:0;padding-bottom:20px;border-bottom:1px solid #f0e8e0 }
+  .cd-how-sec{ padding-left:0;border-left:none;padding-top:0 }
+
+  .cd-about-video{ grid-template-columns:1fr;gap:20px;padding:20px 16px }
+  .cd-video-thumb{ height:200px }
+
+  .cd-reviews-sec{ padding:20px 16px }
+  .cd-rev-layout{ grid-template-columns:1fr }
+  .cd-rev-card{ flex-direction:row }
+  .cd-rev-img{
+    width:100px;
+    height:110px;
+    display:block;          /* ensure it's never accidentally hidden */
+    object-fit:cover;
+    flex-shrink:0;
+  }
+  .cd-stats-row{ grid-template-columns:repeat(2,1fr);margin-top:0 }
+
+  .cd-similar{ padding:20px 16px }
+  .cd-sim-card{ width:calc(50% - 7px);min-width:calc(50% - 7px) }
+
+  .cd-faq{ padding:20px 16px }
+  .cd-faq-grid{ grid-template-columns:1fr }
+
+  .cd-cta{
+    flex-direction:column;gap:18px;
+    text-align:center;padding:32px 20px;
+  }
+  .cd-cta-diya.right{ right:auto;left:50%;transform:translateX(-50%) scaleX(-1) }
+  .cd-cta-btn{ width:100%;justify-content:center }
+
+  /* Desktop uses margin-left:135px/220px to dodge the decorative diya
+     icons sitting on the left side of the CTA banner. On mobile the
+     layout stacks vertically instead, so those margins just shove the
+     text off-center and leave a stray empty gap — reset to 0 here. */
+  .cd-cta-text .t1,
+  .cd-cta-text .t2{
+    margin-left:0 !important;
+  }
+
+  /* Decorative diya icons overlap the stacked mobile layout and can
+     visually collide with the button below — shrink and fade them so
+     they read as background decoration instead of blocking content. */
+  .cd-cta-diya{
+    height:56px;
+    opacity:0.4;
+  }
+
+  .cd-footer{ padding:28px 16px 16px }
+  .cd-ft-top{ grid-template-columns:1fr 1fr }
+
+  .cd-bc{ padding:9px 16px }
+  .cd-sec-label{ font-size:13px }
+}
+
+/* ─ 480px ─ */
+@media(max-width:480px){
+  .cd-hero-left{ min-height:320px }
+  .cd-hero-deity-img{ width:60% }
+  .cd-hero-h1{ font-size:19px }
+  .cd-hero-h1 em{ font-size:22px }
+  .cd-hero-body{ padding:14px 14px }
+
+  .cd-features{ grid-template-columns:1fr }
+  .cd-addon-card{ width:160px;min-width:160px }
+  .cd-addon-img{ width:160px;height:100px;min-width:160px;min-height:100px;max-width:160px;max-height:100px }
+  .cd-sim-card{ width:100%;min-width:100% }
+
+  .cd-trust{ grid-template-columns:1fr }
+  .cd-trust-item{ border-right:none !important;border-bottom:1px solid #f0e0cc }
+  .cd-trust-item:last-child{ border-bottom:none }
+
+  .cd-gallery{ gap:4px;position:static;margin-top:12px;flex-wrap:wrap }
+  .cd-gal-img{ width:64px;height:60px }
+  .cd-gal-more{ width:64px;height:60px }
+
+  .cd-how-steps::before{ display:none }
+  .cd-how-steps{ flex-wrap:wrap;gap:12px }
+  .cd-how-step{ min-width:calc(50% - 8px) }
+
+  .cd-video-thumb{ height:180px }
+
+  .cd-stats-row{ grid-template-columns:1fr 1fr }
+  .cd-ft-top{ grid-template-columns:1fr }
+
+  .cd-rev-card{ flex-direction:column }
+  .cd-rev-img{ width:100%;height:140px }
+
+  .cd-addons-scroll{ padding:0 }
+  .cd-addons-arr{ display:none }
+}

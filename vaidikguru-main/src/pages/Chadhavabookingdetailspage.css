@@ -1,0 +1,578 @@
+/* ============================================
+   Chadhava Booking Details Page — Theme Styles
+   ============================================ */
+
+.cbd-wrap {
+  padding: 28px 0 60px;
+}
+
+.cbd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--pb-maroon, #7B1F3A);
+  cursor: pointer;
+  margin-bottom: 20px;
+  padding: 0;
+}
+.cbd-back i {
+  font-size: 13px;
+}
+
+.cbd-loading,
+.cbd-notfound {
+  text-align: center;
+  padding: 120px 20px;
+}
+.cbd-notfound h3 {
+  color: var(--pb-maroon, #7B1F3A);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.cbd-notfound p {
+  color: var(--pb-muted, #9a8f88);
+  margin-bottom: 20px;
+}
+
+.cbd-primary-btn {
+  border: none;
+  background: linear-gradient(135deg, var(--pb-maroon, #7B1F3A), var(--pb-maroon-dark, #5e1730));
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 28px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* ---------- Video / ritual banner ---------- */
+.cbd-video-banner {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 0;
+  min-height: 240px;
+  display: flex;
+  align-items: flex-end;
+  text-align: left;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #5e1730 0%, #7B1F3A 50%, #9a2a4c 100%);
+  color: #fff;
+}
+
+.cbd-video-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.cbd-video-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to top,
+      rgba(20, 5, 15, 0.88) 0%,
+      rgba(20, 5, 15, 0.55) 45%,
+      rgba(20, 5, 15, 0.15) 75%,
+      transparent 100%
+    ),
+    radial-gradient(circle at 20% 30%, rgba(245, 166, 35, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(245, 166, 35, 0.14) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cbd-video-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.cbd-video-play-btn i {
+  color: #7B1F3A;
+  font-size: 22px;
+  margin-left: 3px; /* optically center the play triangle */
+}
+.cbd-video-play-btn:hover:not(:disabled) {
+  transform: translate(-50%, -50%) scale(1.08);
+  background: #fff;
+}
+.cbd-video-play-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cbd-video-banner-content {
+  position: relative;
+  z-index: 2;
+  padding: 28px;
+  width: 100%;
+  text-align: center;
+}
+
+.cbd-video-banner h4 {
+  position: relative;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+.cbd-video-banner p {
+  position: relative;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 460px;
+  margin: 0 auto 18px;
+  line-height: 1.6;
+}
+.cbd-watch-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 999px;
+  border: none;
+  background: var(--pb-gold, #f5a623);
+  color: #3a2400;
+  font-weight: 800;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.cbd-watch-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.cbd-watch-btn:disabled {
+  background: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: not-allowed;
+}
+
+/* ---------- Card ---------- */
+.cbd-card {
+  background: #fff;
+  border: 1px solid #eee5ea;
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 20px;
+}
+.cbd-card-title {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--pb-ink, #1f1320);
+  margin-bottom: 16px;
+}
+
+/* ---------- Offering row ---------- */
+.cbd-offering-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.cbd-offering-img {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--pb-cream, #fdf8f2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pb-gold, #f5a623);
+  font-size: 22px;
+}
+.cbd-offering-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cbd-offering-info {
+  flex: 1;
+  min-width: 0;
+}
+.cbd-offering-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--pb-ink, #1f1320);
+  margin-bottom: 4px;
+}
+.cbd-offering-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--pb-maroon, #7B1F3A);
+}
+
+.cbd-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: capitalize;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+  border: 1px solid rgba(100, 116, 139, 0.25);
+}
+.cbd-status.success {
+  background: rgba(11, 132, 92, 0.12);
+  color: var(--pb-success, #0b845c);
+  border-color: rgba(11, 132, 92, 0.25);
+}
+.cbd-status.pending {
+  background: rgba(245, 166, 35, 0.22);
+  color: var(--pb-gold-dark, #d6890f);
+  border-color: rgba(245, 166, 35, 0.45);
+}
+.cbd-status.failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+/* ---------- Meta list ---------- */
+.cbd-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #f3ece1;
+  margin-bottom: 14px;
+}
+.cbd-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--pb-ink, #1f1320);
+  font-weight: 600;
+}
+.cbd-meta-item i {
+  width: 16px;
+  color: var(--pb-maroon, #7B1F3A);
+}
+
+/* ---------- Participant / devotee ---------- */
+.cbd-participant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--pb-cream, #fdf8f2);
+  border-radius: 14px;
+  padding: 12px 16px;
+}
+.cbd-participant strong {
+  display: block;
+  font-size: 14px;
+  color: var(--pb-ink, #1f1320);
+}
+.cbd-participant span {
+  display: block;
+  font-size: 12px;
+  color: var(--pb-muted, #9a8f88);
+  margin-top: 2px;
+}
+.cbd-participant i {
+  color: var(--pb-muted, #9a8f88);
+}
+
+/* ---------- Timeline ---------- */
+.cbd-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.cbd-tl-item {
+  display: flex;
+  gap: 14px;
+  position: relative;
+  padding-bottom: 22px;
+}
+.cbd-tl-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 0;
+  width: 1.5px;
+  background: #ece2d6;
+}
+.cbd-tl-item.done:not(:last-child)::before {
+  background: var(--pb-maroon, #7B1F3A);
+}
+.cbd-tl-dot {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1eae2;
+  color: #b3a898;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.cbd-tl-item.done .cbd-tl-dot {
+  background: var(--pb-maroon, #7B1F3A);
+  color: #fff;
+}
+.cbd-tl-item.pending .cbd-tl-dot {
+  background: rgba(245, 166, 35, 0.22);
+  color: var(--pb-gold-dark, #d6890f);
+}
+.cbd-tl-item p {
+  font-size: 13px;
+  color: var(--pb-ink, #1f1320);
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+.cbd-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.cbd-gallery-item {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--pb-cream, #fdf8f2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pb-gold, #f5a623);
+  font-size: 22px;
+}
+.cbd-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Prasad delivery tracking ---------- */
+.cbd-delivery-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--pb-cream, #fdf8f2);
+  border: 1px solid #f4e8d4;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.cbd-delivery-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--pb-maroon, #7B1F3A) 0%, var(--pb-maroon-dark, #5e1730) 100%);
+  color: var(--pb-gold, #f5a623);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.cbd-delivery-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cbd-delivery-info strong {
+  font-size: 13.5px;
+  color: var(--pb-maroon, #7B1F3A);
+}
+.cbd-delivery-info span {
+  font-size: 12px;
+  color: var(--pb-muted, #9a8f88);
+}
+.cbd-delivery-status {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--pb-success, #0b845c);
+  background: rgba(11, 132, 92, 0.12);
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ---------- Invoice ---------- */
+.cbd-invoice-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: 1.5px solid var(--pb-maroon, #7B1F3A);
+  background: #fff;
+  color: var(--pb-maroon, #7B1F3A);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.cbd-invoice-btn:hover {
+  background: #fdf0f4;
+}
+
+/* ---------- Sidebar: FAQ ---------- */
+.cbd-faq-item {
+  border-top: 1px solid #f3ece1;
+  padding: 4px 0;
+}
+.cbd-faq-item:first-of-type {
+  border-top: none;
+}
+.cbd-faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 12px 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--pb-ink, #1f1320);
+  cursor: pointer;
+}
+.cbd-faq-question i {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--pb-maroon, #7B1F3A);
+}
+.cbd-faq-answer {
+  font-size: 12.5px;
+  color: var(--pb-muted, #9a8f88);
+  line-height: 1.6;
+  padding-bottom: 12px;
+  margin: 0;
+}
+
+/* ---------- Sidebar: Help & Support ---------- */
+.cbd-help-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.cbd-help-row i {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--pb-cream, #fdf8f2);
+  color: var(--pb-maroon, #7B1F3A);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.cbd-help-row strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--pb-ink, #1f1320);
+}
+.cbd-help-row span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--pb-muted, #9a8f88);
+  margin-top: 2px;
+}
+.cbd-help-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cbd-help-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid #e5e0eb;
+  background: #fff;
+  color: var(--pb-ink, #1f1320);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.cbd-help-btn.whatsapp {
+  border-color: #25d366;
+  color: #128c3e;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 576px) {
+  .cbd-offering-row {
+    flex-wrap: wrap;
+  }
+  .cbd-status {
+    order: 3;
+  }
+
+  /* Video banner */
+  .cbd-video-banner {
+    min-height: 190px;
+    border-radius: 16px;
+  }
+  .cbd-video-play-btn {
+    width: 52px;
+    height: 52px;
+  }
+  .cbd-video-play-btn i {
+    font-size: 18px;
+  }
+  .cbd-video-banner-content {
+    padding: 18px 20px;
+  }
+  .cbd-video-banner h4 {
+    font-size: 18px;
+  }
+  .cbd-video-banner p {
+    font-size: 12.5px;
+    margin-bottom: 14px;
+  }
+  .cbd-watch-btn {
+    font-size: 12.5px;
+    padding: 10px 18px;
+  }
+}
+
+@media (max-width: 380px) {
+  .cbd-video-banner {
+    min-height: 170px;
+  }
+  .cbd-video-play-btn {
+    width: 46px;
+    height: 46px;
+  }
+  .cbd-video-play-btn i {
+    font-size: 16px;
+  }
+}

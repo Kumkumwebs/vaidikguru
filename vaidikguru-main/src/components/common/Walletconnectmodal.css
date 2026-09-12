@@ -1,0 +1,130 @@
+/* ═══════════════════════════════════════════
+   WalletConnectModal.css — DivinIQ theme
+═══════════════════════════════════════════ */
+
+.wc-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(40,10,28,.55); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.wc-box {
+  position: relative; width: 100%; max-width: 420px;
+  background: #fff; border-radius: 22px; overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0,0,0,.28);
+  padding: 26px 24px 20px;
+}
+.wc-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #f4f4f6; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #6b7280; transition: all .18s; z-index: 2;
+}
+.wc-close:hover { background: #fbeef3; color: #7c1d40; }
+
+/* ── HEADER ── */
+.wc-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.wc-av-wrap { position: relative; width: 68px; height: 68px; flex-shrink: 0; }
+.wc-av-clip {
+  width: 68px; height: 68px; border-radius: 50%; overflow: hidden;
+  border: 3px solid #fbeef3; box-shadow: 0 3px 10px rgba(124,29,64,.18);
+}
+.wc-av-clip img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.wc-av-init {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 700; color: #fff;
+}
+.wc-av-dot {
+  position: absolute; bottom: 3px; right: 3px;
+  width: 13px; height: 13px; border-radius: 50%; border: 2.5px solid #fff;
+}
+.wc-av-dot.on  { background: #22c55e; }
+.wc-av-dot.off { background: #9ca3af; }
+.wc-head-info { flex: 1; min-width: 0; }
+.wc-name { font-size: 1.05rem; font-weight: 800; color: #111827; line-height: 1.2; margin-bottom: 3px; }
+.wc-rating { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: #374151; margin-bottom: 3px; }
+.wc-rating i { color: #f59e0b; font-size: 12px; }
+.wc-rating span { font-weight: 600; }
+.wc-cats { color: #9ca3af !important; font-weight: 500 !important; }
+.wc-rate { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: #7c1d40; }
+.wc-rate i { font-size: 11px; }
+
+/* ── WALLET CARD ── */
+.wc-wallet {
+  background: linear-gradient(135deg,#fdf5f8,#fbeef3);
+  border: 1px solid #f3d9e3; border-radius: 16px;
+  padding: 16px; margin-bottom: 16px;
+}
+.wc-wallet-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.wc-wallet-left { display: flex; align-items: center; gap: 11px; }
+.wc-wallet-ico {
+  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg,#9b2355,#7c1d40);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #fff;
+}
+.wc-wallet-lbl { font-size: 11px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.wc-wallet-amt { font-size: 1.4rem; font-weight: 900; color: #111827; line-height: 1.1; }
+.wc-add-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 700; color: #7c1d40;
+  background: #fff; border: 1.5px solid #f3d9e3; border-radius: 20px;
+  padding: 6px 14px; cursor: pointer; transition: all .18s;
+}
+.wc-add-btn:hover { background: #7c1d40; color: #fff; border-color: #7c1d40; }
+.wc-add-btn i { font-size: 10px; }
+
+/* ── DURATION METER ── */
+.wc-duration { }
+.wc-duration-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+.wc-duration-head > span:first-child {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 600; color: #374151;
+}
+.wc-duration-head i { color: #7c1d40; font-size: 12px; }
+.wc-duration-val { font-size: 14px; font-weight: 800; color: #16a34a; }
+.wc-duration-val.low { color: #dc2626; }
+.wc-bar { width: 100%; height: 7px; border-radius: 10px; background: #e9e3f7; overflow: hidden; }
+.wc-bar-fill {
+  height: 100%; border-radius: 10px;
+  background: linear-gradient(90deg,#22c55e,#16a34a);
+  transition: width .4s ease;
+}
+.wc-bar-fill.low { background: linear-gradient(90deg,#f59e0b,#dc2626); }
+.wc-duration-note { margin-top: 9px; font-size: 11.5px; line-height: 1.4; }
+.wc-warn { display: inline-flex; align-items: flex-start; gap: 5px; color: #dc2626; font-weight: 600; }
+.wc-warn i { margin-top: 1px; }
+.wc-ok   { display: inline-flex; align-items: center; gap: 5px; color: #16a34a; font-weight: 600; }
+
+/* ── ACTION BUTTON ── */
+.wc-btn {
+  width: 100%; padding: 14px; border-radius: 13px;
+  font-size: 15px; font-weight: 700; cursor: pointer; border: none;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  transition: opacity .18s, box-shadow .18s; margin-bottom: 12px;
+}
+.wc-btn:hover { opacity: .93; }
+.wc-btn-connect {
+  background: linear-gradient(135deg,#6b1a3a 0%,#9b2355 55%,#7c1d40 100%);
+  color: #fff; box-shadow: 0 5px 18px rgba(124,29,64,.32);
+}
+.wc-btn-recharge {
+  background: linear-gradient(135deg,#6b1a3a 0%,#9b2355 55%,#7c1d40 100%);
+  color: #fff; box-shadow: 0 5px 18px rgba(124,29,64,.32);
+}
+
+/* ── FOOTER ── */
+.wc-foot {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 11px; color: #9ca3af; font-weight: 500;
+}
+.wc-foot i { color: #16a34a; font-size: 11px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  .wc-overlay { align-items: flex-end; padding: 0; }
+  .wc-box { max-width: 100%; border-radius: 20px 20px 0 0; padding: 22px 18px 18px; }
+  .wc-av-wrap, .wc-av-clip { width: 60px; height: 60px; }
+  .wc-name { font-size: 1rem; }
+  .wc-wallet-amt { font-size: 1.25rem; }
+}

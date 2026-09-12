@@ -1,0 +1,17 @@
+#cursor-follower {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 15px;
+	height: 15px;
+	background-color: var(--theme-color); /* matches $theme-color */
+	border: 1px solid var(--theme-color);
+	border-radius: 100%;
+	z-index: 999999;
+	user-select: none;
+	pointer-events: none;
+	backdrop-filter: blur(6px);
+	will-change: transform;
+	/* Initial off-screen or safe position */
+	transform: translate3d(-100px, -100px, 0);
+}
