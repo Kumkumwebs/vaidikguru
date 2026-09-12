@@ -182,7 +182,21 @@ const toggleTag = (tag) => {
           </button>
           <button
             className="btn btn--primary"
-            onClick={() => onSubmit?.({ rating, category, review, tags, anonymous })}
+            onClick={() => {
+  const finalReview = tags.length > 0
+    ? `${tags.join(', ')}${review ? ` - ${review}` : ''}`
+    : review;
+
+  console.log('Final Review:', finalReview);
+
+  onSubmit?.({
+    rating,
+    category,
+    review: finalReview,
+    tags,
+    anonymous,
+  });
+}}
             style={{
               flex: 1.15,
               padding: '13px 18px',
