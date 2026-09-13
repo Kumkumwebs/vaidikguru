@@ -34,6 +34,7 @@ const getChatPrice  = a => rate(a?.per_min_chat,       a?.per_min_chat_offer);
 const getVoicePrice = a => rate(a?.per_min_voice_call, a?.per_min_voice_call_offer);
 const getVideoPrice = a => rate(a?.per_min_video_call, a?.per_min_video_call_offer);
 const isOn = v => String(v || '').toLowerCase() === 'on';
+const isEnabledFlag = v => v === true || v === 1 || v === '1' || String(v || '').toLowerCase() === 'true' || isOn(v);
 
 // Converts "2025-06-23 16:35:17" style API dates into "5 days ago"
 const timeAgo = dateStr => {
@@ -428,6 +429,12 @@ const fixImgHost = (url) =>
 
   const { status: astroStatusVal, isBusy, isOnline, label: statusLabel } = getAstroStatus(astro);
   const waitLabel = getWaitLabel(astro);
+  const emergencyChat = isEnabledFlag(astro.is_emergency_chat);
+  const emergencyCall = isEnabledFlag(astro.is_emergency_call);
+  const canChat = isOn(astro.is_chat_online) || emergencyChat;
+  const canCall = isOn(astro.is_voice_online) || emergencyCall;
+  const canVideo = isOn(astro.is_video_online);
+  const hasEmergencyAccess = !isBusy && (emergencyChat || emergencyCall);
   const cats = (Array.isArray(astro.category) ? astro.category : []).map(c => typeof c === 'object' ? (c.name || c.category_name || c.title) : c).filter(Boolean);
   const astroRole = getAstroRole(astro);
   const langs = (Array.isArray(astro.language) ? astro.language : []).map(l => typeof l === 'object' ? (l.name || l.title) : l).filter(Boolean).join(', ') || 'Hindi, English';
@@ -671,8 +678,8 @@ const fixImgHost = (url) =>
                   {/* per-minute rates: chat / voice / video */}
                   <div className="ad-rates">
                     {[
-                      { ic: 'fas fa-comment-dots', lbl: 'Chat',  amt: getChatPrice(astro),  on: isOn(astro.is_chat_online) },
-                      { ic: 'fas fa-phone',        lbl: 'Call',  amt: getVoicePrice(astro), on: isOn(astro.is_voice_online) },
+                      { ic: 'fas fa-comment-dots', lbl: 'Chat',  amt: getChatPrice(astro),  on: canChat },
+                      { ic: 'fas fa-phone',        lbl: 'Call',  amt: getVoicePrice(astro), on: canCall },
                       { ic: 'fas fa-camera',       lbl: 'Video', amt: getVideoPrice(astro), on: isOn(astro.is_video_online) },
                     ].map(r => (
                       <div key={r.lbl} className={`ad-rate${r.on && r.amt !== null ? '' : ' off'}`}>
@@ -683,8 +690,8 @@ const fixImgHost = (url) =>
                     ))}
                   </div>
                   <div className="ad-avail-row">
-                    <span className={`ad-avail-dot ${isBusy ? 'busy' : isOnline ? '' : 'offline'}`} style={!isBusy && !isOnline ? { background: '#9ca3af' } : {}} />
-                    <span className={`ad-avail-txt ${isBusy ? 'busy' : isOnline ? '' : 'offline'}`} style={!isBusy && !isOnline ? { color: '#6b7280' } : {}}>{isBusy ? `Busy · ${waitLabel}` : isOnline ? 'Available Now' : 'Offline'}</span>
+                    <span className={`ad-avail-dot ${isBusy ? 'busy' : isOnline || hasEmergencyAccess ? '' : 'offline'}`} style={!isBusy && !isOnline && !hasEmergencyAccess ? { background: '#9ca3af' } : {}} />
+                    <span className={`ad-avail-txt ${isBusy ? 'busy' : isOnline || hasEmergencyAccess ? '' : 'offline'}`} style={!isBusy && !isOnline && !hasEmergencyAccess ? { color: '#6b7280' } : {}}>{isBusy ? `Busy · ${waitLabel}` : isOnline ? 'Available Now' : hasEmergencyAccess ? 'Emergency Access Available' : 'Offline'}</span>
                   </div>
                   <div className="ad-resp-time">Avg. Response Time: &lt; 2 min</div>
                   {isBusy ? (
@@ -711,17 +718,17 @@ const fixImgHost = (url) =>
                         <span>{notified ? "We'll Notify You When Available!" : "Notify When Available"}</span>
                       </button>
                     </>
-                  ) : isOnline ? (
+                  ) : isOnline || canChat || canCall ? (
                     <>
-                      <button className="ad-btn-chat" onClick={() => handleChatCallClick('chat')}>
+                      {canChat && <button className="ad-btn-chat" onClick={() => handleChatCallClick('chat')}>
                         <div className="ad-btn-chat-main"><i className="fas fa-comment-dots" style={{ fontSize: 16 }} />Chat Now</div>
                         <div className="ad-btn-chat-sub">Get instant guidance</div>
-                      </button>
-                      <button className="ad-btn-call" onClick={() => handleChatCallClick('call')}>
+                      </button>}
+                      {canCall && <button className="ad-btn-call" onClick={() => handleChatCallClick('call')}>
                         <div className="ad-btn-call-main"><i className="fas fa-phone" style={{ fontSize: 15 }} />Call Now</div>
                         <div className="ad-btn-call-sub">Start a call session</div>
-                      </button>
-                      <a
+                      </button>}
+                      {canVideo && <a
                         href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -750,7 +757,7 @@ const fixImgHost = (url) =>
                           </div>
                         </div>
                         <i className="fas fa-external-link-alt" style={{ fontSize: 13, opacity: 0.8 }} />
-                      </a>
+                      </a>}
                     </>
                   ) : (
                     <button className="ad-btn-notify disabled" style={{ opacity: 0.7, background: '#9ca3af', cursor: 'not-allowed' }} onClick={(e) => e.stopPropagation()}>
@@ -1153,17 +1160,17 @@ const fixImgHost = (url) =>
               <i className="fas fa-video" />
             </a>
           </>
-        ) : isOnline ? (
+        ) : isOnline || canChat || canCall ? (
           <>
-            <button className="ad-mobile-chat-btn" onClick={() => handleChatCallClick('chat')}>
+            {canChat && <button className="ad-mobile-chat-btn" onClick={() => handleChatCallClick('chat')}>
               <i className="fas fa-comment-dots" />
-              <span>Chat Now</span>
-            </button>
-            <button className="ad-mobile-call-btn" onClick={() => handleChatCallClick('call')}>
+              <span>{emergencyChat && !isOn(astro.is_chat_online) ? 'Emergency Chat' : 'Chat Now'}</span>
+            </button>}
+            {canCall && <button className="ad-mobile-call-btn" onClick={() => handleChatCallClick('call')}>
               <i className="fas fa-phone" />
               <span>Call Now</span>
-            </button>
-            <a
+            </button>}
+            {canVideo && <a
               href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
               target="_blank"
               rel="noopener noreferrer"
@@ -1171,7 +1178,7 @@ const fixImgHost = (url) =>
               title={`Video Call${getVideoPrice(astro) !== null ? ` (₹${getVideoPrice(astro)}/min)` : ''}`}
             >
               <i className="fas fa-video" />
-            </a>
+            </a>}
           </>
         ) : (
           <button className="ad-mobile-chat-btn" style={{ opacity: 0.65, cursor: 'not-allowed', background: '#9ca3af', borderColor: '#9ca3af', color: '#fff' }} onClick={(e) => e.stopPropagation()}>

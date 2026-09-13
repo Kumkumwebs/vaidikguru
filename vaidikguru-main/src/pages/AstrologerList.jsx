@@ -115,6 +115,11 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
   const boostChat = isBoosted(astro.is_boost_chat);
   const boostCall = isBoosted(astro.is_boost_call);
   const boostVideo = isBoosted(astro.is_boost_video);
+  const emergencyChat = isBoosted(astro.is_emergency_chat);
+  const emergencyCall = isBoosted(astro.is_emergency_call);
+  const canChat = isOn(astro.is_chat_online) || emergencyChat;
+  const canCall = isOn(astro.is_voice_online) || emergencyCall;
+  const canVideo = isOn(astro.is_video_online);
   const cats = (Array.isArray(astro.category) ? astro.category : []).slice(0, 3).map(c => typeof c === 'object' ? (c.name || c.category_name || c.title) : c).filter(Boolean);
   const role = getAstroRole(astro);
   const { isBusy, isOnline } = getAstroStatus(astro);
@@ -176,8 +181,8 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
       {/* per-minute rates: chat / voice / video */}
       <div className="al-rates">
         {[
-          { ic: 'fas fa-comment-dots', lbl: 'Chat',  amt: getChatPrice(astro),  on: isOn(astro.is_chat_online) },
-          { ic: 'fas fa-phone',        lbl: 'Call',  amt: getVoicePrice(astro), on: isOn(astro.is_voice_online) },
+          { ic: 'fas fa-comment-dots', lbl: 'Chat',  amt: getChatPrice(astro),  on: canChat },
+          { ic: 'fas fa-phone',        lbl: 'Call',  amt: getVoicePrice(astro), on: canCall },
           { ic: 'fas fa-video',        lbl: 'Video', amt: getVideoPrice(astro), on: isOn(astro.is_video_online) },
         ].map((r) => (
           <div key={r.lbl} className={`al-rate${r.on && r.amt !== null ? '' : ' off'}`}>
@@ -200,17 +205,17 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
               <i className={notified ? 'fas fa-check-circle' : 'fas fa-phone'} />
             </button>
           </div>
-        ) : isOnline ? (
+        ) : isOnline || canChat || canCall ? (
           <>
-            <button className="al-chat" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'chat'); }}>
+            {canChat && <button className="al-chat" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'chat'); }}>
               {boostChat && <i className="fas fa-fire al-boost-fire" aria-label="Boosted chat" />}
-              Chat Now
-            </button>
-            <button className="al-call" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'call'); }} title={`Call (₹${getAstroCallPrice(astro)}/min)`}>
+              {emergencyChat && !isOn(astro.is_chat_online) ? 'Emergency Chat' : 'Chat Now'}
+            </button>}
+            {canCall && <button className="al-call" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'call'); }} title={`Call (₹${getAstroCallPrice(astro)}/min)`}>
               <i className="fas fa-phone" />
               {boostCall && <i className="fas fa-fire al-boost-fire" aria-label="Boosted call" />}
-            </button>
-            <a
+            </button>}
+            {canVideo && <a
               href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
               target="_blank"
               rel="noopener noreferrer"
@@ -220,7 +225,7 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
             >
               <i className="fas fa-video" />
               {boostVideo && <i className="fas fa-fire al-boost-fire" aria-label="Boosted video call" />}
-            </a>
+            </a>}
           </>
         ) : (
           <button className="al-notify-btn disabled" style={{ opacity: 0.65, cursor: 'not-allowed', background: '#9ca3af' }} onClick={(e) => e.stopPropagation()}>
