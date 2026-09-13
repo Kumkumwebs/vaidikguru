@@ -1117,7 +1117,7 @@ export default function LiveWatchScreen() {
       )}
 
       {/* ══ MAIN BODY ════════════════════════════════════════════════════════ */}
-      <div className="row g-0 lw-body-row gap-4 gap-lg-0">
+      <div className="row g-0 lw-body-row gap-lg-0">
 
         {/* ── VIDEO COLUMN ────────────────────────────────────────────────── */}
         <div className={`col-12 lw-col-video ${isMaximized ? "" : "col-lg-7"}`}>
