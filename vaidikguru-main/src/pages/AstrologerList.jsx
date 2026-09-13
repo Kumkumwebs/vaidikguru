@@ -111,6 +111,10 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
   const [liked,  setLiked]  = useState(false);
   const [imgErr, setImgErr] = useState(false);
   const [notified, setNotified] = useState(false);
+  const isBoosted = (value) => value === true || value === 1 || value === '1' || value === 'true';
+  const boostChat = isBoosted(astro.is_boost_chat);
+  const boostCall = isBoosted(astro.is_boost_call);
+  const boostVideo = isBoosted(astro.is_boost_video);
   const cats = (Array.isArray(astro.category) ? astro.category : []).slice(0, 3).map(c => typeof c === 'object' ? (c.name || c.category_name || c.title) : c).filter(Boolean);
   const role = getAstroRole(astro);
   const { isBusy, isOnline } = getAstroStatus(astro);
@@ -199,10 +203,12 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
         ) : isOnline ? (
           <>
             <button className="al-chat" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'chat'); }}>
+              {boostChat && <i className="fas fa-fire al-boost-fire" aria-label="Boosted chat" />}
               Chat Now
             </button>
             <button className="al-call" onClick={(e)=>{ e.stopPropagation(); onChat(astro, 'call'); }} title={`Call (₹${getAstroCallPrice(astro)}/min)`}>
               <i className="fas fa-phone" />
+              {boostCall && <i className="fas fa-fire al-boost-fire" aria-label="Boosted call" />}
             </button>
             <a
               href="https://play.google.com/store/apps/details?id=com.app.vaidikguru"
@@ -213,6 +219,7 @@ const AstrologerCard = ({ astro, onChat, onNotify }) => {
               title={`Video Call${getVideoPrice(astro) !== null ? ` (₹${getVideoPrice(astro)}/min)` : ''} - Download App`}
             >
               <i className="fas fa-video" />
+              {boostVideo && <i className="fas fa-fire al-boost-fire" aria-label="Boosted video call" />}
             </a>
           </>
         ) : (

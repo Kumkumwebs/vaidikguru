@@ -252,6 +252,7 @@
   background: #fbeef3; color: #521721; border: 1px solid #f3d9e3;
   border-radius: 9px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; font-size: 13px;
+  position: relative;
   transform: none !important; box-shadow: none !important;
   transition: background .18s, color .18s, border-color .18s;
   text-decoration: none;
@@ -279,6 +280,7 @@
   background: linear-gradient(135deg,#B8493C,#521721);
   color: #fff; font-size: 13px; font-weight: 700;
   border: none; border-radius: 9px; cursor: pointer;
+  position: relative;
   transform: none !important; box-shadow: none !important; transition: background .2s, opacity .18s;
 }
 .al-chat:hover { opacity: .88; }
@@ -294,6 +296,7 @@
   background: #f3f0ff; color: #521721; border: 1px solid #e9d5ff;
   border-radius: 9px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; font-size: 13px;
+  position: relative;
   transform: none !important; box-shadow: none !important; transition: background .18s, color .18s, border-color .18s;
 }
 .al-call:hover { background: #521721; color: #fff; }
@@ -301,6 +304,15 @@
   background: #fff7ed !important;
   color: #c2410c !important;
   border-color: #fdba74 !important;
+}
+.al-boost-fire {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  z-index: 1;
+  color: #f97316;
+  font-size: 14px;
+  line-height: 1;
 }
 /* ── BUSY: chat + call queue wait buttons ── */
 .al-wait-row { display: flex; gap: 6px; width: 100%; align-items: center; }
