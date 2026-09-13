@@ -647,6 +647,8 @@ export default function LiveWatchScreen() {
   const chatMsgsRef = useRef(null);
   const inputRef = useRef(null);
   const timerRef = useRef();
+  // Tracks the currently active astrologer/live session. Old Agora callbacks are ignored after a switch.
+  const sessionRef = useRef(0);
 
   const log = useCallback((level, msg) => {
     console[level === "success" ? "log" : level](`[Live] ${msg}`);
@@ -675,25 +677,39 @@ export default function LiveWatchScreen() {
   }, [liveId, liveType]);
 
   // ── Agora ──────────────────────────────────────────────────────────────────
-  const initAgora = useCallback(async () => {
+  const initAgora = useCallback(async (sessionId = sessionRef.current) => {
     if (!channelId) {
       setAgoraErr(`No channel_id. liveId="${liveId}" state.channel_id="${s.channel_id}"`);
       setAgoraStatus("error");
       return;
     }
-    if (clientRef.current) {
-      try { await clientRef.current.leave(); } catch { }
-      clientRef.current = null;
+    const oldClient = clientRef.current;
+    clientRef.current = null;
+
+    if (oldClient) {
+      try {
+        oldClient.removeAllListeners?.();
+        await oldClient.leave();
+      } catch { }
     }
+
+    if (sessionId !== sessionRef.current) return;
     setAgoraStatus("connecting");
     setAgoraErr("");
     AgoraRTC.setLogLevel(0);
     try {
       const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+
+      if (sessionId !== sessionRef.current) {
+        try { client.removeAllListeners?.(); await client.leave(); } catch {}
+        return;
+      }
+
       clientRef.current = client;
       await client.setClientRole("audience", { level: 1 });
 
       client.on("user-published", async (user, mediaType) => {
+        if (sessionId !== sessionRef.current || clientRef.current !== client) return;
         try {
           await client.subscribe(user, mediaType);
           if (mediaType === "video") {
@@ -711,8 +727,12 @@ export default function LiveWatchScreen() {
           if (mediaType === "audio") { user.audioTrack?.play(); }
         } catch (err) { log("error", `subscribe failed: ${err?.message}`); }
       });
-      client.on("user-unpublished", (_, mt) => { if (mt === "video") setHasVideo(false); });
+      client.on("user-unpublished", (_, mt) => {
+        if (sessionId !== sessionRef.current || clientRef.current !== client) return;
+        if (mt === "video") setHasVideo(false);
+      });
       client.on("user-left", () => {
+        if (sessionId !== sessionRef.current || clientRef.current !== client) return;
         setHasVideo(false);
         setAgoraStatus("no_broadcaster");
         setAgoraErr("Broadcaster has left the stream.");
@@ -729,6 +749,8 @@ export default function LiveWatchScreen() {
       await client.join(AGORA_APP_ID, channelId, agoraToken, 0);
       setAgoraStatus("connected");
     } catch (err) {
+      if (sessionId !== sessionRef.current) return;
+
       const raw = err?.message || String(err);
       let msg = `Agora join failed: ${raw}`;
       if (raw.includes("CAN_NOT_GET_GATEWAY_SERVER")) msg = "Token rejected — App ID or Certificate mismatch.";
@@ -739,6 +761,40 @@ export default function LiveWatchScreen() {
       setAgoraErr(msg);
     }
   }, [channelId, liveId, s.channel_id]);
+
+  const cleanupLiveSession = useCallback(async (sessionId = sessionRef.current) => {
+    // Invalidate all async/event callbacks belonging to this session.
+    sessionRef.current += 1;
+
+    clearInterval(timerRef.current);
+    clearInterval(waitTimerRef.current);
+
+    const webUserId = myId() || `web_${Date.now()}`;
+
+    if (channelId) {
+      try {
+        await set(ref(db, `LiveViewers/${channelId}/${webUserId}`), null);
+      } catch {}
+    }
+
+    const client = clientRef.current;
+    clientRef.current = null;
+
+    if (client) {
+      try {
+        client.removeAllListeners?.();
+        await client.leave();
+      } catch (err) {
+        console.error("[LiveWatchScreen] Agora cleanup error:", err);
+      }
+    }
+
+    setHasVideo(false);
+    setAgoraStatus("idle");
+    setAgoraErr("");
+    setFbStatus("idle");
+    setFbErr("");
+  }, [channelId]);
 
   // ── Firebase chat ──────────────────────────────────────────────────────────
   const initChat = useCallback(() => {
@@ -830,17 +886,59 @@ export default function LiveWatchScreen() {
     });
   }, [msgs]);
 
-  // ── Mount ──────────────────────────────────────────────────────────────────
+  // ── Live session lifecycle ───────────────────────────────────────────────────
   useEffect(() => {
-    log("info", `=== LiveWatchScreen mounted === channel="${channelId}" astro="${astroName}"`);
-    initAgora();
-    const cleanup = initChat();
-    return () => {
-      cleanup?.();
-      clearInterval(timerRef.current);
-      try { clientRef.current?.leave(); } catch { }
+    if (!liveId || !channelId) return;
+
+    // Every route/liveId/channelId change gets a brand-new session generation.
+    const sessionId = ++sessionRef.current;
+    let cancelled = false;
+    let cleanupChat = null;
+
+    setShowLeavePopup(false);
+    setMsgs([]);
+    setHasVideo(false);
+    setAgoraStatus("idle");
+    setAgoraErr("");
+    setFbStatus("idle");
+    setFbErr("");
+    isLeavingRef.current = false;
+
+    const startSession = async () => {
+      try {
+        await initAgora(sessionId);
+
+        if (cancelled || sessionId !== sessionRef.current) return;
+
+        cleanupChat = initChat();
+      } catch (err) {
+        if (!cancelled && sessionId === sessionRef.current) {
+          console.error("[LiveWatchScreen] session start error:", err);
+        }
+      }
     };
-  }, [initAgora, initChat]);
+
+    startSession();
+
+    return () => {
+      cancelled = true;
+
+      cleanupChat?.();
+
+      clearInterval(timerRef.current);
+      clearInterval(waitTimerRef.current);
+
+      const client = clientRef.current;
+      clientRef.current = null;
+
+      if (client) {
+        try {
+          client.removeAllListeners?.();
+          client.leave();
+        } catch {}
+      }
+    };
+  }, [liveId, channelId, initAgora, initChat]);
 
   // ── Fetch other live astrologers ──────────────────────────────────────────
   const fetchOtherLives = useCallback(async () => {
@@ -980,45 +1078,67 @@ export default function LiveWatchScreen() {
   }, [fetchOtherLives]);
 
   const handleJoinOther = useCallback(async (a) => {
-    if (isLeavingRef.current) return;
+    if (!a?.channel_id || isLeavingRef.current) return;
+
     isLeavingRef.current = true;
-
     setShowLeavePopup(false);
-    clearInterval(timerRef.current);
-    clearInterval(waitTimerRef.current);
-
-    // Remove web viewer presence from Firebase
-    const webUserId = myId() || `web_${Date.now()}`;
-    if (channelId) {
-      try {
-        set(ref(db, `LiveViewers/${channelId}/${webUserId}`), null).catch(() => {});
-      } catch (e) {}
-    }
 
     try {
-      if (clientRef.current) {
-        await clientRef.current.leave();
-        clientRef.current.removeAllListeners?.();
-        clientRef.current = null;
-      }
-    } catch (err) {
-      console.error("[LiveWatchScreen] Agora leave error:", err);
-    }
+      clearInterval(timerRef.current);
+      clearInterval(waitTimerRef.current);
 
-    navigate(`/live/${a.channel_id}`, {
-      replace: true,
-      state: {
-        channel_id: a.channel_id,
-        astro_id: a.astro_id,
-        astro_name: a.name,
-        astro_image: a.profile_image,
-        title: a.title || "Live Session",
-        live_type: a.live_type || "home",
-        viewers: a.viewers ?? 0,
-        rate: a.per_min_chat || "",
-        tags: a.tags || [],
-      },
-    });
+      const oldChannelId = channelId;
+      const webUserId = myId() || `web_${Date.now()}`;
+
+      // Remove presence from the astrologer we are leaving.
+      if (oldChannelId) {
+        try {
+          await set(ref(db, `LiveViewers/${oldChannelId}/${webUserId}`), null);
+        } catch {}
+      }
+
+      // Invalidate all async handlers from the old session.
+      sessionRef.current += 1;
+
+      const oldClient = clientRef.current;
+      clientRef.current = null;
+
+      if (oldClient) {
+        try {
+          oldClient.removeAllListeners?.();
+          await oldClient.leave();
+        } catch (err) {
+          console.error("[LiveWatchScreen] Agora switch cleanup error:", err);
+        }
+      }
+
+      setHasVideo(false);
+      setMsgs([]);
+      setAgoraStatus("idle");
+      setAgoraErr("");
+      setFbStatus("idle");
+      setFbErr("");
+
+      navigate(`/live/${a.channel_id}`, {
+        replace: true,
+        state: {
+          channel_id: a.channel_id,
+          astro_id: a.astro_id,
+          astro_name: a.name,
+          astro_image: a.profile_image,
+          title: a.title || "Live Session",
+          live_type: a.live_type || "home",
+          viewers: a.viewers ?? 0,
+          rate: a.per_min_chat || "",
+          tags: a.tags || [],
+        },
+      });
+    } catch (err) {
+      console.error("[LiveWatchScreen] astrologer switch failed:", err);
+    } finally {
+      // Critical: allow the next astrologer switch.
+      isLeavingRef.current = false;
+    }
   }, [channelId, navigate]);
 
   // ── Send message ───────────────────────────────────────────────────────────
@@ -1033,6 +1153,9 @@ export default function LiveWatchScreen() {
     };
     set(msgRef, payload).catch(() => { });
     setInput("");
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
     inputRef.current?.focus();
   };
 

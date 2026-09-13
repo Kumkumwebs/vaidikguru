@@ -1,15 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════════════
-   LiveAstrologer.css
-   Shared styles for LiveAstrologersPage, LiveCard, and LiveWatchScreen.
-   Built on top of Bootstrap 5 utilities (d-flex, row/col, gap-*, etc.) —
-   this file only supplies what Bootstrap doesn't: brand colors, the
-   live-pulse animation, gradients, chat bubbles, and card treatments.
-   Prefix: "la-" (listing) / "lw-" (watch screen).
-
-   THEME: DiviniQ — maroon + saffron + gold on warm cream, Playfair
-   Display for display type, Poppins for body copy. Matches the palette
-   used across home.css / BlogList.css / Chadhavacartpage.css.
-═══════════════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
 
