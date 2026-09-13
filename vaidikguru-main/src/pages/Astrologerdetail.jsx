@@ -473,7 +473,8 @@ const fixImgHost = (url) =>
       av: fixImgHost(r.profile_img) || '/assets/img/user/user1.jpg',
       time: timeAgo(r.Created_date),
       stars: r.rating || 5,
-      text: r.review || r.astr_comment || 'No written feedback provided.',
+      text: r.review || 'No written feedback provided.',
+      reply: (r.astr_comment || '').trim(),
       tag: 'Consultation',
       helpful: 0,
     }))
@@ -874,6 +875,7 @@ const fixImgHost = (url) =>
                       </div>
                       <RevStars val={r.stars} />
                       <div className="ad-rev-text">{r.text}</div>
+                      {r.reply && <div className="ad-rev-reply"><strong>Astrologer Reply</strong><span>{r.reply}</span></div>}
                       <div className="d-flex justify-content-between align-items-center">
                         <span className="ad-rev-tag">{r.tag}</span>
                         <span className="ad-rev-help"><i className="far fa-thumbs-up me-1" />Helpful ({r.helpful})</span>
@@ -983,6 +985,7 @@ const fixImgHost = (url) =>
               </div>
               <RevStars val={r.stars} />
               <div className="ad-rev-text">{r.text}</div>
+              {r.reply && <div className="ad-rev-reply"><strong>Astrologer Reply</strong><span>{r.reply}</span></div>}
               <div className="d-flex justify-content-between">
                 <span className="ad-rev-tag">{r.tag}</span>
                 <span className="ad-rev-help"><i className="far fa-thumbs-up me-1" />Helpful ({r.helpful})</span>
