@@ -808,12 +808,29 @@
   display: flex;
   align-items: center;
   background: var(--la-cream-dark);
-  border-radius: 999px;
+  border-radius: 18px;
   padding: 10px 16px;
   min-width: 0;
-  height: 45px;
+  min-height: 45px;
 }
-.lw-input-el { flex: 1 1 auto; min-width: 0; background: transparent; border: none; outline: none; font-size: 13.5px; color: var(--la-ink); }
+.lw-input-el {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 25px;
+  max-height: 96px;
+  overflow-y: auto;
+  resize: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--la-ink);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
 .lw-input-el::placeholder { color: #b0aaa2; }
 .lw-send-btn {
   flex-shrink: 0;
@@ -1843,5 +1860,279 @@
     width: 37px !important;
     min-width: 37px !important;
     height: 37px !important;
+  }
+}
+
+
+/* ============================================================================
+   FINAL CHAT LAYOUT FIX
+   ---------------------------------------------------------------------------
+   Goals:
+   - Never let long chat text create horizontal page/chat scrolling.
+   - Let normal text wrap naturally on every screen size.
+   - Break long URLs / long unbroken strings when necessary.
+   - Keep only the message list vertically scrollable.
+   - Keep the input controls inside the chat width.
+   - The textarea grows to a small maximum; after that only the textarea itself
+     may scroll vertically.
+   - Do NOT use scrollIntoView for chat auto-scroll; JS scrolls only .lw-chat-msgs.
+   ============================================================================ */
+
+.lw-root,
+.lw-body-row,
+.lw-col-chat,
+.lw-chat-msgs,
+.lw-input-bar,
+.lw-input-group,
+.lw-input-pill,
+.lw-msg-row,
+.lw-msg-content {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.lw-root,
+.lw-body-row,
+.lw-col-chat {
+  overflow-x: hidden !important;
+}
+
+.lw-col-chat {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+.lw-chat-msgs {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.lw-msg-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.lw-msg-content {
+  flex: 1 1 0% !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.lw-msg-top {
+  display: flex !important;
+  align-items: baseline !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.lw-msg-name {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.lw-msg-time {
+  flex: 0 0 auto !important;
+  max-width: 35% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.lw-msg-text {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 2px 0 0 !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  hyphens: auto;
+  overflow: hidden !important;
+}
+
+.lw-msg-gift-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.lw-msg-gift-row .lw-msg-text {
+  flex: 1 1 0% !important;
+  width: 0 !important;
+}
+
+.lw-input-bar {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.lw-input-group {
+  display: flex !important;
+  align-items: flex-end !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  gap: 8px !important;
+}
+
+.lw-input-pill {
+  flex: 1 1 0% !important;
+  width: 0 !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 45px !important;
+  max-height: 104px !important;
+  padding: 8px 14px !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+.lw-input-el {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 25px !important;
+  max-height: 88px !important;
+  height: auto;
+  padding: 0 !important;
+  margin: 0 !important;
+  resize: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  box-sizing: border-box !important;
+}
+
+.lw-send-btn,
+.lw-join-call-btn {
+  flex: 0 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Desktop/tablet: the chat panel itself stays inside the viewport. */
+@media (min-width: 768px) {
+  .lw-body-row {
+    overflow: hidden !important;
+  }
+
+  .lw-col-chat {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .lw-chat-msgs {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+}
+
+/* Mobile: stacked page can grow vertically, but the chat has its own
+   fixed-height scrolling message area. No horizontal page movement. */
+@media (max-width: 767.98px) {
+  .lw-root {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .lw-body-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .lw-col-chat {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .lw-chat-msgs {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .lw-msg-row {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .lw-msg-content {
+    width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .lw-input-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 7px !important;
+    padding-right: 7px !important;
+  }
+
+  .lw-input-group {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 6px !important;
+  }
+
+  .lw-input-pill {
+    min-height: 38px !important;
+    max-height: 96px !important;
+    padding: 7px 10px !important;
+  }
+
+  .lw-input-el {
+    max-height: 80px !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+  }
+}
+
+/* Very small phones: keep the two action buttons from stealing input width. */
+@media (max-width: 480px) {
+  .lw-input-group {
+    gap: 5px !important;
+  }
+
+  .lw-input-pill {
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+  }
+
+  .lw-send-btn,
+  .lw-join-call-btn {
+    flex-basis: 36px !important;
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
   }
 }

@@ -413,7 +413,7 @@ function MsgRow({ msg }) {
             e.target.src = avatarUrl(msg.name);
           }}
         />
-        <div className="flex-grow-1 min-w-0">
+        <div className="lw-msg-content">
           <div className="lw-msg-top">
             <p className="lw-msg-name mb-0">{msg.name}</p>
             <span className="lw-msg-time">{fmtTs(msg.date_time)}</span>
@@ -450,7 +450,7 @@ function MsgRow({ msg }) {
           e.target.src = avatarUrl(msg.name);
         }}
       />
-      <div className="flex-grow-1 min-w-0">
+      <div className="lw-msg-content">
         <div className="lw-msg-top">
           <p className={`lw-msg-name mb-0${isMe ? " me" : ""}`}>{msg.name}</p>
           <span className="lw-msg-time">{fmtTs(msg.date_time)}</span>
@@ -644,6 +644,7 @@ export default function LiveWatchScreen() {
   const videoRef = useRef(null);
   const clientRef = useRef(null);
   const chatEnd = useRef(null);
+  const chatMsgsRef = useRef(null);
   const inputRef = useRef(null);
   const timerRef = useRef();
 
@@ -820,7 +821,14 @@ export default function LiveWatchScreen() {
     return () => clearInterval(waitTimerRef.current);
   }, [agoraStatus, hasVideo]);
 
-  useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
+  useEffect(() => {
+    const el = chatMsgsRef.current;
+    if (!el) return;
+
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+  }, [msgs]);
 
   // ── Mount ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1080,7 +1088,7 @@ export default function LiveWatchScreen() {
             </div>
           )}
 
-          <div className="flex-grow-1 min-w-0">
+          <div className="lw-msg-content">
             <div className="d-flex align-items-center gap-2">
               <p className="lw-name mb-0">{astroName}</p>
               <svg className="lw-verified-icon" viewBox="0 0 24 24" fill="#D4AF37">
@@ -1196,7 +1204,7 @@ export default function LiveWatchScreen() {
               </div>
             </div>
 
-            <div className="lw-chat-msgs">
+            <div ref={chatMsgsRef} className="lw-chat-msgs">
               {msgs.length === 0 ? (
                 <div className="lw-chat-empty">
                   <div className="lw-chat-empty-emoji">💬</div>
@@ -1216,11 +1224,23 @@ export default function LiveWatchScreen() {
             <div className="lw-input-bar">
               <div className="lw-input-group">
                 <div className="lw-input-pill">
-                  <input ref={inputRef} value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && sendMsg()}
+                  <textarea ref={inputRef} value={input} rows={1}
+                    onChange={e => {
+                      const field = e.currentTarget;
+                      field.style.height = "0px";
+                      field.style.height = `${Math.min(field.scrollHeight, 96)}px`;
+                      setInput(field.value);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMsg();
+                      }
+                    }}
                     placeholder="Type a message..."
-                    className="lw-input-el" />
+                    className="lw-input-el"
+                    aria-label="Type a message"
+                  />
                 </div>
                 <button onClick={sendMsg} disabled={!input.trim()} className="lw-send-btn">
                   <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24">
