@@ -1,0 +1,94 @@
+/* ═══════════════════════════════════════════
+   UserDetailsModal.css — compact, no-scroll
+═══════════════════════════════════════════ */
+
+.ud-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(40,10,28,.55); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.ud-box {
+  position: relative; width: 100%; max-width: 400px;
+  background: #fff; border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0,0,0,.28);
+  padding: 22px 20px 18px;
+}
+
+.ud-close {
+  position: absolute; top: 13px; right: 13px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: #f4f4f6; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: #6b7280; transition: all .18s; z-index: 2;
+}
+.ud-close:hover { background: #fbeef3; color: #7c1d40; }
+
+/* ── HEADER ── */
+.ud-head { display: flex; align-items: center; gap: 11px; margin-bottom: 16px; padding-right: 28px; }
+.ud-head-ico {
+  width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+  background: linear-gradient(135deg,#9b2355,#7c1d40);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: #fff;
+}
+.ud-title { font-size: 1.05rem; font-weight: 800; color: #111827; line-height: 1.2; margin-bottom: 2px; }
+.ud-sub { font-size: 11.5px; color: #6b7280; line-height: 1.4; }
+.ud-sub strong { color: #7c1d40; font-weight: 700; }
+
+/* ── FORM ── */
+.ud-form { margin-bottom: 4px; }
+.ud-field { margin-bottom: 11px; }
+.ud-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ud-label {
+  display: block; font-size: 11.5px; font-weight: 600; color: #374151;
+  margin-bottom: 4px;
+}
+.ud-label span { color: #dc2626; }
+.ud-input {
+  width: 100% !important; padding: 9px 11px; font-size: 13px;
+  border: 1.5px solid #e5e7eb; border-radius: 9px;
+  color: #111827; background: #fff; outline: none;
+  transition: all .18s;
+}
+.ud-input::placeholder { color: #9ca3af; }
+.ud-input:focus { border-color: #9b2355; box-shadow: 0 0 0 3px rgba(124,29,64,.08); }
+.ud-input.err { border-color: #dc2626; }
+.ud-err { display: block; font-size: 10.5px; color: #dc2626; margin-top: 3px; }
+
+/* Gender toggle */
+.ud-gender { display: flex; gap: 7px; }
+.ud-gender-btn {
+  flex: 1; padding: 8px 6px; border-radius: 9px;
+  border: 1.5px solid #e5e7eb; background: #fff;
+  font-size: 12px; font-weight: 600; color: #6b7280;
+  cursor: pointer; transition: all .18s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.ud-gender-btn i { font-size: 11px; }
+.ud-gender-btn:hover { border-color: #e8b4c8; }
+.ud-gender-btn.active { background: #fbeef3; border-color: #9b2355; color: #7c1d40; }
+
+/* ── SUBMIT ── */
+.ud-submit {
+  width: 100%; padding: 12px; border-radius: 11px;
+  background: linear-gradient(135deg,#6b1a3a 0%,#9b2355 55%,#7c1d40 100%);
+  color: #fff; font-size: 14px; font-weight: 700;
+  border: none; cursor: pointer; margin: 6px 0 10px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 5px 18px rgba(124,29,64,.32);
+  transition: opacity .18s;
+}
+.ud-submit:hover { opacity: .93; }
+
+.ud-foot {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 10.5px; color: #9ca3af; font-weight: 500;
+}
+.ud-foot i { color: #16a34a; font-size: 10px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  .ud-overlay { align-items: flex-end; padding: 0; }
+  .ud-box { max-width: 100%; border-radius: 18px 18px 0 0; padding: 20px 16px 16px; }
+  .ud-title { font-size: 1rem; }
+}
