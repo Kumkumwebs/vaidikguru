@@ -316,3 +316,258 @@
 @media (prefers-reduced-motion: reduce) {
   .plv-flame, .plv-mini-flame, .plv-live-dot { animation: none; }
 }
+
+.plv-video-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  overflow: hidden;
+  background: #000;
+}
+
+.plv-agora-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 1;
+}
+
+.plv-agora-video video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block;
+}
+
+.plv-agora-status {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 15px;
+
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.plv-agora-spinner {
+  width: 40px;
+  height: 40px;
+
+  border: 4px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+
+  border-radius: 50%;
+
+  animation: agoraSpinner 0.8s linear infinite;
+}
+
+@keyframes agoraSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* =========================================================
+   MOBILE LIVE PAGE
+   Video first, content below video
+   ========================================================= */
+
+@media (max-width: 767px) {
+
+  /* =========================================
+     HIDE CONTENT INSIDE LIVE VIDEO
+     ========================================= */
+
+  .plv-hero-topleft,
+  .plv-viewer-count,
+  .plv-hero-controls,
+  .plv-hero-caption {
+    display: none !important;
+  }
+
+
+  /* =========================================
+     MAIN MOBILE CONTAINER
+     ========================================= */
+
+  .plv-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .plv-grid {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .plv-main {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+
+  /* =========================================
+     LIVE VIDEO
+     ========================================= */
+
+  .plv-hero {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .plv-video-scene {
+    position: relative !important;
+
+    width: 100% !important;
+
+    /* 16:9 mobile video */
+    aspect-ratio: 16 / 9 !important;
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    background: #000 !important;
+
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .plv-agora-video {
+    position: absolute !important;
+
+    inset: 0 !important;
+
+    width: 100% !important;
+    height: 100% !important;
+
+    background: #000 !important;
+  }
+
+  .plv-agora-video video {
+    width: 100% !important;
+    height: 100% !important;
+
+    object-fit: cover !important;
+  }
+
+
+  /* =========================================
+     AGORA LOADING
+     ========================================= */
+
+  .plv-agora-status {
+    position: absolute !important;
+
+    inset: 0 !important;
+
+    z-index: 20 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: column !important;
+
+    background: #000 !important;
+
+    color: #fff !important;
+  }
+
+
+  /* =========================================
+     SHOW CONTENT BELOW LIVE VIDEO
+     ========================================= */
+
+  .plv-side {
+    display: block !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+
+    margin: 0 !important;
+    padding: 15px !important;
+  }
+
+  .plv-card {
+    width: 100% !important;
+    margin-bottom: 15px !important;
+  }
+
+
+  /* =========================================
+     STATS BELOW CONTENT
+     ========================================= */
+
+  .plv-stats {
+    display: flex !important;
+
+    width: 100% !important;
+
+    margin: 0 !important;
+    padding: 15px !important;
+
+    flex-wrap: wrap !important;
+  }
+
+
+  /* =========================================
+     MOBILE STATS
+     ========================================= */
+
+  .plv-stat {
+    flex: 1 1 50% !important;
+    min-width: 50% !important;
+
+    padding: 15px 5px !important;
+    text-align: center !important;
+  }
+
+  .plv-stats-divider {
+    display: none !important;
+  }
+
+
+  /* =========================================
+     BLESSINGS FEED
+     ========================================= */
+
+  .plv-feed {
+    max-height: 250px !important;
+    overflow-y: auto !important;
+  }
+
+
+  /* =========================================
+     SHARE SECTION
+     ========================================= */
+
+  .plv-share-row {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .plv-link-box {
+    width: 100% !important;
+  }
+
+  .plv-whatsapp {
+    width: 100% !important;
+    text-align: center !important;
+  }
+}

@@ -4,8 +4,10 @@ const SideMenu = ({ isOpen, onClose }) => {
 	return (
 		<div className={`sidemenu-wrapper sidemenu-info ${isOpen ? 'show' : ''}`}>
 			<div className="sidemenu-content">
-				<button className="closeButton sideMenuCls" onClick={onClose}>
-					<i className="far fa-times"></i>
+				<button className="closeButton sideMenuCls" onClick={onClose} aria-label="Close Menu">
+					<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+					</svg>
 				</button>
 				<div className="widget">
 					<div className="th-widget-about">

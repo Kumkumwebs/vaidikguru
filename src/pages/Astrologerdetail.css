@@ -522,3 +522,13 @@
   .ad-mobile-video-btn { width: 40px; height: 40px; font-size: 14px; flex-shrink: 0; }
   .ad-mobile-status-dot { width: 11px; height: 11px; margin-left: 2px; }
 }
+
+
+/* ── 🔥 BOOST FIRE — buttons ko positioned banao ── */
+.ad-btn-chat,
+.ad-btn-call,
+.ad-mobile-chat-btn,
+.ad-mobile-call-btn {
+  position: relative;
+  overflow: visible;
+}

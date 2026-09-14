@@ -427,6 +427,11 @@ const fixImgHost = (url) =>
   );
 
   const { status: astroStatusVal, isBusy, isOnline, label: statusLabel } = getAstroStatus(astro);
+  /* 🔥 boost flags — astrologer list page jaise */
+  const isBoostOn = (...keys) => keys.some(k => ['1', 'on', 'true', 'yes'].includes(String(astro?.[k] ?? '').toLowerCase()));
+  const boostAll   = isBoostOn('is_boost', 'boost', 'is_boosted');
+  const boostChat  = boostAll || isBoostOn('is_chat_boost', 'chat_boost', 'boost_chat', 'is_boost_chat');
+  const boostCall  = boostAll || isBoostOn('is_voice_boost', 'is_call_boost', 'call_boost', 'boost_call', 'voice_boost');
   const waitLabel = getWaitLabel(astro);
   const cats = (Array.isArray(astro.category) ? astro.category : []).map(c => typeof c === 'object' ? (c.name || c.category_name || c.title) : c).filter(Boolean);
   const astroRole = getAstroRole(astro);
@@ -712,11 +717,11 @@ const fixImgHost = (url) =>
                     </>
                   ) : isOnline ? (
                     <>
-                      <button className="ad-btn-chat" onClick={() => handleChatCallClick('chat')}>
+                      <button className="ad-btn-chat" onClick={() => handleChatCallClick('chat')}>{boostChat && <i className="fas fa-fire al-boost-fire" aria-label="Boosted chat" />}
                         <div className="ad-btn-chat-main"><i className="fas fa-comment-dots" style={{ fontSize: 16 }} />Chat Now</div>
                         <div className="ad-btn-chat-sub">Get instant guidance</div>
                       </button>
-                      <button className="ad-btn-call" onClick={() => handleChatCallClick('call')}>
+                      <button className="ad-btn-call" onClick={() => handleChatCallClick('call')}>{boostCall && <i className="fas fa-fire al-boost-fire" aria-label="Boosted call" />}
                         <div className="ad-btn-call-main"><i className="fas fa-phone" style={{ fontSize: 15 }} />Call Now</div>
                         <div className="ad-btn-call-sub">Start a call session</div>
                       </button>
@@ -1152,11 +1157,11 @@ const fixImgHost = (url) =>
           </>
         ) : isOnline ? (
           <>
-            <button className="ad-mobile-chat-btn" onClick={() => handleChatCallClick('chat')}>
+            <button className="ad-mobile-chat-btn" onClick={() => handleChatCallClick('chat')}>{boostChat && <i className="fas fa-fire al-boost-fire" aria-label="Boosted chat" />}
               <i className="fas fa-comment-dots" />
               <span>Chat Now</span>
             </button>
-            <button className="ad-mobile-call-btn" onClick={() => handleChatCallClick('call')}>
+            <button className="ad-mobile-call-btn" onClick={() => handleChatCallClick('call')}>{boostCall && <i className="fas fa-fire al-boost-fire" aria-label="Boosted call" />}
               <i className="fas fa-phone" />
               <span>Call Now</span>
             </button>

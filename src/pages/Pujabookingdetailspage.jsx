@@ -26,6 +26,15 @@ const FAQS = [
   },
 ];
 
+/* Booking me se pooja ki asli ID nikalta hai (live page ke liye).
+   API me puja_id ek object hota hai: { _id, title, pujaImage } */
+const getPujaId = (b) =>
+  b?.puja_id?._id ||
+  (typeof b?.puja_id === "string" ? b.puja_id : null) ||
+  b?.pooja_id?._id ||
+  (typeof b?.pooja_id === "string" ? b.pooja_id : null) ||
+  null;
+
 const PujaBookingDetailsPage = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -39,37 +48,64 @@ const PujaBookingDetailsPage = () => {
   useEffect(() => {
     const fetchBooking = async () => {
       try {
-        const res = await apiService.getBearer(`/puja/pujabookingdetails/${id}`);
-        let bData = null;
-        if (res && res.status) {
-          bData = res.results || res.data || res.booking || null;
-        }
+        // ── Source of truth: /puja/mypujabookings ────────────────────────
+        // Ye endpoint 200 deta hai aur pura booking object deta hai.
+        // Response ka key "bookPooja" hai (results/data nahi), isliye pehle
+        // wahi padha jaata hai. /puja/pujabookingdetails/:id hata diya gaya
+        // hai — wo khali data de raha tha jisse page blank ho jaata tha.
+        const listRes = await apiService
+          .postBearer("/puja/mypujabookings", {})
+          .catch(() => null);
+
+        const list =
+          listRes?.bookPooja ||
+          listRes?.results ||
+          listRes?.data ||
+          listRes?.result ||
+          [];
+
+        let bData = list.find((b) => String(b._id) === String(id)) || null;
+
+        // fallback: navigate state se aayi booking (list page se aaye ho to)
         if (!bData && location.state?.booking) {
           bData = location.state.booking;
         }
 
-        if (bData) {
-          const isWallet = bData.payment_mode?.toLowerCase() === 'wallet';
-          if (isWallet || bData.payment_status?.toLowerCase() === 'pending') {
-            try {
-              const targetBookingId = bData._id || id;
-              const statusRes = await apiService.getBearer(`/puja/puja_payment_status/${targetBookingId}`);
-              if (statusRes?.payment_status === "Success" || statusRes?.status === true || isWallet) {
-                bData = { ...bData, payment_status: "Success" };
-              }
-            } catch (err) {
-              if (isWallet) {
-                bData = { ...bData, payment_status: "Success" };
-              }
-            }
-          }
-          setBooking(bData);
+        if (!bData) {
+          console.warn(
+            "[PujaBooking] id nahi mila:",
+            id,
+            "| available ids:",
+            list.map((b) => b._id)
+          );
+          return;
         }
+
+        // Wallet / pending payment ka status confirm karo
+        const isWallet = bData.payment_mode?.toLowerCase() === "wallet";
+        if (isWallet || bData.payment_status?.toLowerCase() === "pending") {
+          try {
+            const statusRes = await apiService.getBearer(
+              `/puja/puja_payment_status/${bData._id || id}`
+            );
+            if (
+              statusRes?.payment_status === "Success" ||
+              statusRes?.status === true ||
+              isWallet
+            ) {
+              bData = { ...bData, payment_status: "Success" };
+            }
+          } catch (err) {
+            if (isWallet) bData = { ...bData, payment_status: "Success" };
+          }
+        }
+
+        setBooking(bData);
       } catch (error) {
         console.error("Fetch error:", error);
         if (location.state?.booking) {
           let bData = location.state.booking;
-          if (bData.payment_mode?.toLowerCase() === 'wallet') {
+          if (bData.payment_mode?.toLowerCase() === "wallet") {
             bData = { ...bData, payment_status: "Success" };
           }
           setBooking(bData);
@@ -128,10 +164,51 @@ const PujaBookingDetailsPage = () => {
   const isSuccess = statusClass === 'success';
   const isPending = statusClass === 'pending';
 
-  const totalAddons = (booking.addons_selected?.length || 0) + (booking.home_addons_selected?.length || 0);
-  const dateStr = new Date(booking.puja_date).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'long', year: 'numeric', weekday: 'long'
-  });
+  const pujaId = getPujaId(booking);
+const totalAddons =
+  (booking.addons_selected?.length || 0) +
+  (booking.home_addons_selected?.length || 0);
+
+// Support different API field names
+const rawPujaDate =
+  booking.puja_date ||
+  booking.pooja_date ||
+  booking.booking_date ||
+  booking.scheduled_date ||
+  booking.date ||
+  booking.pujaDate;
+
+const parsedDate = rawPujaDate ? new Date(rawPujaDate) : null;
+
+const dateStr =
+  parsedDate && !Number.isNaN(parsedDate.getTime())
+    ? parsedDate.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        weekday: "long",
+      })
+    : "Date not available";
+
+// Support different amount field names
+const pujaAmount =
+  booking.puja_amount ??
+  booking.pooja_amount ??
+  booking.amount ??
+  booking.total_amount ??
+  booking.totalAmount ??
+  booking.price ??
+  booking.puja_id?.price ??
+  0;
+
+  const handleWatchLive = () => {
+    if (!pujaId) {
+      console.warn("[PujaLive] puja id nahi mili, booking:", booking);
+      alert("Is booking me puja ID nahi mili.");
+      return;
+    }
+    navigate(`/puja-live/${pujaId}`, { state: { booking } });
+  };
 
   const handleDownloadInvoice = async () => {
     try {
@@ -178,10 +255,10 @@ const PujaBookingDetailsPage = () => {
               </p>
               <button
                 className="pbd-watch-btn"
-                onClick={() => setIsAppModalOpen(true)}
-                disabled={!isSuccess}
+                onClick={handleWatchLive}
+                disabled={!pujaId}
               >
-                Watch Your Puja Video <i className="fas fa-play-circle"></i>
+                Watch Live Puja <i className="fas fa-play-circle"></i>
               </button>
             </div>
 

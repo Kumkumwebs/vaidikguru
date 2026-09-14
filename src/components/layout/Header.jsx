@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import LoginOTPModal from '../accounts/LoginOTPModel';
+import MobileMenu from './MobileMenu';
 import { useStorage } from '../../context/StorageContext';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -12,10 +13,18 @@ const Header = ({ onMenuToggle, onSideMenuToggle, onSearchToggle }) => {
 	const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [isLangOpen, setIsLangOpen] = useState(false);
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const { activeLang, setLanguage, LANGUAGES } = useLanguage();
 	const { user, isLoggedIn, clearStorage } = useStorage();
 	const dropdownRef = useRef(null);
 	const langRef = useRef(null);
+
+	const handleMenuClick = () => {
+		if (typeof onMenuToggle === 'function') {
+			onMenuToggle();
+		}
+		setIsMobileMenuOpen(true);
+	};
 
 	const handleEmailClick = () => {
 		window.open("mailto:support@vaidikguru.store", "_blank");
@@ -287,38 +296,40 @@ const Header = ({ onMenuToggle, onSideMenuToggle, onSearchToggle }) => {
 					}
 				}
 
-				/* ── Themed hamburger toggle ── */
-				.dqh-menu-toggle {
-					display: flex;
-					flex-direction: column;
-					align-items: center;
-					justify-content: center;
-					gap: 5px;
-					width: 42px;
-					height: 42px;
-					border-radius: 12px;
-					background: linear-gradient(135deg, #7B1C38, #9B1C3A);
-					border: none;
-					cursor: pointer;
-					box-shadow: 0 4px 14px rgba(123,28,56,0.28);
-					transition: transform .2s ease, box-shadow .2s ease;
+				/* ── Themed hamburger toggle (Mobile/Tablet only) ── */
+				@media (min-width: 1200px) {
+					.menu-area .th-menu-toggle,
+					.menu-area .dqh-menu-toggle {
+						display: none !important;
+					}
 				}
-				.dqh-menu-toggle:hover {
-					transform: translateY(-1px);
-					box-shadow: 0 6px 18px rgba(123,28,56,0.35);
+				@media (max-width: 1199px) {
+					.th-menu-toggle, .dqh-menu-toggle {
+						display: inline-flex !important;
+					}
 				}
-				.dqh-menu-toggle span {
-					display: block;
-					width: 20px;
-					height: 2px;
-					border-radius: 2px;
-					background: #fff;
-					transition: all .25s ease;
+				.th-menu-toggle, .dqh-menu-toggle {
+					align-items: center !important;
+					justify-content: center !important;
+					width: 38px !important;
+					height: 38px !important;
+					border-radius: 50% !important;
+					background-color: var(--theme-color, #f5a623) !important;
+					color: #ffffff !important;
+					border: none !important;
+					padding: 0 !important;
+					cursor: pointer !important;
+					box-shadow: 0 2px 8px rgba(245, 166, 35, 0.35) !important;
+					transition: transform .2s ease, background-color .2s ease !important;
 				}
-				.dqh-menu-toggle span:nth-child(2) {
-					width: 14px;
-					align-self: flex-start;
-					margin-left: 11px;
+				.th-menu-toggle:hover, .dqh-menu-toggle:hover {
+					transform: scale(1.05) !important;
+					background-color: #e09319 !important;
+				}
+				.th-menu-toggle svg {
+					display: block !important;
+					width: 18px !important;
+					height: 14px !important;
 				}
 			`}</style>
 
@@ -417,9 +428,24 @@ const Header = ({ onMenuToggle, onSideMenuToggle, onSearchToggle }) => {
 									<button
 										type="button"
 										className="th-menu-toggle d-block d-xl-none"
-										onClick={onMenuToggle}
+										onClick={handleMenuClick}
+										aria-label="Toggle Navigation Menu"
 									>
-										<i className="far fa-bars"></i>
+										<svg
+											width="18"
+											height="14"
+											viewBox="0 0 18 14"
+											fill="none"
+											xmlns="http://www.w3.org/2000/svg"
+										>
+											<path
+												d="M1 1.5H17M1 7H17M1 12.5H17"
+												stroke="white"
+												strokeWidth="2.2"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+											/>
+										</svg>
 									</button>
 								</div>
 								<div className="col-auto dqh-action-col">
@@ -745,6 +771,11 @@ const Header = ({ onMenuToggle, onSideMenuToggle, onSearchToggle }) => {
 					</div>
 				</div>
 			)}
+			{/* Mobile Menu Drawer */}
+			<MobileMenu
+				isOpen={isMobileMenuOpen}
+				onClose={() => setIsMobileMenuOpen(false)}
+			/>
 		</>
 	);
 };

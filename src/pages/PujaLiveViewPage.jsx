@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import AgoraRTC from "agora-rtc-sdk-ng";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import apiService from "../services/apiServices";
 import Header from "../components/layout/Header";
@@ -61,6 +62,187 @@ const PujaLiveViewPage = () => {
   const feedRef = useRef(null);
   const heroRef = useRef(null);
 
+  const videoRef = useRef(null);
+  const agoraClientRef = useRef(null);
+
+  const [liveData, setLiveData] = useState(null);
+  const [agoraStatus, setAgoraStatus] = useState("Connecting...");
+
+  useEffect(() => {
+    if (
+      !liveData?.app_id ||
+      !liveData?.channel_id ||
+      !liveData?.token
+    ) {
+      console.log("Waiting for Agora credentials...");
+      return;
+    }
+
+    let client;
+    let isMounted = true;
+
+    const startAgora = async () => {
+      try {
+        console.log("=================================");
+        console.log("STARTING AGORA");
+        console.log("App ID:", liveData.app_id);
+        console.log("Channel:", liveData.channel_id);
+        console.log("UID:", liveData.uid);
+        console.log("=================================");
+
+        client = AgoraRTC.createClient({
+          mode: "live",
+          codec: "vp8",
+        });
+
+        agoraClientRef.current = client;
+
+        // Viewer
+        await client.setClientRole("audience");
+
+        // Host publishes video/audio
+        client.on("user-published", async (user, mediaType) => {
+          try {
+            console.log(
+              "USER PUBLISHED:",
+              user.uid,
+              mediaType
+            );
+
+            await client.subscribe(user, mediaType);
+
+            console.log(
+              "SUBSCRIBED:",
+              user.uid,
+              mediaType
+            );
+
+            if (mediaType === "video") {
+              if (user.videoTrack && videoRef.current) {
+                user.videoTrack.play(videoRef.current);
+
+                console.log(
+                  "VIDEO PLAYING:",
+                  user.uid
+                );
+
+                if (isMounted) {
+                  setAgoraStatus("Live");
+                }
+              }
+            }
+
+            if (mediaType === "audio") {
+              if (user.audioTrack) {
+                user.audioTrack.play();
+
+                console.log(
+                  "AUDIO PLAYING:",
+                  user.uid
+                );
+              }
+            }
+          } catch (error) {
+            console.error(
+              "Agora subscribe error:",
+              error
+            );
+          }
+        });
+
+        client.on("user-unpublished", (user, mediaType) => {
+          console.log(
+            "USER UNPUBLISHED:",
+            user.uid,
+            mediaType
+          );
+        });
+
+        client.on("user-left", (user) => {
+          console.log(
+            "USER LEFT:",
+            user.uid
+          );
+        });
+
+        client.on(
+          "connection-state-change",
+          (curState, prevState) => {
+            console.log(
+              "AGORA CONNECTION:",
+              prevState,
+              "=>",
+              curState
+            );
+          }
+        );
+
+        const uid = await client.join(
+          liveData.app_id,
+          liveData.channel_id,
+          liveData.token,
+          liveData.uid
+        );
+
+        console.log(
+          "================================="
+        );
+        console.log(
+          "AGORA JOIN SUCCESS:",
+          uid
+        );
+        console.log(
+          "================================="
+        );
+
+        if (isMounted) {
+          setAgoraStatus(
+            "Connected — waiting for live video..."
+          );
+        }
+
+      } catch (error) {
+        console.error(
+          "================================="
+        );
+        console.error(
+          "AGORA JOIN ERROR:",
+          error
+        );
+        console.error(
+          "================================="
+        );
+
+        if (isMounted) {
+          setAgoraStatus(
+            `Agora Error: ${error?.message || "Unknown error"}`
+          );
+        }
+      }
+    };
+
+    startAgora();
+
+    return () => {
+      isMounted = false;
+
+      if (client) {
+        console.log("Leaving Agora channel...");
+
+        client.removeAllListeners();
+
+        client.leave().catch((error) => {
+          console.error(
+            "Agora leave error:",
+            error
+          );
+        });
+      }
+
+      agoraClientRef.current = null;
+    };
+  }, [liveData]);
+
   // ── Fetch booking (same pattern as PujaBookingDetailsPage) ────────────────
   // NOTE: postBearer sends the *logged-in device's* token. This page is meant
   // to be shared with people who did NOT make the booking and may not be
@@ -70,8 +252,6 @@ const PujaLiveViewPage = () => {
   // (title, temple, priest, devotee first name, status) — do not expose the
   // full booking object (address, phone, payment info) on a public link.
   useEffect(() => {
-    if (booking) return;
-
     // TEMP: remove this block once you're done testing the UI
     const params = new URLSearchParams(location.search);
     if (params.get("demo") === "true") {
@@ -80,21 +260,60 @@ const PujaLiveViewPage = () => {
       return;
     }
 
-    const fetchBooking = async () => {
+    const joinLive = async () => {
       try {
-        const res = await apiService.postBearer("/puja/mypujabookings", {});
-        if (res && res.status) {
-          const list = res.results || res.bookPooja || res.data || res.result || [];
-          const match = list.find((b) => b._id === id);
-          setBooking(match || null);
+        // Live pooja join — puja_live_join, body me puja_id.
+        // Ye HAMESHA chalti hai, chahe booking navigate state se aa chuki ho —
+        // taaki viewer backend par register ho aur live data (channel_id,
+        // is_live, room) mil sake.
+        const res = await apiService
+          .postBearer("/user_api/puja_live_join", { puja_id: id })
+          .catch((error) => {
+            console.error("puja_live_join error:", error);
+            return null;
+          });
+
+        if (!res?.app_id || !res?.channel_id || !res?.token) {
+          console.error("Invalid Agora response:", res);
+          setAgoraStatus("Live stream unavailable");
+          setLoading(false);
+          return;
+        }
+
+        const agoraData = {
+          app_id: res.app_id,
+          channel_id: res.channel_id,
+          token: res.token,
+          uid: res.uid ?? null,
+        };
+
+        console.log("AGORA DATA:", agoraData);
+
+        setLiveData(agoraData);
+
+        let data =
+          res?.results ??
+          res?.result ??
+          res?.record ??
+          res?.booking ??
+          res?.data ??
+          null;
+        if (Array.isArray(data)) {
+          data = data.find((b) => String(b._id) === String(id)) || data[0];
+        }
+
+        // API se data mila to merge kar do (naye fields upar rahenge).
+        // Nahi mila to jo state se aaya tha wahi rahega — page blank nahi hoga.
+        if (data) {
+          setBooking((prev) => (prev ? { ...prev, ...data } : data));
         }
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("Live join error:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchBooking();
+    joinLive();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -289,13 +508,19 @@ const PujaLiveViewPage = () => {
       <div className="main-wrapper bg-light">
         <ScrollToTop />
         <Header />
+
         <div className="plv-notfound">
-          <h3>This live pooja isn't available</h3>
-          <p>The link may be incorrect, or the booking may have been removed.</p>
-          <button className="plv-back-btn" onClick={() => navigate("/my_puja_booking")}>
-            Back to My Bookings
-          </button>
+          <div className="plv-agora-spinner"></div>
+
+          <h3>Connecting to live pooja...</h3>
+
+          <p>
+            Please wait while we connect you to the live stream.
+          </p>
         </div>
+
+       
+
         <Footer />
       </div>
     );
@@ -319,15 +544,21 @@ const PujaLiveViewPage = () => {
           <div className="plv-main">
             <div className={`plv-hero${isFullscreen ? " plv-fullscreen-active" : ""}`} ref={heroRef}>
               <div className="plv-video-scene">
-                {/* Replace this whole block with a real <video> tag or your
-                    streaming provider's embed (HLS/RTMP/YouTube Live) once
-                    booking.liveStreamUrl (or similar) is available from the API. */}
-                <div className="plv-arch"></div>
-                <div className="plv-diyas">
-                  <div className="plv-diya"><div className="plv-flame"></div><div className="plv-base"></div></div>
-                  <div className="plv-diya"><div className="plv-flame"></div><div className="plv-base"></div></div>
-                  <div className="plv-diya"><div className="plv-flame"></div><div className="plv-base"></div></div>
-                </div>
+
+                {/* REAL AGORA REMOTE VIDEO */}
+                <div
+                  ref={videoRef}
+                  className="plv-agora-video"
+                ></div>
+
+                {/* Connection status */}
+                {agoraStatus !== "Live" && (
+                  <div className="plv-agora-status">
+                    <div className="plv-agora-spinner"></div>
+                    <span>{agoraStatus}</span>
+                  </div>
+                )}
+
               </div>
 
               <div className="plv-hero-topleft">
@@ -499,6 +730,7 @@ const PujaLiveViewPage = () => {
         </div>
       )}
 
+     
       <Footer />
     </div>
   );

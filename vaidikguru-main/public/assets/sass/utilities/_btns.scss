@@ -485,7 +485,8 @@
     transition: all 300ms linear;
 
     &:after {
-        content: "\f062";
+        content: "" !important;
+        display: none !important;
         font-family: $icon-font;
         position: absolute;
         text-align: center;
