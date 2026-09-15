@@ -10,8 +10,13 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+<<<<<<< HEAD
 		"@fortawesome/fontawesome-free": "^7.1.0",
 		"agora-rtc-sdk-ng": "^4.24.5",
+=======
+		"@fortawesome/fontawesome-free": "^7.3.1",
+		"agora-rtc-sdk-ng": "^4.24.8",
+>>>>>>> aa80a669f20626b94ce61983f7f51cf2d8888024
 		"axios": "^1.13.2",
 		"bootstrap": "^5.3.8",
 		"dompurify": "^3.3.1",

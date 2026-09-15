@@ -108,6 +108,14 @@ const AstrologerCard = ({ astro, onChat }) => {
 	const cats = (Array.isArray(astro.category) ? astro.category : []).slice(0, 3).map((c) => (typeof c === 'object' ? (c.name || c.category_name || c.title) : c)).filter(Boolean);
 	const role = getAstroRole(astro);
 	const { isBusy, isOnline } = getAstroStatus(astro);
+<<<<<<< HEAD
+=======
+	/* 🔥 boost flags — astrologer list page jaise */
+	const isBoostOn = (...keys) => keys.some(k => ['1', 'on', 'true', 'yes'].includes(String(astro?.[k] ?? '').toLowerCase()));
+	const boostAll   = isBoostOn('is_boost', 'boost', 'is_boosted');
+	const boostChat  = boostAll || isBoostOn('is_chat_boost', 'chat_boost', 'boost_chat', 'is_boost_chat');
+	const boostCall  = boostAll || isBoostOn('is_voice_boost', 'is_call_boost', 'call_boost', 'boost_call', 'voice_boost');
+>>>>>>> aa80a669f20626b94ce61983f7f51cf2d8888024
 	const dotCls = isBusy ? 'db' : isOnline ? 'dn' : 'do';
 	const waitLabel = getWaitLabel(astro);
 
@@ -195,10 +203,17 @@ const AstrologerCard = ({ astro, onChat }) => {
 					</div>
 				) : isOnline ? (
 					<>
+<<<<<<< HEAD
 						<button className="al-chat" onClick={(e) => { e.stopPropagation(); onChat(astro, 'chat'); }}>
 							Chat Now
 						</button>
 						<button className="al-call" onClick={(e) => { e.stopPropagation(); onChat(astro, 'call'); }} title={`Call (₹${getAstroCallPrice(astro)}/min)`}>
+=======
+						<button className="al-chat" onClick={(e) => { e.stopPropagation(); onChat(astro, 'chat'); }}>{boostChat && <i className="fas fa-fire al-boost-fire" aria-label="Boosted chat" />}
+							Chat Now
+						</button>
+						<button className="al-call" onClick={(e) => { e.stopPropagation(); onChat(astro, 'call'); }} title={`Call (₹${getAstroCallPrice(astro)}/min)`}>{boostCall && <i className="fas fa-fire al-boost-fire" aria-label="Boosted call" />}
+>>>>>>> aa80a669f20626b94ce61983f7f51cf2d8888024
 							<i className="fas fa-phone" />
 						</button>
 					</>

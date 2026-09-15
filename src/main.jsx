@@ -2,7 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
+<<<<<<< HEAD
 import { StorageProvider } from './context/StorageContext.jsx';
+=======
+import '@fortawesome/fontawesome-free/css/all.min.css';  
+import { StorageProvider } from './context/StorageContext';
+>>>>>>> aa80a669f20626b94ce61983f7f51cf2d8888024
 import { HelmetProvider } from 'react-helmet-async';
 
 createRoot(document.getElementById('root')).render(

@@ -3060,7 +3060,8 @@ input[type=time]::-webkit-calendar-picker-indicator {
 }
 
 .scroll-top:after {
-  content: "\f062";
+  content: "" !important;
+  display: none !important;
   font-family: var(--icon-font);
   position: absolute;
   text-align: center;

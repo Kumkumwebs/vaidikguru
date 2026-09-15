@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
+<<<<<<< HEAD
 import UserDetailsModal from "./ChadhavaUserDetailsModel";
+=======
+import UserDetailsModal from "../common/ChadhavaUserDetailsModel";
+>>>>>>> aa80a669f20626b94ce61983f7f51cf2d8888024
 import ScrollToTop from "./ScrollToTop";
 import Footer from "../layout/Footer";
 import SideMenu from "../layout/SideMenu";

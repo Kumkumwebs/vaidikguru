@@ -10,7 +10,11 @@
 @import "/assets/css/bootstrap.min.css";
 
 /* Fontawesome Icon */
+<<<<<<< HEAD
 @import "/assets/css/fontawesome.min.css";
+=======
+/* @import "/assets/css/fontawesome.min.css"; */
+>>>>>>> aa80a669f20626b94ce61983f7f51cf2d8888024
 
 /* Magnific Popup */
 @import "/assets/css/magnific-popup.min.css";
